@@ -1,136 +1,377 @@
 #!/bin/bash
 #
-# env.sh
+# env.sh - pyvider-hcl Development Environment Setup
 #
-# Standardized development environment setup script for all 'pyvider' packages.
+# This script sets up a clean, isolated development environment for pyvider-hcl
+# using 'uv' for high-performance virtual environment and dependency management.
 #
-# This script uses 'uv' for high-performance virtual environment creation
-# and dependency management. It ensures that all related 'pyvider' sibling
-# packages are installed in editable mode for a seamless development experience
-# across a multi-package project.
-#
-# Usage: From the root of any pyvider package, run: ./env.sh
+# Usage: source ./env.sh
 #
 
-# --- Configuration and Setup ---
-
-# Use colors for better readability in the terminal.
+# --- Configuration ---
 COLOR_BLUE='\033[0;34m'
 COLOR_GREEN='\033[0;32m'
 COLOR_YELLOW='\033[0;33m'
-COLOR_NC='\033[0m' # No Color
+COLOR_RED='\033[0;31m'
+COLOR_NC='\033[0m'
 
-# A small helper function to print formatted section headers.
+# Spinner animation for long operations
+spinner() {
+    local pid=$1
+    local delay=0.1
+    local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    while ps -p $pid > /dev/null 2>&1; do
+        local temp=${spinstr#?}
+        printf " [%c]  " "$spinstr"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b"
+    done
+    printf "    \b\b\b\b"
+}
 print_header() {
     echo -e "\n${COLOR_BLUE}--- ${1} ---${COLOR_NC}"
 }
 
-# Ensure the script is run from a project root containing pyproject.toml.
+print_success() {
+    echo -e "${COLOR_GREEN}✅ ${1}${COLOR_NC}"
+}
+
+print_error() {
+    echo -e "${COLOR_RED}❌ ${1}${COLOR_NC}"
+}
+
+print_warning() {
+    echo -e "${COLOR_YELLOW}⚠️  ${1}${COLOR_NC}"
+}
+# --- Cleanup Previous Environment ---
+print_header "🧹 Cleaning Previous Environment"
+
+# Remove any existing Python aliases
+unalias python 2>/dev/null
+unalias python3 2>/dev/null
+unalias pip 2>/dev/null
+unalias pip3 2>/dev/null
+
+# Clear existing PYTHONPATH
+unset PYTHONPATH
+
+# Store original PATH for restoration if needed
+ORIGINAL_PATH="${PATH}"
+
+print_success "Cleared Python aliases and PYTHONPATH"
+# --- Project Validation ---
 if [ ! -f "pyproject.toml" ]; then
-    echo -e "${COLOR_YELLOW}⚠️  Warning: 'pyproject.toml' not found.${COLOR_NC}"
-    echo "Please run this script from the root directory of a pyvider package."
-    exit 1
+    print_error "No 'pyproject.toml' found in current directory"
+    echo "Please run this script from the pyvider-hcl root directory"
+    return 1 2>/dev/null || exit 1
 fi
 
 PROJECT_NAME=$(basename "$(pwd)")
-print_header "Setting up environment for '${PROJECT_NAME}'"
 
-# --- 'uv' Installation ---
+# --- UV Installation ---
+print_header "🚀 Checking UV Package Manager"
 
-# Check for 'uv' and install it if it's not present. 'uv' is a modern,
-# extremely fast Python package manager from Astral.
 if ! command -v uv &> /dev/null; then
-    print_header "🚀 Installing 'uv' package manager"
-    # The official installer from astral.sh
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-
-    # The uv installer places the binary in either ~/.local/bin or ~/.cargo/bin.
-    # We must source the corresponding environment file to update the shell's PATH.
-    # This logic robustly checks for the correct file before sourcing.
+    echo "Installing UV..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh > /tmp/uv_install.log 2>&1 &
+    spinner $!
+    
     UV_ENV_PATH_LOCAL="$HOME/.local/bin/env"
     UV_ENV_PATH_CARGO="$HOME/.cargo/env"
-
+    
     if [ -f "$UV_ENV_PATH_LOCAL" ]; then
-        echo "Sourcing environment from '$UV_ENV_PATH_LOCAL' to update PATH..."
         source "$UV_ENV_PATH_LOCAL"
     elif [ -f "$UV_ENV_PATH_CARGO" ]; then
-        echo "Sourcing environment from '$UV_ENV_PATH_CARGO' to update PATH..."
         source "$UV_ENV_PATH_CARGO"
-    else
-        echo -e "${COLOR_YELLOW}⚠️  Warning: Could not find 'uv' environment file to source.${COLOR_NC}"
-        echo "Please ensure '$HOME/.local/bin' or '$HOME/.cargo/bin' is in your PATH."
     fi
-
-    echo -e "${COLOR_GREEN}✅ 'uv' installed successfully.${COLOR_NC}"
-    uv --version
+    
+    if command -v uv &> /dev/null; then
+        print_success "UV installed successfully"
+    else
+        print_error "UV installation failed. Check /tmp/uv_install.log"
+        return 1 2>/dev/null || exit 1
+    fi
 else
-    echo -e "${COLOR_GREEN}✅ 'uv' is already installed.${COLOR_NC}"
-    uv --version
+    print_success "UV already installed"
+fi
+# --- Platform Detection ---
+TFOS=$(uname -s | tr '[:upper:]' '[:lower:]')
+TFARCH=$(uname -m)
+case "$TFARCH" in
+    x86_64) TFARCH="amd64" ;;
+    aarch64|arm64) TFARCH="arm64" ;;
+esac
+
+# Workenv directory setup
+PROFILE="${PYVIDER_HCL_PROFILE:-default}"
+if [ "$PROFILE" = "default" ]; then
+    VENV_DIR="workenv/pyvider-hcl_${TFOS}_${TFARCH}"
+else
+    VENV_DIR="workenv/${PROFILE}_${TFOS}_${TFARCH}"
 fi
 
-# --- Virtual Environment and Dependencies ---
+# Validate platform
+if [[ "$TFOS" != "darwin" && "$TFOS" != "linux" ]]; then
+    print_warning "Detected OS: $TFOS (only darwin and linux are fully tested)"
+fi
 
-print_header "🐍 Creating Python virtual environment with 'uv'"
-uv venv
+# Set UV project environment early so uv commands use the correct venv
+export UV_PROJECT_ENVIRONMENT="${VENV_DIR}"
+# --- Virtual Environment ---
+print_header "🐍 Setting Up Virtual Environment"
+echo "Directory: ${VENV_DIR}"
 
-print_header "🔗 Activating the virtual environment"
-# Activation is done before installing dependencies so that any console
-# scripts provided by those dependencies are immediately on the PATH.
-source .venv/bin/activate
-echo "Virtual environment activated at '$(pwd)/.venv'"
+if [ -d "${VENV_DIR}" ] && [ -f "${VENV_DIR}/bin/activate" ] && [ -f "${VENV_DIR}/bin/python" ]; then
+    print_success "Virtual environment exists"
+else
+    echo -n "Creating virtual environment..."
+    uv venv "${VENV_DIR}" > /tmp/uv_venv.log 2>&1 &
+    spinner $!
+    print_success "Virtual environment created"
+fi
 
-print_header "📦 Syncing base and development dependencies"
-# 'uv sync' is the modern, fast way to install dependencies from pyproject.toml.
-# Using --all-groups ensures that optional dependencies, like those for
-# testing and linting, are also installed.
-uv sync --all-groups
+# Activate virtual environment
+source "${VENV_DIR}/bin/activate"
+export VIRTUAL_ENV="$(pwd)/${VENV_DIR}"
+export UV_PROJECT_ENVIRONMENT="${VENV_DIR}"
+# --- Dependency Installation ---
+print_header "📦 Installing Dependencies"
 
-print_header "✏️ Installing '${PROJECT_NAME}' in editable mode"
-# This allows local source code changes to be reflected immediately without
-# needing to reinstall the package. The --no-deps flag prevents re-installing
-# dependencies that `uv sync` just handled.
-uv pip install --no-deps -e .
+# Create log directory
+mkdir -p /tmp/pyvider-hcl_setup
 
-# --- Cross-Package Editable Installs ---
+echo -n "Syncing dependencies..."
+uv sync --all-groups > /tmp/pyvider-hcl_setup/sync.log 2>&1 &
+SYNC_PID=$!
+spinner $SYNC_PID
+wait $SYNC_PID
+SYNC_EXIT_CODE=$?
 
-print_header "🤝 Installing sibling 'pyvider' packages in editable mode"
-# This is the key logic for multi-package development. It ensures that local,
-# unpublished changes in one pyvider package are used by others that depend on it.
+if [ $SYNC_EXIT_CODE -eq 0 ]; then
+    print_success "Dependencies synced"
+else
+    print_warning "Dependency sync failed - will install project and siblings manually"
+    echo "Check /tmp/pyvider-hcl_setup/sync.log for details"
+    
+    # Try to install just the project without dependencies first
+    echo -n "Installing pyvider-hcl without dependencies..."
+    uv pip install --no-deps -e . > /tmp/pyvider-hcl_setup/install_nodeps.log 2>&1 &
+    INSTALL_PID=$!
+    spinner $INSTALL_PID
+    wait $INSTALL_PID
+    if [ $? -eq 0 ]; then
+        print_success "pyvider-hcl installed (no deps)"
+    else
+        print_error "Failed to install pyvider-hcl"
+        return 1 2>/dev/null || exit 1
+    fi
+fi
 
-# Correctly handle the case where we are in '/' and '..' is still '/'
+echo -n "Installing pyvider-hcl in editable mode..."
+uv pip install --no-deps -e . > /tmp/pyvider-hcl_setup/install.log 2>&1 &
+spinner $!
+print_success "pyvider-hcl installed"
+# --- Sibling Packages ---
+print_header "🤝 Installing Sibling Packages"
+
 PARENT_DIR=$(dirname "$(pwd)")
-if [ "$PARENT_DIR" = "/" ] && [ "$(pwd)" = "/" ]; then
-    echo "Running in root directory, skipping sibling search."
-else
-    for dir in "${PARENT_DIR}"/pyvider*; do
-        # Check if the matched item is actually a directory.
-        if [ -d "${dir}" ]; then
-            SIBLING_PACKAGE_NAME=$(basename "${dir}")
-            echo "Found sibling package: '${SIBLING_PACKAGE_NAME}'. Installing in editable mode..."
-            # We use --no-deps here for a crucial reason: the main `uv sync` has
-            # already resolved and installed the complete dependency graph.
-            # This command's only job is to create a "link" (.pth file) to the
-            # sibling's source code, effectively overriding the PyPI version.
-            if ! uv pip install --no-deps -e "${dir}"; then
-                echo -e "${COLOR_YELLOW}⚠️  Warning: Failed to install sibling package '${SIBLING_PACKAGE_NAME}' from '${dir}' in editable mode.${COLOR_NC}"
-                echo "Attempting to continue with other packages..."
+SIBLING_COUNT=0
+
+# New unified siblings configuration
+# Sibling with configuration
+# Pattern-based sibling
+for dir in "${PARENT_DIR}"/pyvider-*; do
+    if [ -d "${dir}" ]; then
+        SIBLING_NAME=$(basename "${dir}")
+        echo -n "Installing ${SIBLING_NAME} with dependencies..."
+        # If with_deps is true, first try normal install, then fallback to local-only
+        uv pip install -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
+        INSTALL_PID=$!
+        spinner $INSTALL_PID
+        wait $INSTALL_PID
+        if [ $? -ne 0 ]; then
+            echo -n " Retrying with local version only..."
+            uv pip install --force-reinstall --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}_local.log 2>&1 &
+            INSTALL_PID=$!
+            spinner $INSTALL_PID
+            wait $INSTALL_PID
+            if [ $? -eq 0 ]; then
+                print_success "${SIBLING_NAME} installed (local, no deps)"
+                print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log"
+            else
+                print_error "${SIBLING_NAME} installation failed"
             fi
+        else
+            print_success "${SIBLING_NAME} installed"
         fi
-    done
+        ((SIBLING_COUNT++))
+    fi
+done
+# Sibling with configuration
+# Explicit sibling
+tofusoup_DIR="${PARENT_DIR}/tofusoup"
+if [ -d "${TOFUSOUP_DIR}" ]; then
+    echo -n "Installing tofusoup with dependencies..."
+    uv pip install -e "${TOFUSOUP_DIR}" > /tmp/pyvider-hcl_setup/tofusoup.log 2>&1 &
+    INSTALL_PID=$!
+    spinner $INSTALL_PID
+    wait $INSTALL_PID
+    if [ $? -ne 0 ]; then
+        echo -n " Retrying with local version only..."
+        uv pip install --force-reinstall --no-deps -e "${TOFUSOUP_DIR}" > /tmp/pyvider-hcl_setup/tofusoup_local.log 2>&1 &
+        INSTALL_PID=$!
+        spinner $INSTALL_PID
+        wait $INSTALL_PID
+        if [ $? -eq 0 ]; then
+            print_success "tofusoup installed (local, no deps)"
+            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/tofusoup.log"
+        else
+            print_error "tofusoup installation failed"
+        fi
+    else
+        print_success "tofusoup installed"
+    fi
+    ((SIBLING_COUNT++))
+fi
+# Sibling with configuration
+# Explicit sibling
+flavor_DIR="${PARENT_DIR}/flavor"
+if [ -d "${FLAVOR_DIR}" ]; then
+    echo -n "Installing flavor with dependencies..."
+    uv pip install -e "${FLAVOR_DIR}" > /tmp/pyvider-hcl_setup/flavor.log 2>&1 &
+    INSTALL_PID=$!
+    spinner $INSTALL_PID
+    wait $INSTALL_PID
+    if [ $? -ne 0 ]; then
+        echo -n " Retrying with local version only..."
+        uv pip install --force-reinstall --no-deps -e "${FLAVOR_DIR}" > /tmp/pyvider-hcl_setup/flavor_local.log 2>&1 &
+        INSTALL_PID=$!
+        spinner $INSTALL_PID
+        wait $INSTALL_PID
+        if [ $? -eq 0 ]; then
+            print_success "flavor installed (local, no deps)"
+            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/flavor.log"
+        else
+            print_error "flavor installation failed"
+        fi
+    else
+        print_success "flavor installed"
+    fi
+    ((SIBLING_COUNT++))
+fi
+# Sibling with configuration
+# Explicit sibling
+wrkenv_DIR="${PARENT_DIR}/wrkenv"
+if [ -d "${WRKENV_DIR}" ]; then
+    echo -n "Installing wrkenv with dependencies..."
+    uv pip install -e "${WRKENV_DIR}" > /tmp/pyvider-hcl_setup/wrkenv.log 2>&1 &
+    INSTALL_PID=$!
+    spinner $INSTALL_PID
+    wait $INSTALL_PID
+    if [ $? -ne 0 ]; then
+        echo -n " Retrying with local version only..."
+        uv pip install --force-reinstall --no-deps -e "${WRKENV_DIR}" > /tmp/pyvider-hcl_setup/wrkenv_local.log 2>&1 &
+        INSTALL_PID=$!
+        spinner $INSTALL_PID
+        wait $INSTALL_PID
+        if [ $? -eq 0 ]; then
+            print_success "wrkenv installed (local, no deps)"
+            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/wrkenv.log"
+        else
+            print_error "wrkenv installation failed"
+        fi
+    else
+        print_success "wrkenv installed"
+    fi
+    ((SIBLING_COUNT++))
 fi
 
 
-# --- Finalization ---
+if [ $SIBLING_COUNT -eq 0 ]; then
+    print_warning "No sibling packages found"
+fi
+# --- Environment Configuration ---
+print_header "🔧 Configuring Environment"
 
-print_header "🔧 Configuring PYTHONPATH"
-# Prepending the current directory's src and root to PYTHONPATH ensures
-# that local modules are resolved correctly, supporting both 'src' and flat layouts.
-# The ${PYTHONPATH:+:${PYTHONPATH}} syntax safely appends the existing PYTHONPATH
-# only if it's already set, avoiding an "unbound variable" error.
-export PYTHONPATH="${PWD}/src:${PWD}${PYTHONPATH:+:${PYTHONPATH}}"
-echo "PYTHONPATH set to: ${PYTHONPATH}"
+# Set clean PYTHONPATH
+export PYTHONPATH="${PWD}/src:${PWD}"
+echo "PYTHONPATH: ${PYTHONPATH}"
 
-print_header "✅ Environment setup complete!"
-echo -e "The '${COLOR_GREEN}${PROJECT_NAME}${COLOR_NC}' development environment is ready."
-echo "The virtual environment is active in this shell."
-echo "To exit, simply run 'deactivate'."
+# Clean up PATH - remove duplicates
+# Ensure UV bin directories are included
+UV_BIN_PATHS="$HOME/.local/bin:$HOME/.cargo/bin"
+NEW_PATH="${VENV_DIR}/bin:${UV_BIN_PATHS}"
+OLD_IFS="$IFS"
+IFS=':'
+for p in $PATH; do
+    case ":$NEW_PATH:" in
+        *":$p:"*) ;;
+        *) NEW_PATH="$NEW_PATH:$p" ;;
+    esac
+done
+IFS="$OLD_IFS"
+export PATH="$NEW_PATH"
+
+# --- Tool Verification ---
+print_header "🔍 Verifying Installation"
+
+echo -e "\n${COLOR_GREEN}Tool Locations & Versions:${COLOR_NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Python
+if command -v python &> /dev/null; then
+    PYTHON_PATH=$(command -v python 2>/dev/null || which python 2>/dev/null || echo "python")
+    printf "%-12s: %s\n" "Python" "$PYTHON_PATH"
+    printf "%-12s  %s\n" "" "$(python --version 2>&1)"
+fi
+
+# UV
+if command -v uv &> /dev/null; then
+    UV_PATH=$(command -v uv 2>/dev/null || which uv 2>/dev/null || echo "uv")
+    printf "%-12s: %s\n" "UV" "$UV_PATH"
+    printf "%-12s  %s\n" "" "$(uv --version 2>&1)"
+fi
+
+# wrkenv
+if command -v wrkenv &> /dev/null; then
+    WRKENV_PATH=$(command -v wrkenv 2>/dev/null || which wrkenv 2>/dev/null || echo "wrkenv")
+    printf "%-12s: %s\n" "wrkenv" "$WRKENV_PATH"
+    printf "%-12s  %s\n" "" "$(wrkenv --version 2>&1 || echo 'No version info')"
+fi
+
+# ibmtf
+if command -v ibmtf &> /dev/null; then
+    IBMTF_PATH=$(command -v ibmtf 2>/dev/null || which ibmtf 2>/dev/null || echo "ibmtf")
+    printf "%-12s: %s\n" "ibmtf" "$IBMTF_PATH"
+    printf "%-12s  %s\n" "" "$(ibmtf version 2>&1 | head -1 || echo 'Not installed')"
+fi
+
+# tofu
+if command -v tofu &> /dev/null; then
+    TOFU_PATH=$(command -v tofu 2>/dev/null || which tofu 2>/dev/null || echo "tofu")
+    printf "%-12s: %s\n" "tofu" "$TOFU_PATH"
+    printf "%-12s  %s\n" "" "$(tofu version 2>&1 | head -1 || echo 'Not installed')"
+fi
+
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+# --- Final Summary ---
+print_header "✅ Environment Ready!"
+
+echo -e "\n${COLOR_GREEN}pyvider-hcl development environment activated${COLOR_NC}"
+echo "Virtual environment: ${VENV_DIR}"
+echo "Profile: ${PROFILE}"
+echo -e "\nUseful commands:"
+echo "  pyvider-hcl --help  # pyvider-hcl CLI"
+echo "  wrkenv status  # Check tool versions"
+echo "  wrkenv container status  # Container status"
+echo "  pytest  # Run tests"
+echo "  deactivate  # Exit environment"
+
+# --- Cleanup ---
+# Remove temporary log files older than 1 day
+find /tmp/pyvider-hcl_setup -name "*.log" -mtime +1 -delete 2>/dev/null
+
+# Return success
+return 0 2>/dev/null || exit 0

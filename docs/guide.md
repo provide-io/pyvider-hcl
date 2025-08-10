@@ -32,7 +32,7 @@ pretty_print_cty(cty_value)
 You can provide a `CtyType` schema to validate the HCL data. This is useful for ensuring that the HCL data has the correct structure and types.
 
 ```python
-from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
+from pyvider.hcl import parse_hcl_to_cty
 from pyvider.cty import CtyObject, CtyString, CtyNumber
 
 schema = CtyObject({
