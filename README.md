@@ -44,7 +44,7 @@ pretty_print_cty(cty_value)
 You can also parse an HCL file:
 
 ```python
-from pyvider.hcl import parse_hcl_to_cty
+from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
 
 with open("my_config.hcl", "r") as f:
     hcl_content = f.read()
@@ -57,7 +57,7 @@ with open("my_config.hcl", "r") as f:
 You can validate HCL data against a `CtyType` schema:
 
 ```python
-from pyvider.hcl import parse_hcl_to_cty
+from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
 from pyvider.cty import CtyObject, CtyString, CtyNumber
 
 schema = CtyObject({
@@ -83,7 +83,7 @@ Here are some more complex examples of how to use `pyvider-hcl` with `pyvider.ct
 #### Parsing a list of objects
 
 ```python
-from pyvider.hcl import parse_hcl_to_cty
+from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
 from pyvider.cty import CtyObject, CtyList, CtyString, CtyNumber
 
 hcl_string = """
@@ -116,7 +116,7 @@ pretty_print_cty(cty_value)
 #### Parsing nested objects
 
 ```python
-from pyvider.hcl import parse_hcl_to_cty
+from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
 from pyvider.cty import CtyObject, CtyString, CtyNumber
 
 hcl_string = """
@@ -155,7 +155,12 @@ pretty_print_cty(cty_value)
 You can use the factory functions to create `CtyValue` objects for Terraform variables and resources:
 
 ```python
-from pyvider.hcl import create_variable_cty, create_resource_cty
+from pyvider.hcl import (
+    parse_hcl_to_cty,
+    pretty_print_cty,
+    create_variable_cty,
+    create_resource_cty,
+)
 
 # Create a variable
 variable_cty = create_variable_cty(
@@ -178,11 +183,3 @@ resource_cty = create_resource_cty(
 
 pretty_print_cty(resource_cty)
 ```
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request on GitHub.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
