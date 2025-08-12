@@ -24,7 +24,7 @@ from pyvider.hcl.exceptions import HclParsingError
 logger = logging.getLogger(__name__)
 
 
-def _auto_infer_value_to_cty(raw_value: Any) -> CtyValue:
+def _auto_infer_value_to_cty(raw_value: Any) -> CtyValue[Any]:
     """Recursively infers a Python value to its corresponding CtyValue."""
     if raw_value is None:
         return CtyDynamic().validate(None)
@@ -49,7 +49,7 @@ def _auto_infer_value_to_cty(raw_value: Any) -> CtyValue:
     return CtyValue.unknown(CtyDynamic())
 
 
-def auto_infer_cty_type(raw_data: Any) -> CtyValue:
+def auto_infer_cty_type(raw_data: Any) -> CtyValue[Any]:
     """
     Automatically infers CtyType from raw Python data parsed by hcl2
     and wraps it in a CtyValue.
@@ -58,7 +58,9 @@ def auto_infer_cty_type(raw_data: Any) -> CtyValue:
     return _auto_infer_value_to_cty(raw_data)
 
 
-def parse_hcl_to_cty(hcl_content: str, schema: CtyType | None = None) -> CtyValue:
+def parse_hcl_to_cty(
+    hcl_content: str, schema: CtyType[Any] | None = None
+) -> CtyValue[Any]:
     """Parse HCL directly into validated CtyValues using pyvider.cty types."""
     logger.debug(
         f"🔌🔍⏳ Parsing HCL content. Schema provided: {'Yes' if schema else 'No'}"
