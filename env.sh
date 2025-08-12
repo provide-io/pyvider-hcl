@@ -146,11 +146,26 @@ uv sync --all-groups > /tmp/pyvider-hcl_setup/sync.log 2>&1 &
 SYNC_PID=$!
 spinner $SYNC_PID
 wait $SYNC_PID
-if [ $? -eq 0 ]; then
+SYNC_EXIT_CODE=$?
+
+if [ $SYNC_EXIT_CODE -eq 0 ]; then
     print_success "Dependencies synced"
 else
-    print_error "Dependency sync failed. Check /tmp/pyvider-hcl_setup/sync.log"
-    return 1 2>/dev/null || exit 1
+    print_warning "Dependency sync failed - will install project and siblings manually"
+    echo "Check /tmp/pyvider-hcl_setup/sync.log for details"
+    
+    # Try to install just the project without dependencies first
+    echo -n "Installing pyvider-hcl without dependencies..."
+    uv pip install --no-deps -e . > /tmp/pyvider-hcl_setup/install_nodeps.log 2>&1 &
+    INSTALL_PID=$!
+    spinner $INSTALL_PID
+    wait $INSTALL_PID
+    if [ $? -eq 0 ]; then
+        print_success "pyvider-hcl installed (no deps)"
+    else
+        print_error "Failed to install pyvider-hcl"
+        return 1 2>/dev/null || exit 1
+    fi
 fi
 
 echo -n "Installing pyvider-hcl in editable mode..."
@@ -163,36 +178,114 @@ print_header "🤝 Installing Sibling Packages"
 PARENT_DIR=$(dirname "$(pwd)")
 SIBLING_COUNT=0
 
-for dir in "${PARENT_DIR}"/pyvider*; do
+# New unified siblings configuration
+# Sibling with configuration
+# Pattern-based sibling
+for dir in "${PARENT_DIR}"/pyvider-*; do
     if [ -d "${dir}" ]; then
         SIBLING_NAME=$(basename "${dir}")
-        echo -n "Installing ${SIBLING_NAME}..."
-        uv pip install --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
-        spinner $!
-        print_success "${SIBLING_NAME} installed"
+        echo -n "Installing ${SIBLING_NAME} with dependencies..."
+        # If with_deps is true, first try normal install, then fallback to local-only
+        uv pip install -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
+        INSTALL_PID=$!
+        spinner $INSTALL_PID
+        wait $INSTALL_PID
+        if [ $? -ne 0 ]; then
+            echo -n " Retrying with local version only..."
+            uv pip install --force-reinstall --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}_local.log 2>&1 &
+            INSTALL_PID=$!
+            spinner $INSTALL_PID
+            wait $INSTALL_PID
+            if [ $? -eq 0 ]; then
+                print_success "${SIBLING_NAME} installed (local, no deps)"
+                print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log"
+            else
+                print_error "${SIBLING_NAME} installation failed"
+            fi
+        else
+            print_success "${SIBLING_NAME} installed"
+        fi
         ((SIBLING_COUNT++))
     fi
 done
-for dir in "${PARENT_DIR}"/tofusoup; do
-    if [ -d "${dir}" ]; then
-        SIBLING_NAME=$(basename "${dir}")
-        echo -n "Installing ${SIBLING_NAME}..."
-        uv pip install --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
-        spinner $!
-        print_success "${SIBLING_NAME} installed"
-        ((SIBLING_COUNT++))
+# Sibling with configuration
+# Explicit sibling
+tofusoup_DIR="${PARENT_DIR}/tofusoup"
+if [ -d "${TOFUSOUP_DIR}" ]; then
+    echo -n "Installing tofusoup with dependencies..."
+    uv pip install -e "${TOFUSOUP_DIR}" > /tmp/pyvider-hcl_setup/tofusoup.log 2>&1 &
+    INSTALL_PID=$!
+    spinner $INSTALL_PID
+    wait $INSTALL_PID
+    if [ $? -ne 0 ]; then
+        echo -n " Retrying with local version only..."
+        uv pip install --force-reinstall --no-deps -e "${TOFUSOUP_DIR}" > /tmp/pyvider-hcl_setup/tofusoup_local.log 2>&1 &
+        INSTALL_PID=$!
+        spinner $INSTALL_PID
+        wait $INSTALL_PID
+        if [ $? -eq 0 ]; then
+            print_success "tofusoup installed (local, no deps)"
+            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/tofusoup.log"
+        else
+            print_error "tofusoup installation failed"
+        fi
+    else
+        print_success "tofusoup installed"
     fi
-done
-for dir in "${PARENT_DIR}"/wrkenv; do
-    if [ -d "${dir}" ]; then
-        SIBLING_NAME=$(basename "${dir}")
-        echo -n "Installing ${SIBLING_NAME}..."
-        uv pip install --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
-        spinner $!
-        print_success "${SIBLING_NAME} installed"
-        ((SIBLING_COUNT++))
+    ((SIBLING_COUNT++))
+fi
+# Sibling with configuration
+# Explicit sibling
+flavor_DIR="${PARENT_DIR}/flavor"
+if [ -d "${FLAVOR_DIR}" ]; then
+    echo -n "Installing flavor with dependencies..."
+    uv pip install -e "${FLAVOR_DIR}" > /tmp/pyvider-hcl_setup/flavor.log 2>&1 &
+    INSTALL_PID=$!
+    spinner $INSTALL_PID
+    wait $INSTALL_PID
+    if [ $? -ne 0 ]; then
+        echo -n " Retrying with local version only..."
+        uv pip install --force-reinstall --no-deps -e "${FLAVOR_DIR}" > /tmp/pyvider-hcl_setup/flavor_local.log 2>&1 &
+        INSTALL_PID=$!
+        spinner $INSTALL_PID
+        wait $INSTALL_PID
+        if [ $? -eq 0 ]; then
+            print_success "flavor installed (local, no deps)"
+            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/flavor.log"
+        else
+            print_error "flavor installation failed"
+        fi
+    else
+        print_success "flavor installed"
     fi
-done
+    ((SIBLING_COUNT++))
+fi
+# Sibling with configuration
+# Explicit sibling
+wrkenv_DIR="${PARENT_DIR}/wrkenv"
+if [ -d "${WRKENV_DIR}" ]; then
+    echo -n "Installing wrkenv with dependencies..."
+    uv pip install -e "${WRKENV_DIR}" > /tmp/pyvider-hcl_setup/wrkenv.log 2>&1 &
+    INSTALL_PID=$!
+    spinner $INSTALL_PID
+    wait $INSTALL_PID
+    if [ $? -ne 0 ]; then
+        echo -n " Retrying with local version only..."
+        uv pip install --force-reinstall --no-deps -e "${WRKENV_DIR}" > /tmp/pyvider-hcl_setup/wrkenv_local.log 2>&1 &
+        INSTALL_PID=$!
+        spinner $INSTALL_PID
+        wait $INSTALL_PID
+        if [ $? -eq 0 ]; then
+            print_success "wrkenv installed (local, no deps)"
+            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/wrkenv.log"
+        else
+            print_error "wrkenv installation failed"
+        fi
+    else
+        print_success "wrkenv installed"
+    fi
+    ((SIBLING_COUNT++))
+fi
 
 
 if [ $SIBLING_COUNT -eq 0 ]; then
@@ -206,7 +299,9 @@ export PYTHONPATH="${PWD}/src:${PWD}"
 echo "PYTHONPATH: ${PYTHONPATH}"
 
 # Clean up PATH - remove duplicates
-NEW_PATH="${VENV_DIR}/bin"
+# Ensure UV bin directories are included
+UV_BIN_PATHS="$HOME/.local/bin:$HOME/.cargo/bin"
+NEW_PATH="${VENV_DIR}/bin:${UV_BIN_PATHS}"
 OLD_IFS="$IFS"
 IFS=':'
 for p in $PATH; do
