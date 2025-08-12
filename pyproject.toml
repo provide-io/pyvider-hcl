@@ -6,7 +6,7 @@
 name = "pyvider-hcl"
 description = "Pyvider HCL: A wrapper for python-hcl2 integrating with Pyvider's Cty type system."
 version = "0.0.113"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [
@@ -21,6 +21,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
@@ -92,7 +93,7 @@ addopts = "-ra -q --color=yes"
 [tool.ruff]
 line-length = 88
 indent-width = 4
-target-version = "py313"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "ANN", "B", "C90", "SIM", "PTH", "RUF"]
@@ -114,7 +115,7 @@ line-ending = "auto"
 # ---------------------------------------------------------------------------- #
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.11"
 mypy_path = "src"
 strict = true
 pretty = true
