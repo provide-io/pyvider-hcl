@@ -183,19 +183,11 @@ Write-Header "🤝 Installing Sibling Packages"
 $ParentDir = Split-Path -Parent (Get-Location)
 $SiblingCount = 0
 
-# New unified siblings configuration
-# Sibling with configuration
-# Pattern-based sibling
-Get-ChildItem -Path $ParentDir -Directory -Filter "pyvider-*" | ForEach-Object {
+Get-ChildItem -Path $ParentDir -Directory -Filter "pyvider*" | ForEach-Object {
     $SiblingName = $_.Name
-    $WithDeps = $true    $DepsText = if ($WithDeps) { " with dependencies" } else { " without dependencies" }
-    Write-Host "Installing $SiblingName$DepsText..." -NoNewline
+    Write-Host "Installing $SiblingName..." -NoNewline
     try {
-        if ($WithDeps) {
-            & uv pip install -e $_.FullName 2>&1 | Out-File -FilePath (Join-Path $LogDir "$SiblingName.log")
-        } else {
-            & uv pip install --no-deps -e $_.FullName 2>&1 | Out-File -FilePath (Join-Path $LogDir "$SiblingName.log")
-        }
+        & uv pip install --no-deps -e $_.FullName 2>&1 | Out-File -FilePath (Join-Path $LogDir "$SiblingName.log")
         Write-Success " $SiblingName installed"
         $SiblingCount++
     }
@@ -203,64 +195,28 @@ Get-ChildItem -Path $ParentDir -Directory -Filter "pyvider-*" | ForEach-Object {
         Write-Warning " Failed to install $SiblingName"
     }
 }
-# Sibling with configuration
-# Explicit sibling
-$tofusoupDir = Join-Path $ParentDir "tofusoup"
-if (Test-Path $tofusoupDir) {
-    $WithDeps = $true    $DepsText = if ($WithDeps) { " with dependencies" } else { " without dependencies" }
-    Write-Host "Installing tofusoup$DepsText..." -NoNewline
+Get-ChildItem -Path $ParentDir -Directory -Filter "tofusoup" | ForEach-Object {
+    $SiblingName = $_.Name
+    Write-Host "Installing $SiblingName..." -NoNewline
     try {
-        if ($WithDeps) {
-            & uv pip install -e $tofusoupDir
-        } else {
-            & uv pip install --no-deps -e $tofusoupDir
-        }
-        Write-Success " tofusoup installed"
+        & uv pip install --no-deps -e $_.FullName 2>&1 | Out-File -FilePath (Join-Path $LogDir "$SiblingName.log")
+        Write-Success " $SiblingName installed"
         $SiblingCount++
     }
     catch {
-        Write-Warning " Failed to install tofusoup package from '$tofusoupDir'"
-        Write-Host "Attempting to continue..."
+        Write-Warning " Failed to install $SiblingName"
     }
 }
-# Sibling with configuration
-# Explicit sibling
-$flavorDir = Join-Path $ParentDir "flavor"
-if (Test-Path $flavorDir) {
-    $WithDeps = $true    $DepsText = if ($WithDeps) { " with dependencies" } else { " without dependencies" }
-    Write-Host "Installing flavor$DepsText..." -NoNewline
+Get-ChildItem -Path $ParentDir -Directory -Filter "wrkenv" | ForEach-Object {
+    $SiblingName = $_.Name
+    Write-Host "Installing $SiblingName..." -NoNewline
     try {
-        if ($WithDeps) {
-            & uv pip install -e $flavorDir
-        } else {
-            & uv pip install --no-deps -e $flavorDir
-        }
-        Write-Success " flavor installed"
+        & uv pip install --no-deps -e $_.FullName 2>&1 | Out-File -FilePath (Join-Path $LogDir "$SiblingName.log")
+        Write-Success " $SiblingName installed"
         $SiblingCount++
     }
     catch {
-        Write-Warning " Failed to install flavor package from '$flavorDir'"
-        Write-Host "Attempting to continue..."
-    }
-}
-# Sibling with configuration
-# Explicit sibling
-$wrkenvDir = Join-Path $ParentDir "wrkenv"
-if (Test-Path $wrkenvDir) {
-    $WithDeps = $true    $DepsText = if ($WithDeps) { " with dependencies" } else { " without dependencies" }
-    Write-Host "Installing wrkenv$DepsText..." -NoNewline
-    try {
-        if ($WithDeps) {
-            & uv pip install -e $wrkenvDir
-        } else {
-            & uv pip install --no-deps -e $wrkenvDir
-        }
-        Write-Success " wrkenv installed"
-        $SiblingCount++
-    }
-    catch {
-        Write-Warning " Failed to install wrkenv package from '$wrkenvDir'"
-        Write-Host "Attempting to continue..."
+        Write-Warning " Failed to install $SiblingName"
     }
 }
 

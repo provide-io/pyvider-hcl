@@ -104,7 +104,7 @@ case "$TFARCH" in
 esac
 
 # Workenv directory setup
-PROFILE="${PYVIDER_HCL_PROFILE:-default}"
+PROFILE="${PYVIDER-HCL_PROFILE:-default}"
 if [ "$PROFILE" = "default" ]; then
     VENV_DIR="workenv/pyvider-hcl_${TFOS}_${TFARCH}"
 else
@@ -115,9 +115,6 @@ fi
 if [[ "$TFOS" != "darwin" && "$TFOS" != "linux" ]]; then
     print_warning "Detected OS: $TFOS (only darwin and linux are fully tested)"
 fi
-
-# Set UV project environment early so uv commands use the correct venv
-export UV_PROJECT_ENVIRONMENT="${VENV_DIR}"
 # --- Virtual Environment ---
 print_header "🐍 Setting Up Virtual Environment"
 echo "Directory: ${VENV_DIR}"
@@ -134,7 +131,6 @@ fi
 # Activate virtual environment
 source "${VENV_DIR}/bin/activate"
 export VIRTUAL_ENV="$(pwd)/${VENV_DIR}"
-export UV_PROJECT_ENVIRONMENT="${VENV_DIR}"
 # --- Dependency Installation ---
 print_header "📦 Installing Dependencies"
 
@@ -163,36 +159,6 @@ print_header "🤝 Installing Sibling Packages"
 PARENT_DIR=$(dirname "$(pwd)")
 SIBLING_COUNT=0
 
-for dir in "${PARENT_DIR}"/pyvider*; do
-    if [ -d "${dir}" ]; then
-        SIBLING_NAME=$(basename "${dir}")
-        echo -n "Installing ${SIBLING_NAME}..."
-        uv pip install --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
-        spinner $!
-        print_success "${SIBLING_NAME} installed"
-        ((SIBLING_COUNT++))
-    fi
-done
-for dir in "${PARENT_DIR}"/tofusoup; do
-    if [ -d "${dir}" ]; then
-        SIBLING_NAME=$(basename "${dir}")
-        echo -n "Installing ${SIBLING_NAME}..."
-        uv pip install --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
-        spinner $!
-        print_success "${SIBLING_NAME} installed"
-        ((SIBLING_COUNT++))
-    fi
-done
-for dir in "${PARENT_DIR}"/wrkenv; do
-    if [ -d "${dir}" ]; then
-        SIBLING_NAME=$(basename "${dir}")
-        echo -n "Installing ${SIBLING_NAME}..."
-        uv pip install --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
-        spinner $!
-        print_success "${SIBLING_NAME} installed"
-        ((SIBLING_COUNT++))
-    fi
-done
 
 
 if [ $SIBLING_COUNT -eq 0 ]; then
