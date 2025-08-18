@@ -20,10 +20,10 @@ def _pretty_print_cty_recursive(value: CtyValue[Any], indent: int) -> str:
     if isinstance(value.type, CtyObject):
         s = "{\n"
         for i, (key, val) in enumerate(
-            cast(dict[str, CtyValue[Any]], value.value).items()
+            cast(dict[str, Any], value.value).items()
         ):
             s += " " * (indent + 2) + f'"{key}": '
-            s += _pretty_print_cty_recursive(val, indent + 2)
+            s += _pretty_print_cty_recursive(CtyValue(vtype=value.type.attribute_types[key], value=val), indent + 2)
             if i < len(value.value) - 1:
                 s += ",\n"
             else:
@@ -32,9 +32,9 @@ def _pretty_print_cty_recursive(value: CtyValue[Any], indent: int) -> str:
         return s
     elif isinstance(value.type, CtyList):
         s = "[\n"
-        for i, item in enumerate(cast(list[CtyValue[Any]], value.value)):
+        for i, item in enumerate(cast(list[Any], value.value)):
             s += " " * (indent + 2)
-            s += _pretty_print_cty_recursive(item, indent + 2)
+            s += _pretty_print_cty_recursive(CtyValue(vtype=value.type.element_type, value=item), indent + 2)
             if i < len(value.value) - 1:
                 s += ",\n"
             else:
@@ -44,10 +44,10 @@ def _pretty_print_cty_recursive(value: CtyValue[Any], indent: int) -> str:
     elif isinstance(value.type, CtyMap):
         s = "{\n"
         for i, (key, val) in enumerate(
-            cast(dict[str, CtyValue[Any]], value.value).items()
+            cast(dict[str, Any], value.value).items()
         ):
             s += " " * (indent + 2) + f'"{key}": '
-            s += _pretty_print_cty_recursive(val, indent + 2)
+            s += _pretty_print_cty_recursive(CtyValue(vtype=value.type.element_type, value=val), indent + 2)
             if i < len(value.value) - 1:
                 s += ",\n"
             else:
@@ -56,9 +56,9 @@ def _pretty_print_cty_recursive(value: CtyValue[Any], indent: int) -> str:
         return s
     elif isinstance(value.type, CtyTuple):
         s = "[\n"
-        for i, item in enumerate(cast(list[CtyValue[Any]], value.value)):
+        for i, item in enumerate(cast(list[Any], value.value)):
             s += " " * (indent + 2)
-            s += _pretty_print_cty_recursive(item, indent + 2)
+            s += _pretty_print_cty_recursive(CtyValue(vtype=value.type.element_types[i], value=item), indent + 2)
             if i < len(value.value) - 1:
                 s += ",\n"
             else:
