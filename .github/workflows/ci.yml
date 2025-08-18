@@ -1,83 +1,71 @@
-name: CI # Added a comment to force refresh
+#
+# pyvider-hcl | Continuous Integration Workflow
+#
+# This workflow runs a comprehensive suite of checks on every push and pull
+# request to the main branch, ensuring code quality, correctness, and security.
+# It leverages `uv` for high-performance dependency management and caching.
+#
+
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: ["main"]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: ["main"]
 
-env:
-  PYTHON_VERSION: "3.11"
-  UV_VERSION: "0.8.11"
+# Cancel any in-progress runs of the same workflow on the same branch
+# to save resources and provide faster feedback.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')
-    strategy:
-      matrix:
-                os: [ubuntu-latest, windows-2025, macos-15]
-        python-version: ["3.11", "3.12", "3.13"] # Keep matrix for testing multiple Python versions
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        version: ${{ env.UV_VERSION }}
-    
-    - name: Install dependencies
-      run: |
-        uv venv
-        uv pip install -e .
-        uv pip install pytest pytest-cov
-    
-    - name: Run tests
-      run: |
-        uv run pytest -v --cov=pyvider.hcl --cov-report=xml
-    
-    - name: Upload coverage
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
-  
-  lint:
+  build-and-test:
+    name: "Build & Test | Python ${{ matrix.python-version }}"
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')
-    
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test against all supported Python versions declared in pyproject.toml
+        python-version: ["3.11", "3.12", "3.13"]
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        version: ${{ env.UV_VERSION }}
-    
-    - name: Install dependencies
-      run: |
-        uv venv
-        uv pip install -e .
-        uv pip install ruff mypy
-    
-    - name: Run ruff
-      run: |
-        uv run ruff check src/
-        uv run ruff format --check src/
-    
-    - name: Run mypy
-      run: |
-        uv run mypy src/
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up uv and Python environment
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          # Cache dependencies to speed up subsequent runs. The cache is keyed
+          # by OS, Python version, and the hash of the lock file.
+          cache-key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/uv.lock') }}
+
+      - name: 📦 Install all dependencies from lockfile
+        run: uv sync --all-groups --dev
+
+      - name: ✨ Check formatting with Ruff
+        run: uv run ruff format --check .
+
+      - name: 🧹 Lint with Ruff
+        run: uv run ruff check .
+
+      - name: 🔒️ Security scan with Bandit
+        run: uv run bandit -r src/
+
+      - name: 🧐 Static type checking with mypy
+        run: uv run mypy src/
+
+      - name: 🧪 Run tests with Pytest and generate coverage
+        run: uv run pytest --cov=pyvider.hcl --cov-report=xml
+
+      - name: ⬆️ Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          # The CODECOV_TOKEN is not strictly required for public repositories,
+          # but it is best practice for reliable uploads.
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: true
+          verbose: true
