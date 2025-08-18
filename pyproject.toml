@@ -29,7 +29,7 @@ classifiers = [
 dependencies = [
     "attrs>=25.3.0",
     "python-hcl2>=7.2.1",
-    "pyvider-cty",
+    #"pyvider-cty",
     "pyvider-telemetry",
     "regex>=2024.11.6",
 ]

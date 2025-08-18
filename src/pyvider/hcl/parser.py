@@ -58,9 +58,7 @@ def auto_infer_cty_type(raw_data: Any) -> CtyValue:
     return _auto_infer_value_to_cty(raw_data)
 
 
-def parse_hcl_to_cty(
-    hcl_content: str, schema: CtyType | None = None
-) -> CtyValue:
+def parse_hcl_to_cty(hcl_content: str, schema: CtyType | None = None) -> CtyValue:
     """Parse HCL directly into validated CtyValues using pyvider.cty types."""
     logger.debug(
         f"🔌🔍⏳ Parsing HCL content. Schema provided: {'Yes' if schema else 'No'}"
