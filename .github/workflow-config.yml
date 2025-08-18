@@ -1,0 +1,86 @@
+# Flavor Workflow Configuration
+# This file controls which workflows are enabled and their settings
+# All workflows check this file to determine if they should run
+
+# Global settings
+global:
+  enabled: true
+  debug: false
+  timeout_minutes: 30
+  
+  # Default runner for all jobs (can be overridden per workflow)
+  default_runner: ubuntu-latest
+  
+  # Artifact retention
+  artifact_retention_days: 30
+  
+  # Python/Go/Rust versions
+  python_version: "3.11"
+  go_version: "1.25"
+  rust_version: "1.89"
+  uv_version: "0.8.11"
+
+# Workflow-specific configurations
+workflows:
+  # Core CI/CD workflows
+  tests:
+    enabled: true
+    triggers:
+      push: [main, develop]
+      pull_request: [main, develop]
+      schedule: "0 0 * * 0"  # Weekly on Sunday
+    matrix:
+      os: [ubuntu-latest, macos-latest]
+      python: ["3.11", "3.12", "3.13"]
+    coverage:
+      enabled: true
+      branch_coverage: true
+      min_coverage: 60
+    parallel: true  # Use pytest-xdist
+
+  security:
+    enabled: true
+    triggers:
+      schedule: "0 0 * * 1"  # Weekly on Monday
+      workflow_dispatch: true
+    scans:
+      - dependency_check
+      - license_scan
+      - vulnerability_scan
+      - secret_scan
+    alert_level: high
+
+# Notification settings
+notifications:
+  slack:
+    enabled: false
+    webhook: ${{ secrets.SLACK_WEBHOOK }}
+    channels:
+      failure: "#ci-failures"
+      success: "#ci-success"
+  
+  email:
+    enabled: false
+    recipients: ["team@example.com"]
+    on_failure: true
+    on_success: false
+
+# Cache settings
+cache:
+  python:
+    enabled: true
+    paths:
+      - "~/.cache/pip"
+      - "~/.cache/uv"
+      - "workenv/"
+
+# Security policies
+security:
+  required_reviewers: 2
+  dismiss_stale_reviews: true
+  restrict_base_branches: [main]
+  enforce_admins: false
+  required_status_checks:
+    - "tests"
+    - "quality"
+    - "security"
