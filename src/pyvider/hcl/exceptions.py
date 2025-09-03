@@ -2,9 +2,10 @@
 # pyvider/hcl/exceptions.py
 
 from attrs import define, field
+from provide.foundation.errors import FoundationError
 
 
-class HclError(Exception):
+class HclError(FoundationError):
     """Base class for errors related to HCL processing in Pyvider."""
 
     pass
