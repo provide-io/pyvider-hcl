@@ -32,23 +32,13 @@ dependencies = [
     #"pyvider-cty",
     "pyvider>=0.0.0.post0",
     "pyvider-cty>=0.0.113",
-    "pyvider-telemetry",
+    "provide-foundation>=0.0.0",
     "regex>=2024.11.6",
 ]
 
 [dependency-groups]
 dev = [
-    "bandit>=1.8.3",
-    "hypothesis>=1.8.3",
-    "mypy>=1.16.0",
-    "pytest>=8.4.0",
-    "pytest-asyncio>=1.0.0",
-    "pytest-benchmark>=5.1.0",
-    "pytest-cov>=6.1.1",
-    "pytest-xdist>=3.7.0",
-    "ruff>=0.9.0",
-    "ty>=0.0.1a8",
-    "uv>=0.7.12",
+    "provide-testkit[standard,advanced-testing,typecheck,build]",
 ]
 
 [build-system]
@@ -64,6 +54,11 @@ namespaces = true # Important for pyvider.hcl as a namespace package
 
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}
+
+[tool.uv.sources]
+provide-foundation = { workspace = true }
+provide-testkit = { workspace = true }
+pyvider-cty = { workspace = true }
 
 ################################################################################
 # Pytest Configuration
