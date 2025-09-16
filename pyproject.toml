@@ -90,7 +90,7 @@ addopts = "-ra -q --color=yes"
 # ---------------------------------------------------------------------------- #
 
 [tool.ruff]
-line-length = 88
+line-length = 111
 indent-width = 4
 target-version = "py311"
 
