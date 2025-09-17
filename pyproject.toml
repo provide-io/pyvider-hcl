@@ -40,6 +40,9 @@ dependencies = [
 dev = [
     "provide-testkit[standard,advanced-testing,typecheck,build]",
 ]
+docs = [
+    "provide-testkit[docs]",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
