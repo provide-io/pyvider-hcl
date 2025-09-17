@@ -33,9 +33,15 @@ class TestParseHclTypeString(unittest.TestCase):
         self.assertEqual(_parse_hcl_type_string("map(number)"), CtyMap(element_type=CtyNumber()))
 
     def test_parse_nested_types(self) -> None:
-        self.assertEqual(_parse_hcl_type_string("list(map(number))"), CtyList(element_type=CtyMap(element_type=CtyNumber())))
-        expected = CtyObject({"data": CtyMap(element_type=CtyObject({"value": CtyString(), "flag": CtyBool()}))})
-        self.assertEqual(_parse_hcl_type_string("object({data=map(object({value=string,flag=bool}))})"), expected)
+        self.assertEqual(
+            _parse_hcl_type_string("list(map(number))"), CtyList(element_type=CtyMap(element_type=CtyNumber()))
+        )
+        expected = CtyObject(
+            {"data": CtyMap(element_type=CtyObject({"value": CtyString(), "flag": CtyBool()}))}
+        )
+        self.assertEqual(
+            _parse_hcl_type_string("object({data=map(object({value=string,flag=bool}))})"), expected
+        )
 
     def test_invalid_type_strings(self) -> None:
         invalid_strings = ["foo", "string()", "list)", "list(", "list(string", "object({name=string,})"]
@@ -50,7 +56,9 @@ class TestParseHclTypeString(unittest.TestCase):
 
 
 class TestCreateVariableCty(unittest.TestCase):
-    def _assert_variable_structure(self, var_cty_val: CtyValue, var_name: str, expected_attrs_values_py: dict[str, Any]) -> None:
+    def _assert_variable_structure(
+        self, var_cty_val: CtyValue, var_name: str, expected_attrs_values_py: dict[str, Any]
+    ) -> None:
         self.assertIsInstance(var_cty_val, CtyValue)
         self.assertIsInstance(var_cty_val.type, CtyObject)
         self.assertIn("variable", var_cty_val.value)
@@ -66,13 +74,17 @@ class TestCreateVariableCty(unittest.TestCase):
     def test_create_string_variable(self) -> None:
         var_name = "my_string"
         attrs = {"type": "string", "default": "hello world", "description": "A test string variable"}
-        var_cty = create_variable_cty(var_name, attrs["type"], default_py=attrs["default"], description=attrs["description"])
+        var_cty = create_variable_cty(
+            var_name, attrs["type"], default_py=attrs["default"], description=attrs["description"]
+        )
         self._assert_variable_structure(var_cty, var_name, attrs)
 
     def test_create_list_variable(self) -> None:
         var_name = "my_list"
         attrs = {"type": "list(bool)", "default": [True, False], "nullable": True}
-        var_cty = create_variable_cty(var_name, attrs["type"], default_py=attrs["default"], nullable=attrs["nullable"])
+        var_cty = create_variable_cty(
+            var_name, attrs["type"], default_py=attrs["default"], nullable=attrs["nullable"]
+        )
         self._assert_variable_structure(var_cty, var_name, attrs)
 
     def test_default_value_type_mismatch(self) -> None:
@@ -81,7 +93,13 @@ class TestCreateVariableCty(unittest.TestCase):
 
 
 class TestCreateResourceCty(unittest.TestCase):
-    def _assert_resource_structure(self, res_cty_val: CtyValue, expected_r_type: str, expected_r_name: str, expected_attrs_values_py: dict[str, Any]) -> None:
+    def _assert_resource_structure(
+        self,
+        res_cty_val: CtyValue,
+        expected_r_type: str,
+        expected_r_name: str,
+        expected_attrs_values_py: dict[str, Any],
+    ) -> None:
         self.assertIsInstance(res_cty_val, CtyValue)
         self.assertIn("resource", res_cty_val.value)
         r_type_block_val = res_cty_val.value["resource"].value[0]
@@ -113,4 +131,9 @@ class TestCreateResourceCty(unittest.TestCase):
 
     def test_missing_attribute_type_in_schema(self) -> None:
         with self.assertRaisesRegex(HclFactoryError, "Missing type string .* for attribute 'actual_attr'"):
-            create_resource_cty("my_resource", "test_missing", attributes_py={"actual_attr": "some_value"}, attributes_schema_py={})
+            create_resource_cty(
+                "my_resource",
+                "test_missing",
+                attributes_py={"actual_attr": "some_value"},
+                attributes_schema_py={},
+            )
