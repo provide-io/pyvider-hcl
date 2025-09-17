@@ -1,10 +1,18 @@
 import textwrap
 
-import pytest
-from pyvider.cty import CtyString, CtyValue, CtyNumber, CtyBool, CtyList, CtyMap, CtyObject, CtyTuple, CtyDynamic
+from pyvider.cty import (
+    CtyBool,
+    CtyDynamic,
+    CtyList,
+    CtyMap,
+    CtyNumber,
+    CtyObject,
+    CtyString,
+    CtyTuple,
+    CtyValue,
+)
 from pyvider.hcl.printer import pretty_print_cty
-import io
-import sys
+
 
 def test_pretty_print_cty_string(capsys):
     """
@@ -15,6 +23,7 @@ def test_pretty_print_cty_string(capsys):
     captured = capsys.readouterr()
     assert captured.out.strip() == '"hello"'
 
+
 def test_pretty_print_cty_number(capsys):
     """
     Tests that pretty_print_cty correctly prints a CtyNumber.
@@ -24,6 +33,7 @@ def test_pretty_print_cty_number(capsys):
     captured = capsys.readouterr()
     assert captured.out.strip() == "123"
 
+
 def test_pretty_print_cty_bool(capsys):
     """
     Tests that pretty_print_cty correctly prints a CtyBool.
@@ -32,6 +42,7 @@ def test_pretty_print_cty_bool(capsys):
     pretty_print_cty(cty_val)
     captured = capsys.readouterr()
     assert captured.out.strip() == "true"
+
 
 def test_pretty_print_cty_list(capsys):
     """
@@ -47,6 +58,7 @@ def test_pretty_print_cty_list(capsys):
     ]""").strip()
     assert captured.out.strip() == expected
 
+
 def test_pretty_print_cty_map(capsys):
     """
     Tests that pretty_print_cty correctly prints a CtyMap.
@@ -60,11 +72,14 @@ def test_pretty_print_cty_map(capsys):
     }""").strip()
     assert captured.out.strip() == expected
 
+
 def test_pretty_print_cty_object(capsys):
     """
     Tests that pretty_print_cty correctly prints a CtyObject.
     """
-    cty_val = CtyValue(value={"name": "John", "age": 30}, vtype=CtyObject({"name": CtyString(), "age": CtyNumber()}))
+    cty_val = CtyValue(
+        value={"name": "John", "age": 30}, vtype=CtyObject({"name": CtyString(), "age": CtyNumber()})
+    )
     pretty_print_cty(cty_val)
     captured = capsys.readouterr()
     expected = textwrap.dedent("""    {
@@ -72,6 +87,7 @@ def test_pretty_print_cty_object(capsys):
       "age": 30
     }""").strip()
     assert captured.out.strip() == expected
+
 
 def test_pretty_print_cty_tuple(capsys):
     """
@@ -85,6 +101,7 @@ def test_pretty_print_cty_tuple(capsys):
       123
     ]""").strip()
     assert captured.out.strip() == expected
+
 
 def test_pretty_print_cty_dynamic(capsys):
     """

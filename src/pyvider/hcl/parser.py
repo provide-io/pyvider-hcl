@@ -60,9 +60,7 @@ def auto_infer_cty_type(raw_data: Any) -> CtyValue:
 
 def parse_hcl_to_cty(hcl_content: str, schema: CtyType | None = None) -> CtyValue:
     """Parse HCL directly into validated CtyValues using pyvider.cty types."""
-    logger.debug(
-        f"🔌🔍⏳ Parsing HCL content. Schema provided: {'Yes' if schema else 'No'}"
-    )
+    logger.debug(f"🔌🔍⏳ Parsing HCL content. Schema provided: {'Yes' if schema else 'No'}")
 
     try:
         raw_data = hcl2.loads(hcl_content)
@@ -71,22 +69,16 @@ def parse_hcl_to_cty(hcl_content: str, schema: CtyType | None = None) -> CtyValu
         raise HclParsingError(message=f"Failed to parse HCL: {e}") from e
 
     if schema:
-        logger.debug(
-            f"🔌✔️⏳ Validating parsed HCL data against provided schema: {schema!r}"
-        )
+        logger.debug(f"🔌✔️⏳ Validating parsed HCL data against provided schema: {schema!r}")
         try:
             validated_value = schema.validate(raw_data)
             logger.debug("🔌✔️✅ Schema validation successful.")
             return validated_value
         except CtySchemaError as e:
             logger.error(f"🔌❗❌ Schema validation failed: {e}")
-            raise HclParsingError(
-                message=f"Schema validation failed after HCL parsing: {e}"
-            ) from e
+            raise HclParsingError(message=f"Schema validation failed after HCL parsing: {e}") from e
     else:
-        logger.debug(
-            "🔌🤖⏳ No schema provided, auto-inferring CtyType from parsed data."
-        )
+        logger.debug("🔌🤖⏳ No schema provided, auto-inferring CtyType from parsed data.")
         inferred_value = auto_infer_cty_type(raw_data)
         logger.debug("🔌🤖✅ CtyType auto-inference complete.")
         return inferred_value
@@ -97,15 +89,9 @@ def parse_with_context(content: str, source_file: Path | None = None) -> Any:
     Parses HCL content and provides richer error context if parsing fails.
     Returns raw parsed data (typically dict/list), not CtyValue directly.
     """
-    logger.debug(
-        f"🔌📄⏳ Parsing HCL content. Source: {source_file if source_file else 'string input'}"
-    )
+    logger.debug(f"🔌📄⏳ Parsing HCL content. Source: {source_file if source_file else 'string input'}")
     try:
         return hcl2.loads(content)
     except Exception as e:
-        logger.error(
-            f"🔌❗❌ HCL parsing error encountered. Source: {source_file}, Error: {e}"
-        )
-        raise HclParsingError(
-            message=str(e), source_file=str(source_file) if source_file else None
-        ) from e
+        logger.error(f"🔌❗❌ HCL parsing error encountered. Source: {source_file}, Error: {e}")
+        raise HclParsingError(message=str(e), source_file=str(source_file) if source_file else None) from e

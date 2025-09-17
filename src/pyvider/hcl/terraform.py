@@ -21,9 +21,7 @@ def parse_terraform_config(config_path: Path) -> TerraformConfig:
     using pyvider.schema types.
     """
     logger.debug(f"🔌📖⏳ Attempting to parse Terraform config: {config_path}")
-    logger.warning(
-        f"🔌⚠️ Placeholder: parse_terraform_config for {config_path} is not fully implemented."
-    )
+    logger.warning(f"🔌⚠️ Placeholder: parse_terraform_config for {config_path} is not fully implemented.")
 
     # In a real implementation:
     # 1. Read the file content from config_path.

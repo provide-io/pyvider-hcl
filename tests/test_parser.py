@@ -45,20 +45,24 @@ class TestHclParser(unittest.TestCase):
     def test_parse_with_nested_object_schema_pass(self) -> None:
         hcl_content = self.load_fixture("nested_object_valid.hcl")
         schema = CtyObject(
-            {"config": CtyList(element_type=CtyObject(
-                {
-                    "name": CtyString(),
-                    "owner": CtyObject(
+            {
+                "config": CtyList(
+                    element_type=CtyObject(
                         {
                             "name": CtyString(),
-                            "contact": CtyObject({"email": CtyString(), "phone": CtyString()}),
+                            "owner": CtyObject(
+                                {
+                                    "name": CtyString(),
+                                    "contact": CtyObject({"email": CtyString(), "phone": CtyString()}),
+                                }
+                            ),
+                            "threshold": CtyNumber(),
+                            "enabled": CtyBool(),
+                            "tags": CtyList(element_type=CtyString()),
                         }
-                    ),
-                    "threshold": CtyNumber(),
-                    "enabled": CtyBool(),
-                    "tags": CtyList(element_type=CtyString()),
-                }
-            ))}
+                    )
+                )
+            }
         )
         result = parse_hcl_to_cty(hcl_content, schema=schema)
         config_val = result.value["config"].value[0]
@@ -69,9 +73,13 @@ class TestHclParser(unittest.TestCase):
         item_spec_schema = CtyObject({"feature_a": CtyString(), "feature_b": CtyBool()})
         item_schema = CtyObject({"id": CtyString(), "value": CtyNumber(), "spec": item_spec_schema})
         schema = CtyObject(
-            {"item_group": CtyList(element_type=CtyObject(
-                {"items": CtyList(element_type=item_schema), "group_name": CtyString()}
-            ))}
+            {
+                "item_group": CtyList(
+                    element_type=CtyObject(
+                        {"items": CtyList(element_type=item_schema), "group_name": CtyString()}
+                    )
+                )
+            }
         )
         result = parse_hcl_to_cty(hcl_content, schema=schema)
         items_list_val = result.value["item_group"].value[0].value["items"]
@@ -83,9 +91,13 @@ class TestHclParser(unittest.TestCase):
         item_spec_schema = CtyObject({"feature_a": CtyString(), "feature_b": CtyBool()})
         item_schema = CtyObject({"id": CtyString(), "value": CtyNumber(), "spec": item_spec_schema})
         schema = CtyObject(
-            {"item_group": CtyList(element_type=CtyObject(
-                {"items": CtyList(element_type=item_schema), "group_name": CtyString()}
-            ))}
+            {
+                "item_group": CtyList(
+                    element_type=CtyObject(
+                        {"items": CtyList(element_type=item_schema), "group_name": CtyString()}
+                    )
+                )
+            }
         )
         with self.assertRaises(HclParsingError) as cm:
             parse_hcl_to_cty(hcl_content, schema=schema)
