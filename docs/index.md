@@ -30,7 +30,7 @@ hcl_content = doc.to_hcl()
 
 ## API Reference
 
-For complete API documentation, see the [API Reference](api/).
+For complete API documentation, see the [API Reference](api/index.md).
 
 ## Core Modules
 
