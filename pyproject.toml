@@ -58,10 +58,6 @@ namespaces = true # Important for pyvider.hcl as a namespace package
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}
 
-[tool.uv.sources]
-provide-foundation = { workspace = true }
-provide-testkit = { workspace = true }
-pyvider-cty = { workspace = true }
 
 ################################################################################
 # Pytest Configuration
