@@ -18,7 +18,7 @@ from pyvider.cty import (
     CtyType,
     CtyValue,
 )
-from pyvider.cty.exceptions import CtyError as CtySchemaError
+from pyvider.cty.exceptions import CtyError as CtySchemaError, CtyValidationError
 from pyvider.hcl.exceptions import HclParsingError
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ def parse_hcl_to_cty(hcl_content: str, schema: CtyType | None = None) -> CtyValu
             validated_value = schema.validate(raw_data)
             logger.debug("🔌✔️✅ Schema validation successful.")
             return validated_value
-        except CtySchemaError as e:
+        except (CtySchemaError, CtyValidationError) as e:
             logger.error(f"🔌❗❌ Schema validation failed: {e}")
             raise HclParsingError(message=f"Schema validation failed after HCL parsing: {e}") from e
     else:
