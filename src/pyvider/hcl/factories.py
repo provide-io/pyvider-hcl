@@ -19,7 +19,7 @@ from pyvider.cty import (
     CtyType,
     CtyValue,
 )
-from pyvider.cty.exceptions import CtyError
+from pyvider.cty.exceptions import CtyError, CtyValidationError
 from pyvider.hcl.parser import auto_infer_cty_type
 
 logger = logging.getLogger(__name__)
@@ -146,7 +146,7 @@ def create_variable_cty(
     if default_py is not None:
         try:
             parsed_variable_type.validate(default_py)
-        except CtyError as e:
+        except CtyValidationError as e:
             raise HclFactoryError(
                 f"Default value for variable '{name}' is not compatible with type '{type_str}': {e}"
             ) from e
@@ -197,7 +197,7 @@ def create_resource_cty(
         resource_attributes_obj_type = CtyObject(attributes_cty_schema)
         try:
             resource_attributes_obj_type.validate(attributes_py)
-        except CtyError as e:
+        except CtyValidationError as e:
             raise HclFactoryError(
                 f"One or more attributes for resource '{r_type}.{r_name}' are not compatible with the provided schema: {e}"
             ) from e
