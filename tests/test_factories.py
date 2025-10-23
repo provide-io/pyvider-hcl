@@ -54,6 +54,56 @@ class TestParseHclTypeString(unittest.TestCase):
         with self.assertRaisesRegex(HclTypeParsingError, "Unknown or malformed type string"):
             _parse_hcl_type_string("object({name=string age=number})")
 
+    def test_empty_list_type(self) -> None:
+        """Test that empty list type raises error."""
+        with self.assertRaisesRegex(HclTypeParsingError, "List type string is empty"):
+            _parse_hcl_type_string("list()")
+
+    def test_empty_map_type(self) -> None:
+        """Test that empty map type raises error."""
+        with self.assertRaisesRegex(HclTypeParsingError, "Map type string is empty"):
+            _parse_hcl_type_string("map()")
+
+    def test_object_without_braces(self) -> None:
+        """Test that object type without braces raises error."""
+        with self.assertRaisesRegex(HclTypeParsingError, "must be enclosed in"):
+            _parse_hcl_type_string("object(name=string)")
+
+    def test_object_empty_braces(self) -> None:
+        """Test that object with empty braces works."""
+        result = _parse_hcl_type_string("object({})")
+        self.assertEqual(result, CtyObject({}))
+
+    def test_object_whitespace_only(self) -> None:
+        """Test that object with whitespace only works."""
+        result = _parse_hcl_type_string("object({   })")
+        self.assertEqual(result, CtyObject({}))
+
+    def test_object_trailing_comma(self) -> None:
+        """Test that object with trailing comma raises error."""
+        with self.assertRaisesRegex(HclTypeParsingError, "Trailing comma"):
+            _parse_hcl_type_string("object({name=string,})")
+
+    def test_object_empty_attribute_part(self) -> None:
+        """Test that object with empty attribute part raises error."""
+        with self.assertRaisesRegex(HclTypeParsingError, "Empty attribute part"):
+            _parse_hcl_type_string("object({name=string,,other=bool})")
+
+    def test_object_attribute_without_equals(self) -> None:
+        """Test that object attribute without = raises error."""
+        with self.assertRaisesRegex(HclTypeParsingError, "missing '='"):
+            _parse_hcl_type_string("object({namestring})")
+
+    def test_object_attribute_empty_name(self) -> None:
+        """Test that object attribute with empty name raises error."""
+        with self.assertRaisesRegex(HclTypeParsingError, "Invalid attribute name or type"):
+            _parse_hcl_type_string("object({=string})")
+
+    def test_object_attribute_empty_type(self) -> None:
+        """Test that object attribute with empty type raises error."""
+        with self.assertRaisesRegex(HclTypeParsingError, "Invalid attribute name or type"):
+            _parse_hcl_type_string("object({name=})")
+
 
 class TestCreateVariableCty(unittest.TestCase):
     def _assert_variable_structure(
@@ -90,6 +140,48 @@ class TestCreateVariableCty(unittest.TestCase):
     def test_default_value_type_mismatch(self) -> None:
         with self.assertRaisesRegex(HclFactoryError, "Default value .* not compatible"):
             create_variable_cty("test_var", "number", default_py="not-a-number")
+
+    def test_invalid_variable_name_empty(self) -> None:
+        """Test that empty variable name raises error."""
+        with self.assertRaisesRegex(HclFactoryError, "Invalid variable name"):
+            create_variable_cty("", "string")
+
+    def test_invalid_variable_name_not_identifier(self) -> None:
+        """Test that invalid variable name raises error."""
+        with self.assertRaisesRegex(HclFactoryError, "Invalid variable name"):
+            create_variable_cty("my-var-name", "string")
+
+    def test_invalid_type_string_for_variable(self) -> None:
+        """Test that invalid type string raises error."""
+        with self.assertRaisesRegex(HclFactoryError, "Invalid type string"):
+            create_variable_cty("my_var", "invalid_type")
+
+    def test_create_variable_with_sensitive(self) -> None:
+        """Test creating a variable with sensitive flag."""
+        var_name = "my_secret"
+        attrs = {"type": "string", "sensitive": True}
+        var_cty = create_variable_cty(var_name, attrs["type"], sensitive=True)
+        self._assert_variable_structure(var_cty, var_name, attrs)
+
+    def test_create_variable_with_all_params(self) -> None:
+        """Test creating a variable with all optional parameters."""
+        var_name = "full_var"
+        attrs = {
+            "type": "string",
+            "default": "test",
+            "description": "A full test",
+            "sensitive": False,
+            "nullable": True,
+        }
+        var_cty = create_variable_cty(
+            var_name,
+            attrs["type"],
+            default_py=attrs["default"],
+            description=attrs["description"],
+            sensitive=attrs["sensitive"],
+            nullable=attrs["nullable"],
+        )
+        self._assert_variable_structure(var_cty, var_name, attrs)
 
 
 class TestCreateResourceCty(unittest.TestCase):
@@ -136,4 +228,31 @@ class TestCreateResourceCty(unittest.TestCase):
                 "test_missing",
                 attributes_py={"actual_attr": "some_value"},
                 attributes_schema_py={},
+            )
+
+    def test_empty_resource_type(self) -> None:
+        """Test that empty resource type raises error."""
+        with self.assertRaisesRegex(HclFactoryError, "Resource type .* cannot be empty"):
+            create_resource_cty("", "my_name", {"attr": "value"})
+
+    def test_whitespace_resource_type(self) -> None:
+        """Test that whitespace-only resource type raises error."""
+        with self.assertRaisesRegex(HclFactoryError, "Resource type .* cannot be empty"):
+            create_resource_cty("   ", "my_name", {"attr": "value"})
+
+    def test_empty_resource_name(self) -> None:
+        """Test that empty resource name raises error."""
+        with self.assertRaisesRegex(HclFactoryError, "Resource name .* cannot be empty"):
+            create_resource_cty("aws_instance", "", {"attr": "value"})
+
+    def test_whitespace_resource_name(self) -> None:
+        """Test that whitespace-only resource name raises error."""
+        with self.assertRaisesRegex(HclFactoryError, "Resource name .* cannot be empty"):
+            create_resource_cty("aws_instance", "   ", {"attr": "value"})
+
+    def test_invalid_type_string_in_schema(self) -> None:
+        """Test that invalid type string in schema raises error."""
+        with self.assertRaisesRegex(HclFactoryError, "Invalid type string for attribute"):
+            create_resource_cty(
+                "my_resource", "test_invalid", {"my_attr": "value"}, {"my_attr": "not_a_valid_type"}
             )
