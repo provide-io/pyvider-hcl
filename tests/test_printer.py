@@ -111,3 +111,30 @@ def test_pretty_print_cty_dynamic(capsys):
     pretty_print_cty(cty_val)
     captured = capsys.readouterr()
     assert captured.out.strip() == "dynamic"
+
+
+def test_pretty_print_cty_unknown_type(capsys):
+    """
+    Tests that pretty_print_cty handles unknown CtyTypes by falling back to str().
+    """
+    from pyvider.cty import CtyType
+
+    # Create a custom CtyType for testing the fallback path
+    class CustomCtyType(CtyType):
+        def validate(self, value):
+            return CtyValue(vtype=self, value=value)
+
+        def equal(self, other):
+            return isinstance(other, CustomCtyType)
+
+        def usable_as(self, other):
+            return isinstance(other, CustomCtyType)
+
+        def _to_wire_json(self):
+            return {"type": "custom"}
+
+    custom_type = CustomCtyType()
+    cty_val = CtyValue(value="custom_value", vtype=custom_type)
+    pretty_print_cty(cty_val)
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "custom_value"
