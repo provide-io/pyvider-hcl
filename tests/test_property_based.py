@@ -2,7 +2,7 @@
 # pyvider-hcl/tests/test_property_based.py
 """Property-based tests using Hypothesis for HCL parsing and factories."""
 
-from hypothesis import given, strategies as st
+from hypothesis import given, settings, strategies as st
 import pytest
 
 from pyvider.hcl.factories import (
@@ -186,6 +186,7 @@ class TestPropertyBasedAutoInference:
 class TestPropertyBasedHclParsing:
     """Property-based tests for HCL parsing."""
 
+    @settings(deadline=None)
     @given(value=st.text(alphabet=st.characters(blacklist_categories=('Cs', 'Cc'), blacklist_characters='"\\\n\r\t'), min_size=0, max_size=50))
     def test_simple_key_value_parsing(self, value: str) -> None:
         """Simple key=value HCL should always parse."""

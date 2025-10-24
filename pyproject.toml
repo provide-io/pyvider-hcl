@@ -156,3 +156,6 @@ exclude_lines = [
     "def __str__",
     "pass",
 ]
+
+[tool.uv.sources]
+provide-foundation = { path = "../provide-foundation", editable = true }
