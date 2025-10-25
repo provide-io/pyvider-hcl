@@ -133,7 +133,7 @@ warn_unused_configs = true
 disallow_untyped_decorators = false
 
 [[tool.mypy.overrides]]
-module = ["hcl2.*", "pytest.*"]
+module = ["hcl2.*", "pytest.*", "opentelemetry.*"]
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------------------- #
