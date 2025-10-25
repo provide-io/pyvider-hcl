@@ -80,6 +80,7 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore:cannot collect test class.*:pytest.PytestCollectionWarning",
+    "ignore:Module already imported so cannot be rewritten.*:pytest.PytestAssertRewriteWarning",
 ]
 norecursedirs = [
     ".git",
