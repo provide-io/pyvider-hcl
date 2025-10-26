@@ -15,94 +15,94 @@ from pyvider.cty.conversion import cty_to_native
 from pyvider.hcl.factories import (
     HclFactoryError,
     HclTypeParsingError,
-    _parse_hcl_type_string,
     create_resource_cty,
     create_variable_cty,
+    parse_hcl_type_string,
 )
 
 
 class TestParseHclTypeString(unittest.TestCase):
     def test_parse_primitive_types(self) -> None:
-        self.assertEqual(_parse_hcl_type_string("string"), CtyString())
-        self.assertEqual(_parse_hcl_type_string(" number "), CtyNumber())
-        self.assertEqual(_parse_hcl_type_string("bool"), CtyBool())
-        self.assertEqual(_parse_hcl_type_string("any"), CtyDynamic())
+        self.assertEqual(parse_hcl_type_string("string"), CtyString())
+        self.assertEqual(parse_hcl_type_string(" number "), CtyNumber())
+        self.assertEqual(parse_hcl_type_string("bool"), CtyBool())
+        self.assertEqual(parse_hcl_type_string("any"), CtyDynamic())
 
     def test_parse_simple_list_and_map_types(self) -> None:
-        self.assertEqual(_parse_hcl_type_string("list(string)"), CtyList(element_type=CtyString()))
-        self.assertEqual(_parse_hcl_type_string("map(number)"), CtyMap(element_type=CtyNumber()))
+        self.assertEqual(parse_hcl_type_string("list(string)"), CtyList(element_type=CtyString()))
+        self.assertEqual(parse_hcl_type_string("map(number)"), CtyMap(element_type=CtyNumber()))
 
     def test_parse_nested_types(self) -> None:
         self.assertEqual(
-            _parse_hcl_type_string("list(map(number))"), CtyList(element_type=CtyMap(element_type=CtyNumber()))
+            parse_hcl_type_string("list(map(number))"), CtyList(element_type=CtyMap(element_type=CtyNumber()))
         )
         expected = CtyObject(
             {"data": CtyMap(element_type=CtyObject({"value": CtyString(), "flag": CtyBool()}))}
         )
         self.assertEqual(
-            _parse_hcl_type_string("object({data=map(object({value=string,flag=bool}))})"), expected
+            parse_hcl_type_string("object({data=map(object({value=string,flag=bool}))})"), expected
         )
 
     def test_invalid_type_strings(self) -> None:
         invalid_strings = ["foo", "string()", "list)", "list(", "list(string", "object({name=string,})"]
         for type_str in invalid_strings:
             with self.assertRaises(HclTypeParsingError, msg=f"Expected error for: '{type_str}'"):
-                _parse_hcl_type_string(type_str)
+                parse_hcl_type_string(type_str)
 
     def test_malformed_object_attributes(self) -> None:
         # FIX: The test now expects the correct error message from the parser.
         with self.assertRaisesRegex(HclTypeParsingError, "Unknown or malformed type string"):
-            _parse_hcl_type_string("object({name=string age=number})")
+            parse_hcl_type_string("object({name=string age=number})")
 
     def test_empty_list_type(self) -> None:
         """Test that empty list type raises error."""
         with self.assertRaisesRegex(HclTypeParsingError, "List type string is empty"):
-            _parse_hcl_type_string("list()")
+            parse_hcl_type_string("list()")
 
     def test_empty_map_type(self) -> None:
         """Test that empty map type raises error."""
         with self.assertRaisesRegex(HclTypeParsingError, "Map type string is empty"):
-            _parse_hcl_type_string("map()")
+            parse_hcl_type_string("map()")
 
     def test_object_without_braces(self) -> None:
         """Test that object type without braces raises error."""
         with self.assertRaisesRegex(HclTypeParsingError, "must be enclosed in"):
-            _parse_hcl_type_string("object(name=string)")
+            parse_hcl_type_string("object(name=string)")
 
     def test_object_empty_braces(self) -> None:
         """Test that object with empty braces works."""
-        result = _parse_hcl_type_string("object({})")
+        result = parse_hcl_type_string("object({})")
         self.assertEqual(result, CtyObject({}))
 
     def test_object_whitespace_only(self) -> None:
         """Test that object with whitespace only works."""
-        result = _parse_hcl_type_string("object({   })")
+        result = parse_hcl_type_string("object({   })")
         self.assertEqual(result, CtyObject({}))
 
     def test_object_trailing_comma(self) -> None:
         """Test that object with trailing comma raises error."""
         with self.assertRaisesRegex(HclTypeParsingError, "Trailing comma"):
-            _parse_hcl_type_string("object({name=string,})")
+            parse_hcl_type_string("object({name=string,})")
 
     def test_object_empty_attribute_part(self) -> None:
         """Test that object with empty attribute part raises error."""
         with self.assertRaisesRegex(HclTypeParsingError, "Empty attribute part"):
-            _parse_hcl_type_string("object({name=string,,other=bool})")
+            parse_hcl_type_string("object({name=string,,other=bool})")
 
     def test_object_attribute_without_equals(self) -> None:
         """Test that object attribute without = raises error."""
         with self.assertRaisesRegex(HclTypeParsingError, "missing '='"):
-            _parse_hcl_type_string("object({namestring})")
+            parse_hcl_type_string("object({namestring})")
 
     def test_object_attribute_empty_name(self) -> None:
         """Test that object attribute with empty name raises error."""
         with self.assertRaisesRegex(HclTypeParsingError, "Invalid attribute name or type"):
-            _parse_hcl_type_string("object({=string})")
+            parse_hcl_type_string("object({=string})")
 
     def test_object_attribute_empty_type(self) -> None:
         """Test that object attribute with empty type raises error."""
         with self.assertRaisesRegex(HclTypeParsingError, "Invalid attribute name or type"):
-            _parse_hcl_type_string("object({name=})")
+            parse_hcl_type_string("object({name=})")
 
 
 class TestCreateVariableCty(unittest.TestCase):

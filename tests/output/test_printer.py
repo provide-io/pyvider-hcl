@@ -1,4 +1,7 @@
 import textwrap
+from typing import Any
+
+import pytest
 
 from pyvider.cty import (
     CtyBool,
@@ -11,10 +14,10 @@ from pyvider.cty import (
     CtyTuple,
     CtyValue,
 )
-from pyvider.hcl.printer import pretty_print_cty
+from pyvider.hcl.output import pretty_print_cty
 
 
-def test_pretty_print_cty_string(capsys):
+def test_pretty_print_cty_string(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty correctly prints a CtyString.
     """
@@ -24,7 +27,7 @@ def test_pretty_print_cty_string(capsys):
     assert captured.out.strip() == '"hello"'
 
 
-def test_pretty_print_cty_number(capsys):
+def test_pretty_print_cty_number(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty correctly prints a CtyNumber.
     """
@@ -34,7 +37,7 @@ def test_pretty_print_cty_number(capsys):
     assert captured.out.strip() == "123"
 
 
-def test_pretty_print_cty_bool(capsys):
+def test_pretty_print_cty_bool(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty correctly prints a CtyBool.
     """
@@ -44,7 +47,7 @@ def test_pretty_print_cty_bool(capsys):
     assert captured.out.strip() == "true"
 
 
-def test_pretty_print_cty_list(capsys):
+def test_pretty_print_cty_list(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty correctly prints a CtyList.
     """
@@ -59,7 +62,7 @@ def test_pretty_print_cty_list(capsys):
     assert captured.out.strip() == expected
 
 
-def test_pretty_print_cty_map(capsys):
+def test_pretty_print_cty_map(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty correctly prints a CtyMap.
     """
@@ -73,7 +76,7 @@ def test_pretty_print_cty_map(capsys):
     assert captured.out.strip() == expected
 
 
-def test_pretty_print_cty_object(capsys):
+def test_pretty_print_cty_object(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty correctly prints a CtyObject.
     """
@@ -89,7 +92,7 @@ def test_pretty_print_cty_object(capsys):
     assert captured.out.strip() == expected
 
 
-def test_pretty_print_cty_tuple(capsys):
+def test_pretty_print_cty_tuple(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty correctly prints a CtyTuple.
     """
@@ -103,7 +106,7 @@ def test_pretty_print_cty_tuple(capsys):
     assert captured.out.strip() == expected
 
 
-def test_pretty_print_cty_dynamic(capsys):
+def test_pretty_print_cty_dynamic(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty correctly prints a CtyDynamic.
     """
@@ -113,7 +116,7 @@ def test_pretty_print_cty_dynamic(capsys):
     assert captured.out.strip() == "dynamic"
 
 
-def test_pretty_print_cty_unknown_type(capsys):
+def test_pretty_print_cty_unknown_type(capsys: pytest.CaptureFixture[str]) -> None:
     """
     Tests that pretty_print_cty handles unknown CtyTypes by falling back to str().
     """
@@ -121,16 +124,16 @@ def test_pretty_print_cty_unknown_type(capsys):
 
     # Create a custom CtyType for testing the fallback path
     class CustomCtyType(CtyType):
-        def validate(self, value):
+        def validate(self, value: Any) -> CtyValue[Any]:
             return CtyValue(vtype=self, value=value)
 
-        def equal(self, other):
+        def equal(self, other: "CtyType") -> bool:
             return isinstance(other, CustomCtyType)
 
-        def usable_as(self, other):
+        def usable_as(self, other: "CtyType") -> bool:
             return isinstance(other, CustomCtyType)
 
-        def _to_wire_json(self):
+        def _to_wire_json(self) -> dict[str, str]:
             return {"type": "custom"}
 
     custom_type = CustomCtyType()

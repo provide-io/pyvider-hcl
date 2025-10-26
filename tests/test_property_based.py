@@ -5,15 +5,14 @@
 from hypothesis import given, settings, strategies as st
 import pytest
 
+from pyvider.cty import CtyBool, CtyList, CtyMap, CtyNumber, CtyObject, CtyString
 from pyvider.hcl.factories import (
     HclTypeParsingError,
-    _parse_hcl_type_string,
-    create_variable_cty,
     create_resource_cty,
+    create_variable_cty,
+    parse_hcl_type_string,
 )
-from pyvider.hcl.parser import parse_hcl_to_cty, auto_infer_cty_type
-from pyvider.cty import CtyString, CtyNumber, CtyBool, CtyList, CtyMap, CtyObject
-
+from pyvider.hcl.parser import auto_infer_cty_type, parse_hcl_to_cty
 
 # Strategy for valid HCL primitive type strings
 primitive_types = st.sampled_from(["string", "number", "bool", "any"])
@@ -29,9 +28,8 @@ class TestPropertyBasedTypeStringParsing:
     @given(type_str=primitive_types)
     def test_primitive_types_always_parse(self, type_str: str) -> None:
         """Any valid primitive type string should parse successfully."""
-        from pyvider.cty import CtyDynamic
 
-        result = _parse_hcl_type_string(type_str)
+        result = parse_hcl_type_string(type_str)
         assert result is not None
         # Should return one of the known primitive types
         # Note: "any" maps to CtyDynamic
@@ -41,14 +39,14 @@ class TestPropertyBasedTypeStringParsing:
     def test_list_of_primitive_types_always_parse(self, element_type: str) -> None:
         """List of any primitive type should parse successfully."""
         type_str = f"list({element_type})"
-        result = _parse_hcl_type_string(type_str)
+        result = parse_hcl_type_string(type_str)
         assert isinstance(result, CtyList)
 
     @given(element_type=primitive_types)
     def test_map_of_primitive_types_always_parse(self, element_type: str) -> None:
         """Map of any primitive type should parse successfully."""
         type_str = f"map({element_type})"
-        result = _parse_hcl_type_string(type_str)
+        result = parse_hcl_type_string(type_str)
         assert isinstance(result, CtyMap)
 
     @given(
@@ -58,19 +56,26 @@ class TestPropertyBasedTypeStringParsing:
     def test_object_with_single_attribute_parses(self, attr_name: str, attr_type: str) -> None:
         """Object with a single valid attribute should parse."""
         type_str = f"object({{{attr_name}={attr_type}}})"
-        result = _parse_hcl_type_string(type_str)
+        result = parse_hcl_type_string(type_str)
         assert isinstance(result, CtyObject)
         assert attr_name in result.attribute_types
 
-    @given(random_str=st.text(min_size=1, max_size=20).filter(lambda x: x.strip() not in ["", "string", "number", "bool", "any"]))
+    @given(
+        random_str=st.text(min_size=1, max_size=20).filter(
+            lambda x: x.strip() not in ["", "string", "number", "bool", "any"]
+        )
+    )
     def test_invalid_type_strings_raise_error(self, random_str: str) -> None:
         """Random strings that aren't valid types should raise HclTypeParsingError."""
         # Filter out strings that might accidentally be valid
-        if any(keyword in random_str.lower() for keyword in ["list", "map", "object", "string", "number", "bool", "any"]):
+        if any(
+            keyword in random_str.lower()
+            for keyword in ["list", "map", "object", "string", "number", "bool", "any"]
+        ):
             pytest.skip("String contains valid type keywords")
 
         with pytest.raises(HclTypeParsingError):
-            _parse_hcl_type_string(random_str)
+            parse_hcl_type_string(random_str)
 
 
 class TestPropertyBasedVariableCreation:
@@ -122,13 +127,9 @@ class TestPropertyBasedResourceCreation:
         r_name=valid_identifiers,
         attr_value=st.text(min_size=0, max_size=100),
     )
-    def test_resource_with_string_attributes(
-        self, r_type: str, r_name: str, attr_value: str
-    ) -> None:
+    def test_resource_with_string_attributes(self, r_type: str, r_name: str, attr_value: str) -> None:
         """Resources should handle string attributes correctly."""
-        result = create_resource_cty(
-            r_type, r_name, {"attr": attr_value}, {"attr": "string"}
-        )
+        result = create_resource_cty(r_type, r_name, {"attr": attr_value}, {"attr": "string"})
         assert result is not None
         assert "resource" in result.value
 
@@ -187,7 +188,13 @@ class TestPropertyBasedHclParsing:
     """Property-based tests for HCL parsing."""
 
     @settings(deadline=None)
-    @given(value=st.text(alphabet=st.characters(blacklist_categories=('Cs', 'Cc'), blacklist_characters='"\\\n\r\t'), min_size=0, max_size=50))
+    @given(
+        value=st.text(
+            alphabet=st.characters(blacklist_categories=("Cs", "Cc"), blacklist_characters='"\\\n\r\t'),
+            min_size=0,
+            max_size=50,
+        )
+    )
     def test_simple_key_value_parsing(self, value: str) -> None:
         """Simple key=value HCL should always parse."""
         # Use safe characters to avoid HCL parsing issues
