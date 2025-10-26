@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # pyvider/hcl/exceptions.py
 
+from __future__ import annotations
+
 from attrs import define, field
 from provide.foundation.errors import FoundationError
 

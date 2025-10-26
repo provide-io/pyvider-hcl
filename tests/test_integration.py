@@ -3,12 +3,12 @@
 """Integration tests using provide-testkit utilities."""
 
 from pathlib import Path
+
 import pytest
 
-from pyvider.hcl import parse_hcl_to_cty
-from pyvider.hcl.parser import parse_with_context
+from pyvider.cty import CtyList, CtyObject, CtyString
 from pyvider.hcl.exceptions import HclParsingError
-from pyvider.cty import CtyObject, CtyString, CtyList
+from pyvider.hcl.parser import parse_with_context
 
 
 class TestMultiFileHclIntegration:
@@ -164,7 +164,7 @@ class TestConfigFileIntegration:
             }
         )
 
-        config_schema = CtyObject(
+        CtyObject(
             {
                 "config": CtyList(
                     element_type=CtyObject(
@@ -188,7 +188,7 @@ class TestConfigFileIntegration:
         original = parse_with_context(hcl_config_file.read_text())
 
         # Modify the file
-        new_content = '''
+        new_content = """
 config {
   name = "modified-config"
   version = "2.0.0"
@@ -198,7 +198,7 @@ config {
     timeout = 60
   }
 }
-'''
+"""
         hcl_config_file.write_text(new_content)
 
         # Parse modified content

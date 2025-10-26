@@ -4,7 +4,7 @@ site_author: provide.io
 site_url: https://foundry.provide.io/pyvider-hcl/
 repo_url: https://github.com/provide-io/pyvider-hcl
 repo_name: provide-io/pyvider-hcl
-edit_uri: edit/main/docs/
+edit_uri: edit/develop/docs/
 
 # Development server configuration
 dev_addr: '127.0.0.1:8005'
@@ -110,4 +110,14 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - Getting Started: getting-started.md
+  - User Guide: guide.md
+  - Architecture: architecture.md
+  - Guides:
+    - Parsing HCL: guides/parsing.md
+    - Schema Validation: guides/schema-validation.md
+    - Type Inference: guides/type-inference.md
+    - Terraform Integration: guides/terraform-integration.md
+    - Error Handling: guides/error-handling.md
+    - Testing: guides/testing.md
   - API Reference: api/index.md
