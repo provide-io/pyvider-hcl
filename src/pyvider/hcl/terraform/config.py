@@ -60,4 +60,5 @@ def parse_terraform_config(config_path: Path) -> TerraformConfig:
 
     return {"status": "not_implemented", "path": str(config_path)}
 
+
 # 📄⚙️🔚

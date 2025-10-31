@@ -233,4 +233,5 @@ class TestErrorHandlingWithFixtures:
         with pytest.raises(HclParsingError):
             parse_with_context("invalid {", source_file=nonexistent)
 
+
 # 📄⚙️🔚

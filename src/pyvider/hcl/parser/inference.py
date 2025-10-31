@@ -70,4 +70,5 @@ def auto_infer_cty_type(raw_data: Any) -> CtyValue[Any]:
     """
     return _auto_infer_value_to_cty(raw_data)
 
+
 # 📄⚙️🔚

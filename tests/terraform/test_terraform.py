@@ -34,4 +34,5 @@ class TestTerraformConfig(unittest.TestCase):
         self.assertEqual(result["status"], "not_implemented")
         self.assertEqual(result["path"], str(test_path))
 
+
 # 📄⚙️🔚

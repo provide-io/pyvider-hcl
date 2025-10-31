@@ -130,4 +130,5 @@ def create_resource_cty(  # noqa: C901
         logger.error("🏭❌ Resource creation failed", r_type=r_type, r_name=r_name, error=str(e))
         raise HclFactoryError(f"Internal error creating resource CtyValue: {e}") from e
 
+
 # 📄⚙️🔚
