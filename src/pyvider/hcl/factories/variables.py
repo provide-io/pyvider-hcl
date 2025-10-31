@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Terraform variable factory functions."""
 
 from __future__ import annotations
@@ -100,8 +104,9 @@ def create_variable_cty(  # noqa: C901
 
     try:
         result = root_schema.validate(root_py_struct)
-        logger.debug("🏭✅ Variable created successfully", name=name)
         return result  # type: ignore[no-any-return]
     except CtyError as e:
         logger.error("🏭❌ Variable creation failed", name=name, error=str(e))
         raise HclFactoryError(f"Internal error creating variable CtyValue: {e}") from e
+
+# 📄⚙️🔚

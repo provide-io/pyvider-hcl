@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Example 04: Terraform Variables
 
 This example demonstrates how to create Terraform variable
-structures using the factory functions.
-"""
+structures using the factory functions."""
 
 from pyvider.hcl import create_variable_cty, pretty_print_cty
 
@@ -21,7 +24,6 @@ def example_simple_variable() -> None:
         description="AWS region for deployment",
     )
 
-    print("\n✅ Created Terraform variable structure:")
     pretty_print_cty(variable)
 
 
@@ -38,7 +40,6 @@ def example_number_variable() -> None:
         description="Number of instances to create",
     )
 
-    print("\n✅ Created number variable:")
     pretty_print_cty(variable)
 
 
@@ -55,7 +56,6 @@ def example_sensitive_variable() -> None:
         sensitive=True,  # Mark as sensitive
     )
 
-    print("\n✅ Created sensitive variable (no default):")
     pretty_print_cty(variable)
 
 
@@ -72,7 +72,6 @@ def example_list_variable() -> None:
         description="List of availability zones",
     )
 
-    print("\n✅ Created list variable:")
     pretty_print_cty(variable)
 
 
@@ -92,7 +91,6 @@ def example_object_variable() -> None:
         description="Server configuration",
     )
 
-    print("\n✅ Created object variable:")
     pretty_print_cty(variable)
 
 
@@ -110,7 +108,6 @@ def example_nullable_variable() -> None:
         description="Optional tag for resources",
     )
 
-    print("\n✅ Created nullable variable:")
     pretty_print_cty(variable)
 
 
@@ -135,7 +132,6 @@ def example_complex_object_variable() -> None:
         description="Database configuration with connection pool settings",
     )
 
-    print("\n✅ Created complex object variable:")
     pretty_print_cty(variable)
 
 
@@ -156,3 +152,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# 📄⚙️🔚

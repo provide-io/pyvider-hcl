@@ -1,3 +1,10 @@
+# 
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+"""TODO: Add module docstring."""
+
 from typing import Any
 import unittest
 
@@ -256,3 +263,5 @@ class TestCreateResourceCty(unittest.TestCase):
             create_resource_cty(
                 "my_resource", "test_invalid", {"my_attr": "value"}, {"my_attr": "not_a_valid_type"}
             )
+
+# 📄⚙️🔚

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Example 08: Multi-File Project
 
 This example demonstrates parsing multiple HCL files
-in a real-world project structure.
-"""
+in a real-world project structure."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -108,19 +111,16 @@ def example_parse_all_files() -> None:
         # Find all HCL files
         hcl_files = sorted(base_dir.glob("**/*.hcl"))
 
-        print(f"\n📁 Found {len(hcl_files)} HCL files:")
         for file in hcl_files:
             rel_path = file.relative_to(base_dir)
             print(f"  - {rel_path}")
 
         # Parse each file
-        print("\n📄 Parsing files...")
         for file in hcl_files:
             rel_path = file.relative_to(base_dir)
             try:
                 content = file.read_text()
                 parse_with_context(content, source_file=file)
-                print(f"  ✅ {rel_path}")
             except Exception as e:
                 print(f"  ❌ {rel_path}: {e}")
 
@@ -137,7 +137,6 @@ def example_parse_specific_files() -> None:
 
         # Parse variables file
         variables_file = base_dir / "variables.hcl"
-        print(f"\n📄 Parsing {variables_file.name}:")
         content = variables_file.read_text()
         variables = parse_with_context(content, source_file=variables_file)
         print(f"\n  Found {len(variables.get('variable', []))} variables:")
@@ -147,7 +146,6 @@ def example_parse_specific_files() -> None:
 
         # Parse outputs file
         outputs_file = base_dir / "outputs.hcl"
-        print(f"\n📄 Parsing {outputs_file.name}:")
         content = outputs_file.read_text()
         outputs = parse_with_context(content, source_file=outputs_file)
         print(f"\n  Found {len(outputs.get('output', []))} outputs:")
@@ -177,13 +175,11 @@ def example_validate_project_structure() -> None:
         for filename in required_files:
             file_path = base_dir / filename
             if file_path.exists():
-                print(f"  ✅ {filename}")
             else:
                 print(f"  ❌ {filename} (missing)")
                 all_present = False
 
         if all_present:
-            print("\n✅ Project structure is valid!")
         else:
             print("\n❌ Project structure is incomplete!")
 
@@ -249,3 +245,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# 📄⚙️🔚

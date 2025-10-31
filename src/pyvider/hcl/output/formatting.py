@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """CTY value formatting and pretty printing."""
 
 from __future__ import annotations
@@ -129,3 +133,5 @@ def pretty_print_cty(value: CtyValue[Any]) -> None:
         "test"
     """
     print(_pretty_print_cty_recursive(value, 0))
+
+# 📄⚙️🔚

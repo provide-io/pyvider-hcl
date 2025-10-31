@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Terraform resource factory functions."""
 
 from __future__ import annotations
@@ -121,8 +125,9 @@ def create_resource_cty(  # noqa: C901
 
     try:
         result = root_schema.validate(root_py_struct)
-        logger.debug("🏭✅ Resource created successfully", r_type=r_type, r_name=r_name)
         return result  # type: ignore[no-any-return]
     except CtyError as e:
         logger.error("🏭❌ Resource creation failed", r_type=r_type, r_name=r_name, error=str(e))
         raise HclFactoryError(f"Internal error creating resource CtyValue: {e}") from e
+
+# 📄⚙️🔚

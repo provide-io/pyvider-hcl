@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Example 03: Automatic Type Inference
 
 This example demonstrates how pyvider-hcl automatically infers
-CTY types from HCL data when no schema is provided.
-"""
+CTY types from HCL data when no schema is provided."""
 
 from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
 
@@ -27,7 +30,6 @@ def example_primitive_inference() -> None:
     print(f"number_value → {result.value['number_value'].type}")
     print(f"bool_value → {result.value['bool_value'].type}")
 
-    print("\n✅ Parsed value:")
     pretty_print_cty(result)
 
 
@@ -50,7 +52,6 @@ def example_list_inference() -> None:
     print(f"number_list → {result.value['number_list'].type}")
     print(f"mixed_list → {result.value['mixed_list'].type}")
 
-    print("\n✅ Parsed value:")
     pretty_print_cty(result)
 
 
@@ -82,7 +83,6 @@ def example_object_inference() -> None:
     print(f"  age: {user_obj.value['age'].type}")
     print(f"  admin: {user_obj.value['admin'].type}")
 
-    print("\n✅ Parsed value:")
     pretty_print_cty(result)
 
 
@@ -118,7 +118,6 @@ def example_complex_inference() -> None:
     result = parse_hcl_to_cty(hcl_content)
 
     print("\n📊 Complex structure - all types inferred automatically!")
-    print("\n✅ Parsed value:")
     pretty_print_cty(result)
 
 
@@ -181,3 +180,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# 📄⚙️🔚

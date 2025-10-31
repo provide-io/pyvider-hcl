@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Example 02: Schema Validation
 
 This example demonstrates how to validate HCL data against
-CTY type schemas for type safety.
-"""
+CTY type schemas for type safety."""
 
 from pyvider.cty import CtyBool, CtyList, CtyNumber, CtyObject, CtyString
 from pyvider.hcl import HclParsingError, parse_hcl_to_cty, pretty_print_cty
@@ -33,7 +36,6 @@ def example_simple_schema() -> None:
 
     result = parse_hcl_to_cty(hcl_content, schema=schema)
 
-    print("\n✅ Validation successful!")
     print("\nParsed value:")
     pretty_print_cty(result)
 
@@ -92,7 +94,6 @@ def example_nested_schema() -> None:
 
     result = parse_hcl_to_cty(hcl_content, schema=schema)
 
-    print("\n✅ Nested validation successful!")
     print("\nParsed value:")
     pretty_print_cty(result)
 
@@ -131,7 +132,6 @@ def example_list_schema() -> None:
 
     result = parse_hcl_to_cty(hcl_content, schema=schema)
 
-    print("\n✅ List validation successful!")
     print("\nParsed value:")
     pretty_print_cty(result)
 
@@ -150,3 +150,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# 📄⚙️🔚

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Example 07: Error Handling
 
 This example demonstrates proper error handling when
-parsing HCL and using factory functions.
-"""
+parsing HCL and using factory functions."""
 
 from pyvider.cty import CtyNumber, CtyObject
 from pyvider.hcl import HclParsingError, parse_hcl_to_cty
@@ -26,7 +29,6 @@ def example_syntax_error() -> None:
     except HclParsingError as e:
         print("\n❌ Caught HCL parsing error:")
         print(f"Error message: {e.message}")
-        print("\n✅ Error handled gracefully!")
 
 
 def example_schema_validation_error() -> None:
@@ -111,7 +113,6 @@ def example_graceful_recovery() -> None:
         try:
             result = parse_hcl_to_cty(config)
             results.append(result)
-            print(f"✅ Config {i}: Parsed successfully")
         except HclParsingError as e:
             errors.append((i, str(e)))
             print(f"❌ Config {i}: Failed to parse")
@@ -167,3 +168,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# 📄⚙️🔚

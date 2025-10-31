@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Terraform configuration parsing (placeholder for future implementation)."""
 
 from __future__ import annotations
@@ -39,7 +43,6 @@ def parse_terraform_config(config_path: Path) -> TerraformConfig:
         'not_implemented'
     """
     logger.warning(
-        "📄⚠️ Terraform config parsing not fully implemented",
         config_path=str(config_path),
     )
 
@@ -56,3 +59,5 @@ def parse_terraform_config(config_path: Path) -> TerraformConfig:
     # 6. Handle errors with context
 
     return {"status": "not_implemented", "path": str(config_path)}
+
+# 📄⚙️🔚

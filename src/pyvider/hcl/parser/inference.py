@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Automatic CTY type inference from Python data structures."""
 
 from __future__ import annotations
@@ -40,7 +44,6 @@ def _auto_infer_value_to_cty(raw_value: Any) -> CtyValue[Any]:
         return CtyValue(vtype=obj_type, value=inferred_attrs)
 
     logger.warning(
-        "📄⚠️ Unknown type for inference, using CtyDynamic",
         value_type=str(type(raw_value)),
         value_repr=repr(raw_value)[:100],
     )
@@ -65,5 +68,6 @@ def auto_infer_cty_type(raw_data: Any) -> CtyValue[Any]:
         >>> isinstance(result.type, CtyObject)
         True
     """
-    logger.debug("📄⏳ Auto-inferring CTY types", data_type=str(type(raw_data)))
     return _auto_infer_value_to_cty(raw_data)
+
+# 📄⚙️🔚
