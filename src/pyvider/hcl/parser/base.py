@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import Any
 
 import hcl2
-from provide.foundation import logger
 
 from pyvider.cty import CtyType, CtyValue
 from pyvider.cty.exceptions import CtyError as CtySchemaError, CtyValidationError
@@ -52,5 +51,6 @@ def parse_hcl_to_cty(hcl_content: str, schema: CtyType[Any] | None = None) -> Ct
     else:
         inferred_value = auto_infer_cty_type(raw_data)
         return inferred_value
+
 
 # 📄⚙️🔚

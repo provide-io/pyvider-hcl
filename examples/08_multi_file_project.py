@@ -175,11 +175,13 @@ def example_validate_project_structure() -> None:
         for filename in required_files:
             file_path = base_dir / filename
             if file_path.exists():
+                print(f"  ✅ {filename}")
             else:
                 print(f"  ❌ {filename} (missing)")
                 all_present = False
 
         if all_present:
+            print("\n✅ Project structure is complete!")
         else:
             print("\n❌ Project structure is incomplete!")
 

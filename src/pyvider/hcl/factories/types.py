@@ -134,4 +134,5 @@ def _split_attr_part(part: str) -> tuple[str, str]:
 
     return name, type_str
 
+
 # 📄⚙️🔚

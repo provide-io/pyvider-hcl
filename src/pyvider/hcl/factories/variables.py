@@ -109,4 +109,5 @@ def create_variable_cty(  # noqa: C901
         logger.error("🏭❌ Variable creation failed", name=name, error=str(e))
         raise HclFactoryError(f"Internal error creating variable CtyValue: {e}") from e
 
+
 # 📄⚙️🔚

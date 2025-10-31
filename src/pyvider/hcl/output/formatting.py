@@ -134,4 +134,5 @@ def pretty_print_cty(value: CtyValue[Any]) -> None:
     """
     print(_pretty_print_cty_recursive(value, 0))
 
+
 # 📄⚙️🔚
