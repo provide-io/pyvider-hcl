@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """HCL type string parsing for Terraform type syntax."""
 
 from __future__ import annotations
@@ -129,3 +133,5 @@ def _split_attr_part(part: str) -> tuple[str, str]:
         raise HclTypeParsingError(f"Invalid attribute name or type in part: '{part}'")
 
     return name, type_str
+
+# 📄⚙️🔚

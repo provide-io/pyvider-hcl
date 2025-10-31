@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Example 06: Complex Nested Structures
 
 This example demonstrates parsing and working with
-complex nested HCL structures.
-"""
+complex nested HCL structures."""
 
 from pyvider.cty import CtyList, CtyNumber, CtyObject, CtyString
 from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
@@ -47,7 +50,6 @@ def example_nested_objects() -> None:
 
     result = parse_hcl_to_cty(hcl_content)
 
-    print("\n✅ Parsed deeply nested structure:")
     pretty_print_cty(result)
 
 
@@ -79,7 +81,6 @@ def example_list_of_objects() -> None:
 
     result = parse_hcl_to_cty(hcl_content)
 
-    print("\n✅ Parsed list of server objects:")
     pretty_print_cty(result)
 
 
@@ -110,7 +111,6 @@ def example_mixed_collections() -> None:
 
     result = parse_hcl_to_cty(hcl_content)
 
-    print("\n✅ Parsed mixed collections:")
     pretty_print_cty(result)
 
 
@@ -151,7 +151,6 @@ def example_with_schema_validation() -> None:
 
     result = parse_hcl_to_cty(hcl_content, schema=schema)
 
-    print("\n✅ Parsed and validated complex structure:")
     pretty_print_cty(result)
 
 
@@ -169,3 +168,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# 📄⚙️🔚

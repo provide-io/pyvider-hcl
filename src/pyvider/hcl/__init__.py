@@ -1,9 +1,12 @@
-# pyvider/hcl/__init__.py
+# 
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """pyvider-hcl: HCL parsing with CTY type system integration.
 
 This package provides HCL (HashiCorp Configuration Language) parsing capabilities
-with seamless integration into the pyvider ecosystem through the CTY type system.
-"""
+with seamless integration into the pyvider ecosystem through the CTY type system."""
 
 from pyvider.hcl._version import __version__
 from pyvider.hcl.exceptions import HclError, HclParsingError
@@ -31,3 +34,5 @@ __all__ = [
     "parse_with_context",
     "pretty_print_cty",
 ]
+
+# 📄⚙️🔚

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-# pyvider-hcl/tests/test_integration.py
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Integration tests using provide-testkit utilities."""
 
 from pathlib import Path
@@ -229,3 +232,5 @@ class TestErrorHandlingWithFixtures:
         # This should work - we're just using the path for error context
         with pytest.raises(HclParsingError):
             parse_with_context("invalid {", source_file=nonexistent)
+
+# 📄⚙️🔚

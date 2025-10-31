@@ -1,7 +1,11 @@
+# 
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """HCL parsing module.
 
-This module provides HCL parsing functionality with CTY type integration.
-"""
+This module provides HCL parsing functionality with CTY type integration."""
 
 from pyvider.hcl.parser.base import parse_hcl_to_cty
 from pyvider.hcl.parser.context import parse_with_context
@@ -12,3 +16,5 @@ __all__ = [
     "parse_hcl_to_cty",
     "parse_with_context",
 ]
+
+# 📄⚙️🔚

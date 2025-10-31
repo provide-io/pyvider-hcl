@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# pyvider-hcl/tests/test_terraform.py
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+"""TODO: Add module docstring."""
 
 from pathlib import Path
 import unittest
@@ -29,3 +33,5 @@ class TestTerraformConfig(unittest.TestCase):
         self.assertIsInstance(result, dict)
         self.assertEqual(result["status"], "not_implemented")
         self.assertEqual(result["path"], str(test_path))
+
+# 📄⚙️🔚

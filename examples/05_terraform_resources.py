@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Example 05: Terraform Resources
 
 This example demonstrates how to create Terraform resource
-structures using the factory functions.
-"""
+structures using the factory functions."""
 
 from pyvider.hcl import create_resource_cty, pretty_print_cty
 
@@ -27,7 +30,6 @@ def example_simple_resource() -> None:
         },
     )
 
-    print("\n✅ Created Terraform resource structure:")
     pretty_print_cty(resource)
 
 
@@ -47,7 +49,6 @@ def example_resource_with_inference() -> None:
         # No schema - types will be inferred
     )
 
-    print("\n✅ Created resource (types inferred):")
     pretty_print_cty(resource)
 
 
@@ -76,7 +77,6 @@ def example_resource_with_numbers() -> None:
         },
     )
 
-    print("\n✅ Created database resource:")
     pretty_print_cty(resource)
 
 
@@ -116,7 +116,6 @@ def example_resource_with_complex_types() -> None:
         },
     )
 
-    print("\n✅ Created security group resource with complex rules:")
     pretty_print_cty(resource)
 
 
@@ -134,3 +133,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# 📄⚙️🔚

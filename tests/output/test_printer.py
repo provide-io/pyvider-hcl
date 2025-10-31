@@ -1,3 +1,10 @@
+# 
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+"""TODO: Add module docstring."""
+
 import textwrap
 from typing import Any
 
@@ -141,3 +148,5 @@ def test_pretty_print_cty_unknown_type(capsys: pytest.CaptureFixture[str]) -> No
     pretty_print_cty(cty_val)
     captured = capsys.readouterr()
     assert captured.out.strip() == "custom_value"
+
+# 📄⚙️🔚

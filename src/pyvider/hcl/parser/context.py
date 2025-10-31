@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """HCL parsing with enhanced error context."""
 
 from __future__ import annotations
@@ -35,13 +39,11 @@ def parse_with_context(content: str, source_file: Path | None = None) -> Any:
         'example'
     """
     source_str = str(source_file) if source_file else "string input"
-    logger.debug("📄⏳ Parsing HCL with context", source=source_str)
 
     try:
         return hcl2.loads(content)  # type: ignore[attr-defined]
     except Exception as e:
         logger.error(
-            "📄❌ HCL parsing error",
             source=source_str,
             error=str(e),
             exc_info=True,
@@ -50,3 +52,5 @@ def parse_with_context(content: str, source_file: Path | None = None) -> Any:
             message=str(e),
             source_file=str(source_file) if source_file else None,
         ) from e
+
+# 📄⚙️🔚

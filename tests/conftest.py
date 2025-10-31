@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-# pyvider-hcl/tests/conftest.py
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Pytest configuration and fixtures for pyvider-hcl tests."""
 
 from pathlib import Path
@@ -185,3 +188,5 @@ item_group {
   }
 }
 """
+
+# 📄⚙️🔚

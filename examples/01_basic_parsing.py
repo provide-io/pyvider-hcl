@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Example 01: Basic HCL Parsing
 
 This example demonstrates the basics of parsing HCL strings
-and accessing the parsed values.
-"""
+and accessing the parsed values."""
 
 from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
 
@@ -123,3 +126,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# 📄⚙️🔚

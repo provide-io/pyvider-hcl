@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# pyvider-hcl/tests/test_parser.py
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+"""TODO: Add module docstring."""
 
 from pathlib import Path
 import unittest
@@ -170,3 +174,5 @@ class TestHclParser(unittest.TestCase):
         with self.assertRaises(HclParsingError) as cm:
             parse_with_context(hcl_content, source_file=source_file)
         self.assertEqual(cm.exception.source_file, str(source_file))
+
+# 📄⚙️🔚

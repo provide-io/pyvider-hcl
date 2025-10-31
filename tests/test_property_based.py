@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-# pyvider-hcl/tests/test_property_based.py
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Property-based tests using Hypothesis for HCL parsing and factories."""
 
 from hypothesis import HealthCheck, given, settings, strategies as st
@@ -234,3 +237,5 @@ class TestPropertyBasedHclParsing:
         result = parse_hcl_to_cty(hcl_content)
         assert result is not None
         assert "test_bool" in result.value
+
+# 📄⚙️🔚
