@@ -43,6 +43,7 @@ def parse_terraform_config(config_path: Path) -> TerraformConfig:
         'not_implemented'
     """
     logger.warning(
+        "Terraform config parsing not implemented",
         config_path=str(config_path),
     )
 

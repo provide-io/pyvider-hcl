@@ -9,7 +9,7 @@ pyvider-hcl automatically infers CTY types from Python/HCL data structures. The 
 - `str` → `CtyString()`
 - `int`, `float` → `CtyNumber()`
 - `bool` → `CtyBool()`
-- `list` → `CtyList(CtyDynamic())`
+- `list` → `CtyList(element_type)` (element type inferred from list contents)
 - `dict` → `CtyObject({...})`
 - `None` → `CtyDynamic()`
 - `Decimal` → `CtyNumber()` (preserves precision)
@@ -40,15 +40,18 @@ result = auto_infer_cty_type(data)
 # - config: CtyObject with timeout (CtyNumber) and retry (CtyBool)
 ```
 
-#### Lists with Mixed Types
-Lists are inferred as `CtyList(CtyDynamic())` since HCL lists can contain heterogeneous elements:
+#### List Type Inference
+Lists are analyzed to infer their element types. Homogeneous lists get specific element types, while mixed lists use `CtyDynamic()`:
 
 ```python
-data = {
-    "values": [1, "two", True, 3.14]
-}
+# Homogeneous list - infers specific element type
+data_numbers = {"values": [1, 2, 3, 4]}
+result = auto_infer_cty_type(data_numbers)
+# values becomes CtyList(CtyNumber())
 
-result = auto_infer_cty_type(data)
+# Heterogeneous list - falls back to dynamic
+data_mixed = {"values": [1, "two", True, 3.14]}
+result = auto_infer_cty_type(data_mixed)
 # values becomes CtyList(CtyDynamic())
 ```
 
@@ -105,25 +108,19 @@ See [examples/03_type_inference.py](../../examples/03_type_inference.py)
 
 ### Current Limitations
 
-1. **List Element Types**: Lists are always inferred as `CtyList(CtyDynamic())` rather than analyzing element types
-   ```python
-   # Even homogeneous lists get CtyDynamic elements
-   numbers = [1, 2, 3, 4]  # → CtyList(CtyDynamic())
-   ```
-
-2. **No Union Types**: Cannot infer union or variant types
+1. **No Union Types**: Cannot infer union or variant types
    ```python
    # Mixed types fall back to CtyDynamic
    mixed = {"value": some_complex_object}  # → value: CtyDynamic()
    ```
 
-3. **No Validation**: Inference accepts any valid structure without constraints
+2. **No Validation**: Inference accepts any valid structure without constraints
    ```python
    # No way to enforce required fields or value ranges
    data = {"port": 99999}  # Accepted even if invalid port number
    ```
 
-4. **Type Ambiguity**: Some values could map to multiple types
+3. **Type Ambiguity**: Some values could map to multiple types
    ```python
    # String "123" vs number 123
    value = "123"  # Always inferred as CtyString, not CtyNumber
