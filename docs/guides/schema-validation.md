@@ -73,5 +73,5 @@ except HclParsingError as e:
 
 ## See Also
 
-- [API Reference](../api/index.md)
+- [API Reference](../reference/)
 - [Examples](../../examples/02_schema_validation.py)
