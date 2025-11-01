@@ -1,4 +1,7 @@
-.PHONY: help setup test test-parallel lint format typecheck quality build docs clean coverage
+# Include shared documentation targets from provide-foundry
+include ../provide-foundry/Makefile.docs.inc
+
+.PHONY: help setup test test-parallel lint format typecheck quality build clean coverage
 
 # Default target
 .DEFAULT_GOAL := help
@@ -84,15 +87,6 @@ build: ## Build package
 	@echo '$(BLUE)Building package...$(NC)'
 	uv build
 	@echo '$(GREEN)✓ Package built in dist/$(NC)'
-
-docs: ## Build documentation
-	@echo '$(BLUE)Building documentation...$(NC)'
-	uv run mkdocs build
-	@echo '$(GREEN)✓ Documentation built in site/$(NC)'
-
-docs-serve: ## Serve documentation locally
-	@echo '$(BLUE)Serving documentation at http://127.0.0.1:8000$(NC)'
-	uv run mkdocs serve
 
 clean: ## Clean build artifacts and caches
 	@echo '$(BLUE)Cleaning build artifacts...$(NC)'
