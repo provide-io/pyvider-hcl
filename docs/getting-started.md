@@ -216,7 +216,7 @@ except HclParsingError as e:
 Now that you've learned the basics, explore more advanced topics:
 
 - **[User Guide](guide.md)** - Comprehensive usage examples
-- **[API Reference](api/index.md)** - Complete API documentation
+- **[API Reference](reference/)** - Complete API documentation
 - **[Architecture](architecture.md)** - Understand how pyvider-hcl works
 - **[Examples](../examples/README.md)** - Working code examples
 

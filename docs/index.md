@@ -182,7 +182,7 @@ resource = create_resource_cty(
 - **[Testing](guides/testing.md)**: Testing with pyvider-hcl
 
 ### Reference
-- **[API Reference](api/index.md)**: Complete API documentation
+- **[API Reference](reference/)**: Complete API documentation
 - **[Architecture](architecture.md)**: System design and data flow diagrams
 
 ## Core API

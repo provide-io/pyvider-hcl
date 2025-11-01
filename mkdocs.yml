@@ -60,6 +60,11 @@ theme:
 plugins:
   - search
   - autorefs
+  - gen-files:
+      scripts:
+        - docs/reference/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
   - macros:
       include_dir: docs/.shared-theme/data
   - mkdocstrings:
@@ -120,4 +125,4 @@ nav:
     - Terraform Integration: guides/terraform-integration.md
     - Error Handling: guides/error-handling.md
     - Testing: guides/testing.md
-  - API Reference: api/index.md
+  - API Reference: reference/
