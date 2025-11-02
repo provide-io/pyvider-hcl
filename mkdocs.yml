@@ -2,7 +2,7 @@
 INHERIT: ../provide-foundry/base-mkdocs.yml
 
 # Project-Specific Configuration
-site_name: PyVider HCL Documentation
+site_name: Pyvider HCL Documentation
 site_description: HCL parsing and manipulation for Terraform configurations in Python
 site_author: provide.io
 site_url: https://foundry.provide.io/pyvider-hcl/

@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API reference for PyVider HCL.
+Complete API reference for Pyvider HCL.
 
 This reference is automatically generated from source code docstrings. Every module, class, and function is documented here.
 
