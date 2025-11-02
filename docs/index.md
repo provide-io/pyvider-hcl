@@ -1,6 +1,6 @@
-# PyVider HCL Documentation
+# Pyvider HCL Documentation
 
-Welcome to PyVider HCL - HCL (HashiCorp Configuration Language) parsing with seamless pyvider.cty type system integration.
+Welcome to Pyvider HCL - HCL (HashiCorp Configuration Language) parsing with seamless pyvider.cty type system integration.
 
 !!! warning "Alpha Software - Active Development"
     pyvider-hcl is in active alpha development. APIs may change, and some features are experimental.
@@ -105,7 +105,7 @@ validated = parse_hcl_to_cty(hcl_string, schema=schema)
 
 ## Features
 
-PyVider HCL provides:
+Pyvider HCL provides:
 
 - **HCL Parsing**: Parse HCL strings into Python data structures using python-hcl2
 - **CTY Type Integration**: Automatic conversion to pyvider.cty type-safe values
