@@ -404,3 +404,6 @@ workenv/
 
 # Synced theme files (source: provide-foundry/shared-theme/)
 docs/.shared-theme/
+
+# Extracted provide.io tooling artifacts
+.provide/

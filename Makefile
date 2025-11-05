@@ -1,7 +1,4 @@
-# Include shared documentation targets from provide-foundry
-include ../provide-foundry/Makefile.docs.inc
-
-.PHONY: help setup test test-parallel lint format typecheck quality build clean coverage
+.PHONY: help setup test test-parallel lint format typecheck quality build clean coverage docs-setup docs-build docs-serve docs-clean
 
 # Default target
 .DEFAULT_GOAL := help
@@ -143,3 +140,16 @@ ci-quality: format-check lint typecheck ## Run all quality checks for CI
 
 ci-all: ci-quality ci-test build ## Run full CI pipeline
 	@echo '$(GREEN)✓ Full CI pipeline complete$(NC)'
+
+# Documentation targets
+docs-setup:
+	@python -c "from provide.foundry.config import extract_base_mkdocs; from pathlib import Path; extract_base_mkdocs(Path('.'))"
+
+docs-build: docs-setup
+	@mkdocs build
+
+docs-serve: docs-setup
+	@mkdocs serve
+
+docs-clean:
+	@rm -rf site .provide
