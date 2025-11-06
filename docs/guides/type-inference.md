@@ -102,7 +102,7 @@ result = parse_hcl_to_cty(hcl_content)
 
 ## Examples
 
-See [examples/03_type_inference.py](../../examples/03_type_inference.py)
+<!-- See [examples/03_type_inference.py](../../examples/03_type_inference.py) -->
 
 ## Inference Limitations and Edge Cases
 
