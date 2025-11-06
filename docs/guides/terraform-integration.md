@@ -184,5 +184,5 @@ except HclTypeParsingError as e:
 
 ## See Also
 
-- [Examples](../../examples/04_terraform_variables.py)
-- [Examples](../../examples/05_terraform_resources.py)
+<!-- - [Examples](../../examples/04_terraform_variables.py) -->
+<!-- - [Examples](../../examples/05_terraform_resources.py) -->

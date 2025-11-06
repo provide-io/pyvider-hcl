@@ -60,5 +60,5 @@ def test_parse_strings(value):
 
 ## See Also
 
-- [Examples](../../examples/)
+<!-- - [Examples](../../examples/) -->
 - [Test Suite](../../tests/)
