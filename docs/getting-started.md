@@ -2,19 +2,8 @@
 
 Welcome to pyvider-hcl! This guide will help you get started with parsing HCL (HashiCorp Configuration Language) and integrating it with the pyvider ecosystem.
 
-## Installation
-
-Install pyvider-hcl using uv:
-
-```bash
-uv pip install pyvider-hcl
-```
-
-Or if you're using pip:
-
-```bash
-pip install pyvider-hcl
-```
+!!! tip "Installation"
+    If you haven't installed pyvider-hcl yet, see the [Installation Guide](getting-started/installation.md).
 
 ## Your First HCL Parse
 
