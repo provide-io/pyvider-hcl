@@ -170,20 +170,20 @@ resource = create_resource_cty(
 ## Documentation
 
 ### Getting Started
-- **[Getting Started Guide](getting-started.md)**: Installation and first steps
+- **[Getting Started Guide](getting-started/)**: Installation and first steps
 
 ### Guides
-- **[User Guide](guide.md)**: Detailed usage examples and patterns
-- **[HCL Parsing](guides/parsing.md)**: Parsing HCL strings and files
-- **[Schema Validation](guides/schema-validation.md)**: Validating with CTY schemas
-- **[Type Inference](guides/type-inference.md)**: Automatic type inference
-- **[Terraform Integration](guides/terraform-integration.md)**: Creating Terraform structures
-- **[Error Handling](guides/error-handling.md)**: Exception handling patterns
-- **[Testing](guides/testing.md)**: Testing with pyvider-hcl
+- **[User Guide](guide/)**: Detailed usage examples and patterns
+- **[HCL Parsing](guides/parsing/)**: Parsing HCL strings and files
+- **[Schema Validation](guides/schema-validation/)**: Validating with CTY schemas
+- **[Type Inference](guides/type-inference/)**: Automatic type inference
+- **[Terraform Integration](guides/terraform-integration/)**: Creating Terraform structures
+- **[Error Handling](guides/error-handling/)**: Exception handling patterns
+- **[Testing](guides/testing/)**: Testing with pyvider-hcl
 
 ### Reference
 - **[API Reference](reference/)**: Complete API documentation
-- **[Architecture](architecture.md)**: System design and data flow diagrams
+- **[Architecture](architecture/)**: System design and data flow diagrams
 
 ## Core API
 

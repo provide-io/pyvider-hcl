@@ -98,6 +98,6 @@ uv add pyvider-hcl --upgrade
 
 After installation:
 
-1. **[Getting Started](../getting-started.md)** - Learn HCL parsing basics
-2. **[User Guide](../guide.md)** - Comprehensive usage examples
+1. **[Getting Started](../getting-started/)** - Learn HCL parsing basics
+2. **[User Guide](../guide/)** - Comprehensive usage examples
 3. **[API Reference](../reference/)** - Complete API documentation

@@ -3,7 +3,7 @@
 Welcome to pyvider-hcl! This guide will help you get started with parsing HCL (HashiCorp Configuration Language) and integrating it with the pyvider ecosystem.
 
 !!! tip "Installation"
-    If you haven't installed pyvider-hcl yet, see the [Installation Guide](getting-started/installation.md).
+    If you haven't installed pyvider-hcl yet, see the [Installation Guide](getting-started/installation/).
 
 ## Your First HCL Parse
 
@@ -204,18 +204,18 @@ except HclParsingError as e:
 
 Now that you've learned the basics, explore more advanced topics:
 
-- **[User Guide](guide.md)** - Comprehensive usage examples
+- **[User Guide](guide/)** - Comprehensive usage examples
 - **[API Reference](reference/)** - Complete API documentation
-- **[Architecture](architecture.md)** - Understand how pyvider-hcl works
-<!-- - **[Examples](../examples/README.md)** - Working code examples -->
+- **[Architecture](architecture/)** - Understand how pyvider-hcl works
+<!-- - **[Examples](../examples/README/)** - Working code examples -->
 
 ### Guides
 
-- [Parsing Guide](guides/parsing.md) - Advanced parsing techniques
-- [Schema Validation](guides/schema-validation.md) - Schema best practices
-- [Terraform Integration](guides/terraform-integration.md) - Working with Terraform
-- [Error Handling](guides/error-handling.md) - Robust error handling
-- [Testing](guides/testing.md) - Testing with pyvider-hcl
+- [Parsing Guide](guides/parsing/) - Advanced parsing techniques
+- [Schema Validation](guides/schema-validation/) - Schema best practices
+- [Terraform Integration](guides/terraform-integration/) - Working with Terraform
+- [Error Handling](guides/error-handling/) - Robust error handling
+- [Testing](guides/testing/) - Testing with pyvider-hcl
 
 ## Common Patterns
 
@@ -261,6 +261,6 @@ def load_terraform_project(project_dir: Path):
 
 <!-- - **Examples**: Check the [examples/](../examples/) directory for working code -->
 - **Issues**: Report bugs at [GitHub Issues](https://github.com/provide-io/pyvider-hcl/issues)
-<!-- - **Contributing**: See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines -->
+<!-- - **Contributing**: See [CONTRIBUTING.md](../CONTRIBUTING/) for contribution guidelines -->
 
 Happy parsing! 🚀
