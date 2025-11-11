@@ -8,7 +8,9 @@
 This package provides HCL (HashiCorp Configuration Language) parsing capabilities
 with seamless integration into the pyvider ecosystem through the CTY type system."""
 
-from pyvider.hcl._version import __version__
+from provide.foundation.utils.versioning import get_version
+
+__version__ = get_version("pyvider-hcl", caller_file=__file__)
 from pyvider.hcl.exceptions import HclError, HclParsingError
 from pyvider.hcl.factories import (
     HclFactoryError,
