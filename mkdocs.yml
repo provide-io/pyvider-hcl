@@ -9,7 +9,7 @@ site_url: https://foundry.provide.io/pyvider-hcl/
 repo_url: https://github.com/provide-io/pyvider-hcl
 repo_name: provide-io/pyvider-hcl
 edit_uri: edit/develop/docs/
-copyright: Copyright &copy; 2024-2025 provide.io
+copyright: ©2024-2025 provide.io llc<br/>🛠️ with 💚 and 🦝 on 🌎
 
 # Development server configuration
 dev_addr: '127.0.0.1:11005'
