@@ -1,12 +1,4 @@
-# Python Library Makefile
-# Canonical Makefile for Python library projects in the provide.io ecosystem
-# This file is maintained in provide-foundry and extracted to library projects
-#
-# Source: provide-foundry/src/provide/foundry/config/Makefile.python.tmpl
-# Do not edit directly in library projects - changes will be overwritten
-# To update: run `make update-makefile` or extract from provide-foundry
-
-.PHONY: help setup test test-parallel test-verbose test-unit test-integration coverage lint lint-fix format format-check typecheck quality quality-all build clean install uninstall lock version dev-setup dev-test dev-check ci-test ci-quality ci-all docs-setup docs-build docs-serve docs-clean
+.PHONY: help setup test test-parallel lint format typecheck quality build clean coverage docs-setup docs-build docs-serve docs-clean
 
 # Default target
 .DEFAULT_GOAL := help
@@ -18,26 +10,14 @@ YELLOW := \033[0;33m
 RED := \033[0;31m
 NC := \033[0m # No Color
 
-# ==============================================================================
-# 📖 Help & Information
-# ==============================================================================
-
 help: ## Show this help message
 	@echo '$(BLUE)Available targets:$(NC)'
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
-
-# ==============================================================================
-# 🔧 Setup & Environment
-# ==============================================================================
 
 setup: ## Initialize development environment
 	@echo '$(BLUE)Setting up development environment...$(NC)'
 	uv sync
 	@echo '$(GREEN)✓ Development environment ready$(NC)'
-
-# ==============================================================================
-# 🧪 Testing
-# ==============================================================================
 
 test: ## Run all tests
 	@echo '$(BLUE)Running tests...$(NC)'
@@ -66,12 +46,8 @@ test-integration: ## Run only integration tests
 
 coverage: ## Run tests with coverage report
 	@echo '$(BLUE)Running tests with coverage...$(NC)'
-	uv run pytest --cov=src --cov-report=html --cov-report=term
+	uv run pytest --cov=pyvider.hcl --cov-report=html --cov-report=term
 	@echo '$(GREEN)✓ Coverage report generated in htmlcov/$(NC)'
-
-# ==============================================================================
-# 🔍 Code Quality
-# ==============================================================================
 
 lint: ## Run linter (ruff check)
 	@echo '$(BLUE)Running linter...$(NC)'
@@ -104,18 +80,10 @@ quality: lint typecheck ## Run all quality checks (lint + typecheck)
 quality-all: format-check lint typecheck test ## Run all quality checks including tests
 	@echo '$(GREEN)✓ All quality checks and tests passed$(NC)'
 
-# ==============================================================================
-# 🏗️ Build & Package
-# ==============================================================================
-
 build: ## Build package
 	@echo '$(BLUE)Building package...$(NC)'
 	uv build
 	@echo '$(GREEN)✓ Package built in dist/$(NC)'
-
-# ==============================================================================
-# 🧹 Clean
-# ==============================================================================
 
 clean: ## Clean build artifacts and caches
 	@echo '$(BLUE)Cleaning build artifacts...$(NC)'
@@ -134,10 +102,6 @@ clean: ## Clean build artifacts and caches
 	find . -type f -name "*.pyo" -delete 2>/dev/null || true
 	@echo '$(GREEN)✓ Cleanup complete$(NC)'
 
-# ==============================================================================
-# 📦 Package Management
-# ==============================================================================
-
 install: ## Install package in development mode
 	@echo '$(BLUE)Installing package in development mode...$(NC)'
 	uv pip install -e .
@@ -145,7 +109,7 @@ install: ## Install package in development mode
 
 uninstall: ## Uninstall package
 	@echo '$(BLUE)Uninstalling package...$(NC)'
-	uv pip uninstall -y $$(grep '^name = ' pyproject.toml | cut -d'"' -f2)
+	uv pip uninstall pyvider-hcl -y
 	@echo '$(GREEN)✓ Package uninstalled$(NC)'
 
 lock: ## Update dependency lock file
@@ -155,12 +119,9 @@ lock: ## Update dependency lock file
 
 version: ## Show package version
 	@echo '$(BLUE)Package version:$(NC)'
-	@cat VERSION 2>/dev/null || grep '^version = ' pyproject.toml | cut -d'"' -f2
+	@cat VERSION
 
-# ==============================================================================
-# 🚀 Development Workflow Shortcuts
-# ==============================================================================
-
+# Development workflow shortcuts
 dev-setup: setup ## Alias for setup
 	@echo '$(GREEN)✓ Ready for development$(NC)'
 
@@ -170,10 +131,7 @@ dev-test: test-parallel ## Quick test run for development
 dev-check: format lint typecheck ## Quick quality check for development
 	@echo '$(GREEN)✓ Development checks complete$(NC)'
 
-# ==============================================================================
-# 🤖 CI/CD Targets
-# ==============================================================================
-
+# CI/CD targets
 ci-test: test-parallel coverage ## Run tests with coverage for CI
 	@echo '$(GREEN)✓ CI tests complete$(NC)'
 
@@ -183,10 +141,7 @@ ci-quality: format-check lint typecheck ## Run all quality checks for CI
 ci-all: ci-quality ci-test build ## Run full CI pipeline
 	@echo '$(GREEN)✓ Full CI pipeline complete$(NC)'
 
-# ==============================================================================
-# 📚 Documentation
-# ==============================================================================
-
+# Documentation targets
 docs-setup:
 	@python -c "from provide.foundry.config import extract_base_mkdocs; from pathlib import Path; extract_base_mkdocs(Path('.'))"
 
