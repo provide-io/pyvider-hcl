@@ -47,7 +47,7 @@ def auto_infer_cty_type(raw_data: Any) -> CtyValue[Any]:
     """
     # Use pyvider-cty's canonical inference implementation
     inferred_type = infer_cty_type_from_raw(raw_data)
-    return inferred_type.validate(raw_data)  # type: ignore[no-any-return]
+    return inferred_type.validate(raw_data)
 
 
 # 📄⚙️🔚

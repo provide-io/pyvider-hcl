@@ -101,6 +101,7 @@ addopts = "-ra -q --color=yes"
 line-length = 111
 indent-width = 4
 target-version = "py311"
+extend-exclude = ["mutants", "site"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "ANN", "B", "C90", "SIM", "PTH", "RUF"]
@@ -131,6 +132,7 @@ show_column_numbers = true
 warn_unused_ignores = true
 warn_unused_configs = true
 disallow_untyped_decorators = false
+exclude = ["^mutants/"]
 
 [[tool.mypy.overrides]]
 module = ["hcl2.*", "pytest.*", "opentelemetry.*"]
