@@ -111,10 +111,6 @@ pyvider-hcl/
 │   ├── architecture.md      # Architecture details
 │   ├── getting-started.md   # Getting started guide
 │   └── guides/              # Topic-specific guides
-├── scripts/                  # Development scripts
-│   ├── setup.sh             # Environment setup
-│   ├── test.sh              # Test runner
-│   └── quality.sh           # Quality checks
 ├── Makefile                  # Build automation
 └── pyproject.toml            # Project configuration
 ```
