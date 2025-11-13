@@ -76,6 +76,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks integration tests",
     "unit: marks unit tests",
+    "isolated: marks tests that must run in isolation to avoid state pollution",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
@@ -91,7 +92,7 @@ norecursedirs = [
     "htmlcov",
     ".hypothesis",
 ]
-addopts = "-ra -q --color=yes"
+addopts = "-m 'not isolated' -ra -q --color=yes"
 
 # ---------------------------------------------------------------------------- #
 # ruff configuration
