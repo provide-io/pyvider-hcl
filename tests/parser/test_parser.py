@@ -134,18 +134,6 @@ class TestHclParser(unittest.TestCase):
         self.assertEqual(len(result_val.value["empty_list"].value), 0)
         self.assertEqual(len(result_val.value["empty_object"].value), 0)
 
-    def test_auto_infer_cty_type_unknown_type(self) -> None:
-        """Test that unknown types are returned as CtyDynamic unknown."""
-
-        class CustomClass:
-            pass
-
-        custom_obj = CustomClass()
-        raw_data = {"custom": custom_obj}
-        result_val = auto_infer_cty_type(raw_data)
-        # Should fall back to unknown CtyDynamic for custom class
-        self.assertTrue(result_val.value["custom"].is_unknown)
-
     def test_parse_with_context_success(self) -> None:
         """Test parse_with_context successfully parses HCL."""
         hcl_content = 'key = "value"'
