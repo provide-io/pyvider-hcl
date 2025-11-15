@@ -17,9 +17,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v1
       - name: Install dependencies
-        run: uv sync --all-extras
-      - name: Install project with dev dependencies
-        run: uv pip install -e .[dev]
+        run: uv sync --all-groups
       - name: Build
         run: uv run python -m build
       - name: Publish

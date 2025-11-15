@@ -2,34 +2,25 @@ name: Main Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
   lint-and-format:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
         with:
-          path: provide-io
+          python-version: '3.12'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
       - name: Install dependencies
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install uv
-          uv sync --all-extras
-      - name: Install project with dev dependencies
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          source .venv/bin/activate
-          uv pip install -e .[dev]
-          pip install -e provide-io/pyvider-cty
+        run: uv sync --all-groups
       - name: Lint and Format
-        working-directory: provide-io/pyvider-hcl
         run: |
-          source .venv/bin/activate
           uv run ruff check .
           uv run ruff format . --check
 
@@ -37,25 +28,16 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
         with:
-          path: provide-io
+          python-version: '3.12'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
       - name: Install dependencies
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install uv
-          uv sync --all-extras
-      - name: Install project with dev dependencies
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          source .venv/bin/activate
-          uv pip install -e .[dev]
+        run: uv sync --all-groups
       - name: Type Check
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          source .venv/bin/activate
-          uv run mypy src
+        run: uv run mypy src
 
   test:
     runs-on: ${{ matrix.os }}
@@ -65,26 +47,13 @@ jobs:
         python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v3
-        with:
-          path: provide-io
       - name: Set up Python ${{ matrix.python-version }}
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install uv
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
       - name: Install dependencies
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          source .venv/bin/activate
-          uv sync --all-extras
-      - name: Install project with dev dependencies
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          source .venv/bin/activate
-          uv pip install -e .[dev]
+        run: uv sync --all-groups
       - name: Test
-        working-directory: provide-io/pyvider-hcl
-        run: |
-          source .venv/bin/activate
-          uv run pytest
+        run: uv run pytest

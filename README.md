@@ -1,11 +1,5 @@
 # pyvider-hcl
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![uv](https://img.shields.io/badge/uv-package_manager-FF6B35.svg)](https://github.com/astral-sh/uv)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![CI](https://github.com/provide-io/pyvider-hcl/actions/workflows/ci.yml/badge.svg)](https://github.com/provide-io/pyvider-hcl/actions)
-
 `pyvider-hcl` is a Python library for parsing HCL (HashiCorp Configuration Language) into `pyvider.cty` types. It provides a simple and intuitive way to work with HCL data in your Python applications.
 
 This library is mostly a wrapper around the excellent `python-hcl2` library. `pyvider-hcl` differentiates itself by providing:
@@ -16,11 +10,10 @@ This library is mostly a wrapper around the excellent `python-hcl2` library. `py
 
 ## Features
 
-- Parse HCL strings into `pyvider.cty` values
-- Automatically infer `CtyType` from HCL data
-- Validate HCL data against a `CtyType` schema
-- Create `CtyValue` objects for Terraform variables and resources
-- Pretty print CTY values for debugging
+- Parse HCL strings and files into `pyvider.cty` values.
+- Automatically infer `CtyType` from HCL data.
+- Validate HCL data against a `CtyType` schema.
+- Create `CtyValue` objects for Terraform variables and resources.
 
 ## Installation
 
@@ -190,127 +183,3 @@ resource_cty = create_resource_cty(
 
 pretty_print_cty(resource_cty)
 ```
-
-## FAQ
-
-### How do I parse an HCL file?
-
-Currently, you need to read the file manually and pass the content to `parse_hcl_to_cty()`:
-
-```python
-from pathlib import Path
-from pyvider.hcl import parse_hcl_to_cty
-
-hcl_content = Path("config.hcl").read_text()
-result = parse_hcl_to_cty(hcl_content)
-```
-
-### Can this library generate HCL output?
-
-No, `pyvider-hcl` is currently focused on parsing HCL into CTY types. It does not generate HCL output. You can use the `pretty_print_cty()` function to display CTY values in a readable format, but this is not HCL syntax.
-
-### Does this support HCL expressions like `var.name` or `length(list)`?
-
-Not yet. The library currently parses static HCL data. Expression evaluation (variables, functions, conditionals) is planned for a future release.
-
-### What's the difference between `parse_hcl_to_cty()` and `parse_with_context()`?
-
-- **`parse_hcl_to_cty()`**: Returns a `CtyValue` object with full type information. Use this for most cases.
-- **`parse_with_context()`**: Returns raw Python dict/list from the parser. Use this when you need the raw data structure or want enhanced error context without CTY conversion.
-
-### How do I validate HCL against a specific structure?
-
-Pass a CTY schema to `parse_hcl_to_cty()`:
-
-```python
-from pyvider.hcl import parse_hcl_to_cty
-from pyvider.cty import CtyObject, CtyString, CtyNumber
-
-schema = CtyObject({
-    "name": CtyString(),
-    "port": CtyNumber(),
-})
-
-result = parse_hcl_to_cty(hcl_content, schema=schema)
-# Raises HclParsingError if validation fails
-```
-
-### Can I use this with Terraform configurations?
-
-Yes! The library parses HCL syntax used by Terraform. The `create_variable_cty()` and `create_resource_cty()` factory functions help create Terraform-specific structures. However, full Terraform-specific validation (provider blocks, module blocks, etc.) is not yet implemented.
-
-### What HCL version is supported?
-
-The library uses `python-hcl2` which supports HCL 2.x (the version used by Terraform 0.12+).
-
-### How do I handle parsing errors?
-
-Wrap your parsing calls in a try/except block:
-
-```python
-from pyvider.hcl import parse_hcl_to_cty, HclParsingError
-
-try:
-    result = parse_hcl_to_cty(hcl_content)
-except HclParsingError as e:
-    print(f"Parsing failed: {e}")
-    # e.source_file, e.line, e.column available if set
-```
-
-### Can I parse multiple HCL files at once?
-
-You need to parse each file individually. For multi-file Terraform projects, parse each file separately and combine the results as needed.
-
-### What types can be automatically inferred?
-
-When no schema is provided, the library automatically infers:
-- `string` → `CtyString`
-- `number` (int/float) → `CtyNumber`
-- `bool` → `CtyBool`
-- `list` → `CtyList(CtyDynamic())`
-- `object` → `CtyObject` with inferred field types
-
-### How do I contribute or report bugs?
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines. For bugs, please open an issue on the GitHub repository with:
-- The HCL content that fails
-- The error message
-- Expected vs. actual behavior
-
-## Documentation
-
-- **[User Guide](docs/guide.md)**: Detailed usage examples and patterns
-- **[API Reference](docs/api/index.md)**: Complete API documentation
-- **[Architecture](docs/architecture.md)**: System design and data flow diagrams
-- **[Contributing](CONTRIBUTING.md)**: Guidelines for contributors
-- **[Changelog](CHANGELOG.md)**: Version history and release notes
-
-## Development
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
-
-Quick start for development:
-
-```bash
-# Clone and setup
-git clone https://github.com/provide-io/pyvider-hcl.git
-cd pyvider-hcl
-uv sync
-
-# Run tests
-uv run pytest -n auto
-
-# Format and lint
-uv run ruff format .
-uv run ruff check .
-```
-
-## License
-
-Apache-2.0 License - see [LICENSE](LICENSE) for details.
-
-## Related Projects
-
-- [pyvider-cty](https://github.com/provide-io/pyvider-cty): CTY type system for Python
-- [pyvider](https://github.com/provide-io/pyvider): Terraform provider framework for Python
-- [provide-foundation](https://github.com/provide-io/provide-foundation): Foundation services and utilities
