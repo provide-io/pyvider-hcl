@@ -4,8 +4,8 @@
 
 [project]
 name = "pyvider-hcl"
+dynamic = ["version"]
 description = "Pyvider HCL: A wrapper for python-hcl2 integrating with Pyvider's Cty type system."
-version = "0.0.113"
 requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -60,6 +60,9 @@ package-dir = {"" = "src"} # Specifies that packages are under src
 where = ["src"]
 namespaces = true # Important for pyvider.hcl as a namespace package
 
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
+
 ################################################################################
 # Pytest Configuration
 ################################################################################
@@ -90,7 +93,7 @@ addopts = "-ra -q --color=yes"
 # ---------------------------------------------------------------------------- #
 
 [tool.ruff]
-line-length = 88
+line-length = 111
 indent-width = 4
 target-version = "py311"
 
