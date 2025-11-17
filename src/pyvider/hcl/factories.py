@@ -20,6 +20,7 @@ from pyvider.cty import (
     CtyValue,
 )
 from pyvider.cty.exceptions import CtyError
+from pyvider.cty.exceptions.validation import CtyValidationError
 from pyvider.hcl.parser import auto_infer_cty_type
 
 logger = logging.getLogger(__name__)
@@ -40,9 +41,7 @@ PRIMITIVE_TYPE_MAP: dict[str, CtyType[Any]] = {
     "any": CtyDynamic(),
 }
 
-COMPLEX_TYPE_REGEX = re.compile(
-    r"^(list|object|map)\((.*)\)$", re.IGNORECASE | re.DOTALL
-)
+COMPLEX_TYPE_REGEX = re.compile(r"^(list|object|map)\((.*)\)$", re.IGNORECASE | re.DOTALL)
 
 
 def _parse_hcl_type_string(type_str: str) -> CtyType[Any]:
@@ -100,9 +99,7 @@ def _parse_object_attributes_str(attrs_str: str) -> dict[str, CtyType[Any]]:
         elif char == "," and balance == 0:
             part = attrs_str[last_break:i].strip()
             if not part:
-                raise HclTypeParsingError(
-                    f"Empty attribute part found in '{attrs_str}'"
-                )
+                raise HclTypeParsingError(f"Empty attribute part found in '{attrs_str}'")
             name, type_str = _split_attr_part(part)
             attributes[name] = _parse_hcl_type_string(type_str)
             last_break = i + 1
@@ -111,9 +108,7 @@ def _parse_object_attributes_str(attrs_str: str) -> dict[str, CtyType[Any]]:
         name, type_str = _split_attr_part(last_part)
         attributes[name] = _parse_hcl_type_string(type_str)
     elif attrs_str.strip().endswith(","):
-        raise HclTypeParsingError(
-            f"Trailing comma found in attribute string: '{attrs_str}'"
-        )
+        raise HclTypeParsingError(f"Trailing comma found in attribute string: '{attrs_str}'")
     return attributes
 
 
@@ -137,9 +132,7 @@ def create_variable_cty(
     nullable: bool | None = None,
 ) -> CtyValue[Any]:
     if not name or not name.isidentifier():
-        raise HclFactoryError(
-            f"Invalid variable name: '{name}'. Must be a valid identifier."
-        )
+        raise HclFactoryError(f"Invalid variable name: '{name}'. Must be a valid identifier.")
     try:
         parsed_variable_type = _parse_hcl_type_string(type_str)
     except HclTypeParsingError as e:
@@ -154,7 +147,7 @@ def create_variable_cty(
     if default_py is not None:
         try:
             parsed_variable_type.validate(default_py)
-        except CtyError as e:
+        except (CtyError, CtyValidationError) as e:
             raise HclFactoryError(
                 f"Default value for variable '{name}' is not compatible with type '{type_str}': {e}"
             ) from e
@@ -170,11 +163,7 @@ def create_variable_cty(
         variable_attrs_schema["default"] = parsed_variable_type
     root_py_struct = {"variable": [{name: variable_attrs_py}]}
     root_schema = CtyObject(
-        {
-            "variable": CtyList(
-                element_type=CtyObject({name: CtyObject(variable_attrs_schema)})
-            )
-        }
+        {"variable": CtyList(element_type=CtyObject({name: CtyObject(variable_attrs_schema)}))}
     )
     try:
         return root_schema.validate(root_py_struct)
@@ -224,13 +213,7 @@ def create_resource_cty(
         {
             "resource": CtyList(
                 element_type=CtyObject(
-                    {
-                        r_type: CtyList(
-                            element_type=CtyObject(
-                                {r_name: CtyObject(attributes_cty_schema)}
-                            )
-                        )
-                    }
+                    {r_type: CtyList(element_type=CtyObject({r_name: CtyObject(attributes_cty_schema)}))}
                 )
             )
         }
