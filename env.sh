@@ -118,17 +118,106 @@ fi
 
 # Set UV project environment early so uv commands use the correct venv
 export UV_PROJECT_ENVIRONMENT="${VENV_DIR}"
+# --- Python Version Compatibility Check ---
+RECREATE_VENV=false
+print_header "🐍 Checking Python Version Compatibility"
+
+# Get project's Python requirement
+PROJECT_PYTHON_REQ=">=3.11"
+echo "Project requires Python ${PROJECT_PYTHON_REQ}"
+
+# Function to check if we need to recreate venv
+check_python_version() {
+    local venv_dir="$1"
+    local python_bin="${venv_dir}/bin/python"
+    
+    if [ ! -f "${python_bin}" ]; then
+        return 1  # No venv exists
+    fi
+    
+    # Get current venv Python version
+    local venv_version=$("${python_bin}" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" 2>/dev/null)
+    
+    if [ -z "${venv_version}" ]; then
+        return 1  # Couldn't get version
+    fi
+    
+    echo "Current venv has Python ${venv_version}"
+    
+    # Check if version file exists and matches
+    local version_file="${venv_dir}/.python-version"
+    if [ -f "${version_file}" ]; then
+        local saved_version=$(cat "${version_file}")
+        if [ "${saved_version}" != "${venv_version}" ]; then
+            print_warning "Python version mismatch detected!"
+            return 2  # Version mismatch
+        fi
+    fi
+    
+    # Check compatibility with project requirement
+    "${python_bin}" -c "
+import sys
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
+
+requirement = '${PROJECT_PYTHON_REQ}'
+current = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}'
+
+try:
+    spec = SpecifierSet(requirement)
+    version = Version(current)
+    if version not in spec:
+        sys.exit(1)
+except:
+    # If packaging is not available, do simple comparison
+    import re
+    match = re.match(r'>=(\d+)\.(\d+)', requirement)
+    if match:
+        req_major, req_minor = int(match.group(1)), int(match.group(2))
+        if sys.version_info.major < req_major or (sys.version_info.major == req_major and sys.version_info.minor < req_minor):
+            sys.exit(1)
+" 2>/dev/null
+    
+    if [ $? -ne 0 ]; then
+        print_warning "Python ${venv_version} does not meet requirement ${PROJECT_PYTHON_REQ}"
+        return 2  # Incompatible version
+    fi
+    
+    return 0  # All good
+}
+
+# Check if we need to recreate the venv
+RECREATE_VENV=false
+if [ -d "${VENV_DIR}" ]; then
+    check_python_version "${VENV_DIR}"
+    CHECK_RESULT=$?
+    
+    if [ $CHECK_RESULT -eq 2 ]; then
+        RECREATE_VENV=true
+        print_warning "Virtual environment needs to be recreated due to Python version mismatch"
+        echo "Backing up current venv to ${VENV_DIR}.backup..."
+        mv "${VENV_DIR}" "${VENV_DIR}.backup"
+    fi
+fi
+
 # --- Virtual Environment ---
 print_header "🐍 Setting Up Virtual Environment"
 echo "Directory: ${VENV_DIR}"
 
-if [ -d "${VENV_DIR}" ] && [ -f "${VENV_DIR}/bin/activate" ] && [ -f "${VENV_DIR}/bin/python" ]; then
+if [ -d "${VENV_DIR}" ] && [ -f "${VENV_DIR}/bin/activate" ] && [ -f "${VENV_DIR}/bin/python" ] && [ "${RECREATE_VENV}" != "true" ]; then
     print_success "Virtual environment exists"
 else
-    echo -n "Creating virtual environment..."
+    if [ "${RECREATE_VENV}" = "true" ]; then
+        echo -n "Recreating virtual environment with correct Python version..."
+    else
+        echo -n "Creating virtual environment..."
+    fi
     uv venv "${VENV_DIR}" > /tmp/uv_venv.log 2>&1 &
     spinner $!
     print_success "Virtual environment created"
+    
+    # Save Python version for future checks
+    ${VENV_DIR}/bin/python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" > "${VENV_DIR}/.python-version"
 fi
 
 # Activate virtual environment
@@ -178,115 +267,6 @@ print_header "🤝 Installing Sibling Packages"
 PARENT_DIR=$(dirname "$(pwd)")
 SIBLING_COUNT=0
 
-# New unified siblings configuration
-# Sibling with configuration
-# Pattern-based sibling
-for dir in "${PARENT_DIR}"/pyvider-*; do
-    if [ -d "${dir}" ]; then
-        SIBLING_NAME=$(basename "${dir}")
-        echo -n "Installing ${SIBLING_NAME} with dependencies..."
-        # If with_deps is true, first try normal install, then fallback to local-only
-        uv pip install -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log 2>&1 &
-        INSTALL_PID=$!
-        spinner $INSTALL_PID
-        wait $INSTALL_PID
-        if [ $? -ne 0 ]; then
-            echo -n " Retrying with local version only..."
-            uv pip install --force-reinstall --no-deps -e "${dir}" > /tmp/pyvider-hcl_setup/${SIBLING_NAME}_local.log 2>&1 &
-            INSTALL_PID=$!
-            spinner $INSTALL_PID
-            wait $INSTALL_PID
-            if [ $? -eq 0 ]; then
-                print_success "${SIBLING_NAME} installed (local, no deps)"
-                print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/${SIBLING_NAME}.log"
-            else
-                print_error "${SIBLING_NAME} installation failed"
-            fi
-        else
-            print_success "${SIBLING_NAME} installed"
-        fi
-        ((SIBLING_COUNT++))
-    fi
-done
-# Sibling with configuration
-# Explicit sibling
-tofusoup_DIR="${PARENT_DIR}/tofusoup"
-if [ -d "${TOFUSOUP_DIR}" ]; then
-    echo -n "Installing tofusoup with dependencies..."
-    uv pip install -e "${TOFUSOUP_DIR}" > /tmp/pyvider-hcl_setup/tofusoup.log 2>&1 &
-    INSTALL_PID=$!
-    spinner $INSTALL_PID
-    wait $INSTALL_PID
-    if [ $? -ne 0 ]; then
-        echo -n " Retrying with local version only..."
-        uv pip install --force-reinstall --no-deps -e "${TOFUSOUP_DIR}" > /tmp/pyvider-hcl_setup/tofusoup_local.log 2>&1 &
-        INSTALL_PID=$!
-        spinner $INSTALL_PID
-        wait $INSTALL_PID
-        if [ $? -eq 0 ]; then
-            print_success "tofusoup installed (local, no deps)"
-            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/tofusoup.log"
-        else
-            print_error "tofusoup installation failed"
-        fi
-    else
-        print_success "tofusoup installed"
-    fi
-    ((SIBLING_COUNT++))
-fi
-# Sibling with configuration
-# Explicit sibling
-flavor_DIR="${PARENT_DIR}/flavor"
-if [ -d "${FLAVOR_DIR}" ]; then
-    echo -n "Installing flavor with dependencies..."
-    uv pip install -e "${FLAVOR_DIR}" > /tmp/pyvider-hcl_setup/flavor.log 2>&1 &
-    INSTALL_PID=$!
-    spinner $INSTALL_PID
-    wait $INSTALL_PID
-    if [ $? -ne 0 ]; then
-        echo -n " Retrying with local version only..."
-        uv pip install --force-reinstall --no-deps -e "${FLAVOR_DIR}" > /tmp/pyvider-hcl_setup/flavor_local.log 2>&1 &
-        INSTALL_PID=$!
-        spinner $INSTALL_PID
-        wait $INSTALL_PID
-        if [ $? -eq 0 ]; then
-            print_success "flavor installed (local, no deps)"
-            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/flavor.log"
-        else
-            print_error "flavor installation failed"
-        fi
-    else
-        print_success "flavor installed"
-    fi
-    ((SIBLING_COUNT++))
-fi
-# Sibling with configuration
-# Explicit sibling
-wrkenv_DIR="${PARENT_DIR}/wrkenv"
-if [ -d "${WRKENV_DIR}" ]; then
-    echo -n "Installing wrkenv with dependencies..."
-    uv pip install -e "${WRKENV_DIR}" > /tmp/pyvider-hcl_setup/wrkenv.log 2>&1 &
-    INSTALL_PID=$!
-    spinner $INSTALL_PID
-    wait $INSTALL_PID
-    if [ $? -ne 0 ]; then
-        echo -n " Retrying with local version only..."
-        uv pip install --force-reinstall --no-deps -e "${WRKENV_DIR}" > /tmp/pyvider-hcl_setup/wrkenv_local.log 2>&1 &
-        INSTALL_PID=$!
-        spinner $INSTALL_PID
-        wait $INSTALL_PID
-        if [ $? -eq 0 ]; then
-            print_success "wrkenv installed (local, no deps)"
-            print_warning "Some dependencies may be missing - check /tmp/pyvider-hcl_setup/wrkenv.log"
-        else
-            print_error "wrkenv installation failed"
-        fi
-    else
-        print_success "wrkenv installed"
-    fi
-    ((SIBLING_COUNT++))
-fi
-
 
 if [ $SIBLING_COUNT -eq 0 ]; then
     print_warning "No sibling packages found"
@@ -333,11 +313,11 @@ if command -v uv &> /dev/null; then
     printf "%-12s  %s\n" "" "$(uv --version 2>&1)"
 fi
 
-# wrkenv
-if command -v wrkenv &> /dev/null; then
-    WRKENV_PATH=$(command -v wrkenv 2>/dev/null || which wrkenv 2>/dev/null || echo "wrkenv")
-    printf "%-12s: %s\n" "wrkenv" "$WRKENV_PATH"
-    printf "%-12s  %s\n" "" "$(wrkenv --version 2>&1 || echo 'No version info')"
+# wrknv
+if command -v wrknv &> /dev/null; then
+    WRKENV_PATH=$(command -v wrknv 2>/dev/null || which wrknv 2>/dev/null || echo "wrknv")
+    printf "%-12s: %s\n" "wrknv" "$WRKENV_PATH"
+    printf "%-12s  %s\n" "" "$(wrknv --version 2>&1 || echo 'No version info')"
 fi
 
 # ibmtf
@@ -364,8 +344,8 @@ echo "Virtual environment: ${VENV_DIR}"
 echo "Profile: ${PROFILE}"
 echo -e "\nUseful commands:"
 echo "  pyvider-hcl --help  # pyvider-hcl CLI"
-echo "  wrkenv status  # Check tool versions"
-echo "  wrkenv container status  # Container status"
+echo "  wrknv status  # Check tool versions"
+echo "  wrknv container status  # Container status"
 echo "  pytest  # Run tests"
 echo "  deactivate  # Exit environment"
 

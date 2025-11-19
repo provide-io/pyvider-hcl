@@ -1,0 +1,65 @@
+# Inherit shared configuration from provide-foundry
+INHERIT: .provide/foundry/base-mkdocs.yml
+
+# Project-Specific Configuration
+site_name: Pyvider HCL
+site_description: HCL parsing and manipulation for Terraform configurations in Python
+site_author: provide.io
+site_url: https://foundry.provide.io/pyvider-hcl/
+repo_url: https://github.com/provide-io/pyvider-hcl
+repo_name: provide-io/pyvider-hcl
+edit_uri: edit/develop/docs/
+copyright: ©2024-2025 provide.io llc<br/>🛠️ with 💚 and 🦝 on 🌎
+
+# Development server configuration
+dev_addr: '127.0.0.1:11005'
+
+# Standalone mode settings
+docs_dir: docs
+
+# Project-specific theme overrides
+theme:
+  font:
+    text: Inter
+    code: Fira Code
+  palette:
+    # Light mode - custom colors for pyvider-hcl
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode - custom colors for pyvider-hcl
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+# Project-specific plugins (in addition to base plugins)
+plugins:
+  - gen-files:
+      scripts:
+        - .provide/foundry/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started.md
+    - Installation: getting-started/installation.md
+  - User Guide: guide.md
+  - Architecture: architecture.md
+  - Guides:
+    - Parsing HCL: guides/parsing.md
+    - Schema Validation: guides/schema-validation.md
+    - Type Inference: guides/type-inference.md
+    - Terraform Integration: guides/terraform-integration.md
+    - Error Handling: guides/error-handling.md
+    - Testing: guides/testing.md
+  - API Reference: reference/
