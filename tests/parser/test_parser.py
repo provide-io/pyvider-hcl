@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# pyvider-hcl/tests/test_parser.py
+# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+"""TODO: Add module docstring."""
 
 from pathlib import Path
 import unittest
@@ -14,7 +18,7 @@ from pyvider.cty import (
 )
 from pyvider.cty.exceptions import CtyValidationError
 from pyvider.hcl import HclParsingError, parse_hcl_to_cty
-from pyvider.hcl.parser import auto_infer_cty_type
+from pyvider.hcl.parser import auto_infer_cty_type, parse_with_context
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
 
@@ -43,35 +47,45 @@ class TestHclParser(unittest.TestCase):
         self.assertEqual(result.value["my_attr"].value, "A raw HCL string")
 
     def test_parse_with_nested_object_schema_pass(self) -> None:
+        """Test parsing nested objects with schema."""
         hcl_content = self.load_fixture("nested_object_valid.hcl")
         schema = CtyObject(
-            {"config": CtyList(element_type=CtyObject(
-                {
-                    "name": CtyString(),
-                    "owner": CtyObject(
+            {
+                "config": CtyList(
+                    element_type=CtyObject(
                         {
                             "name": CtyString(),
-                            "contact": CtyObject({"email": CtyString(), "phone": CtyString()}),
+                            "owner": CtyObject(
+                                {
+                                    "name": CtyString(),
+                                    "contact": CtyObject({"email": CtyString(), "phone": CtyString()}),
+                                }
+                            ),
+                            "threshold": CtyNumber(),
+                            "enabled": CtyBool(),
+                            "tags": CtyList(element_type=CtyString()),
                         }
-                    ),
-                    "threshold": CtyNumber(),
-                    "enabled": CtyBool(),
-                    "tags": CtyList(element_type=CtyString()),
-                }
-            ))}
+                    )
+                )
+            }
         )
         result = parse_hcl_to_cty(hcl_content, schema=schema)
         config_val = result.value["config"].value[0]
         self.assertEqual(config_val.value["owner"].value["contact"].value["email"].value, "admin@example.com")
 
     def test_parse_with_list_of_nested_objects_schema_pass(self) -> None:
+        """Test parsing list of objects with schema."""
         hcl_content = self.load_fixture("list_of_nested_objects_valid.hcl")
         item_spec_schema = CtyObject({"feature_a": CtyString(), "feature_b": CtyBool()})
         item_schema = CtyObject({"id": CtyString(), "value": CtyNumber(), "spec": item_spec_schema})
         schema = CtyObject(
-            {"item_group": CtyList(element_type=CtyObject(
-                {"items": CtyList(element_type=item_schema), "group_name": CtyString()}
-            ))}
+            {
+                "item_group": CtyList(
+                    element_type=CtyObject(
+                        {"items": CtyList(element_type=item_schema), "group_name": CtyString()}
+                    )
+                )
+            }
         )
         result = parse_hcl_to_cty(hcl_content, schema=schema)
         items_list_val = result.value["item_group"].value[0].value["items"]
@@ -79,13 +93,18 @@ class TestHclParser(unittest.TestCase):
         self.assertEqual(items_list_val.value[0].value["id"].value, "item1")
 
     def test_parse_with_list_of_nested_objects_schema_fail(self) -> None:
+        """Test that invalid list of objects fails validation."""
         hcl_content = self.load_fixture("list_of_nested_objects_invalid.hcl")
         item_spec_schema = CtyObject({"feature_a": CtyString(), "feature_b": CtyBool()})
         item_schema = CtyObject({"id": CtyString(), "value": CtyNumber(), "spec": item_spec_schema})
         schema = CtyObject(
-            {"item_group": CtyList(element_type=CtyObject(
-                {"items": CtyList(element_type=item_schema), "group_name": CtyString()}
-            ))}
+            {
+                "item_group": CtyList(
+                    element_type=CtyObject(
+                        {"items": CtyList(element_type=item_schema), "group_name": CtyString()}
+                    )
+                )
+            }
         )
         with self.assertRaises(HclParsingError) as cm:
             parse_hcl_to_cty(hcl_content, schema=schema)
@@ -114,3 +133,35 @@ class TestHclParser(unittest.TestCase):
         self.assertIsInstance(result_val.value["empty_object"].type, CtyObject)
         self.assertEqual(len(result_val.value["empty_list"].value), 0)
         self.assertEqual(len(result_val.value["empty_object"].value), 0)
+
+    def test_parse_with_context_success(self) -> None:
+        """Test parse_with_context successfully parses HCL."""
+        hcl_content = 'key = "value"'
+        result = parse_with_context(hcl_content)
+        self.assertEqual(result["key"], "value")
+
+    def test_parse_with_context_with_file(self) -> None:
+        """Test parse_with_context with source file path."""
+        hcl_content = self.load_fixture("simple_valid.hcl")
+        source_file = FIXTURE_DIR / "simple_valid.hcl"
+        result = parse_with_context(hcl_content, source_file=source_file)
+        self.assertIsInstance(result, dict)
+        self.assertIn("variable", result)
+
+    def test_parse_with_context_error(self) -> None:
+        """Test parse_with_context raises HclParsingError on invalid HCL."""
+        hcl_content = "invalid { unclosed"
+        with self.assertRaises(HclParsingError) as cm:
+            parse_with_context(hcl_content)
+        self.assertIsInstance(cm.exception, HclParsingError)
+
+    def test_parse_with_context_error_with_file(self) -> None:
+        """Test parse_with_context includes file path in error."""
+        hcl_content = "invalid { unclosed"
+        source_file = Path("/fake/path/config.hcl")
+        with self.assertRaises(HclParsingError) as cm:
+            parse_with_context(hcl_content, source_file=source_file)
+        self.assertEqual(cm.exception.source_file, str(source_file))
+
+
+# 📄⚙️🔚

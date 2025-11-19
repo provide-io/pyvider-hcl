@@ -404,6 +404,17 @@ workenv/
 
 # MkDocs build output
 site/
+docs/.shared-theme/
 
 # Provide tooling artifacts
-.provide/foundry/
+.provide/
+
+# Terraform state (sensitive)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Cache directories
+.mypy_cache/
+.ruff_cache/
