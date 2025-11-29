@@ -98,7 +98,7 @@ norecursedirs = [
     "htmlcov",
     ".hypothesis",
 ]
-addopts = "-m 'not isolated' -ra -q --color=yes"
+addopts = "-m 'not isolated' -ra -q --color=yes --dist load"
 
 # ---------------------------------------------------------------------------- #
 # ruff configuration
