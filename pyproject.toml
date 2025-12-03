@@ -28,7 +28,6 @@ classifiers = [
 dependencies = [
     "attrs>=25.3.0",
     "python-hcl2>=7.2.1",
-    #"pyvider-cty",
     "pyvider",
     "pyvider-cty",
     "provide-foundation",
