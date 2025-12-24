@@ -97,7 +97,8 @@ norecursedirs = [
     "htmlcov",
     ".hypothesis",
 ]
-addopts = "-m 'not isolated' -ra -q --color=yes --dist load"
+addopts = "-m 'not isolated' -ra -q --color=yes"
+# Parallel execution: pytest -n <workers> (range: 2-16, recommend: CPU cores or 8, max: 16 to avoid xdist hang)
 
 # ---------------------------------------------------------------------------- #
 # ruff configuration
