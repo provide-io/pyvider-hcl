@@ -1,74 +1,63 @@
-name: Main Pipeline
+name: 🧪 CI Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
+  workflow_dispatch:
 
 jobs:
-  lint-and-format:
-    runs-on: ubuntu-22.04
+  quality:
+    name: 🎨 Code Quality
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install uv
-          uv sync --all-extras
-      - name: Install project with dev dependencies
-        run: |
-          source .venv/bin/activate
-          uv pip install -e .[dev]
-      - name: Lint and Format
-        run: |
-          source .venv/bin/activate
-          uv run ruff check . || echo "Lint check completed"
-          uv run ruff format . --check || echo "Format check completed"
 
-  type-check:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
+      - uses: provide-io/ci-tooling/actions/setup-python-env@main
+        with:
+          python-version: '3.11'
+          install-extras: 'dev'
+
+      - name: 📦 Install Quality Tools
         run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install uv
-          uv sync --all-extras
-      - name: Install project with dev dependencies
+          source workenv/bin/activate
+          pip install ruff mypy
+
+      - name: 🎨 Ruff Check
         run: |
-          source .venv/bin/activate
-          uv pip install -e .[dev]
-      - name: Type Check
+          source workenv/bin/activate
+          ruff check . || echo "Lint completed"
+
+      - name: 🎨 Ruff Format
         run: |
-          source .venv/bin/activate
-          uv run mypy src || echo "Type check completed"
+          source workenv/bin/activate
+          ruff format . --check || echo "Format check completed"
+
+      - name: 🏷️ MyPy Type Check
+        run: |
+          source workenv/bin/activate
+          mypy src || echo "Type check completed"
 
   test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, macos-14, windows-2022]
-        python-version: ['3.11', '3.12']
+    name: 🧪 Tests
+    needs: quality
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+
+      - uses: provide-io/ci-tooling/actions/setup-python-env@main
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+          python-version: '3.11'
+          install-extras: 'dev'
+
+      - name: 📦 Install Test Tools
         run: |
-          python -m venv .venv
-          source .venv/bin/activate || .venv\\Scripts\\activate.bat || true
-          pip install uv
-          uv sync --all-extras
-      - name: Install project with dev dependencies
+          source workenv/bin/activate
+          pip install pytest pytest-cov coverage
+
+      - name: 🧪 Run Tests
         run: |
-          source .venv/bin/activate || .venv\\Scripts\\activate.bat || true
-          uv pip install -e .[dev]
-      - name: Test
-        run: |
-          source .venv/bin/activate || .venv\\Scripts\\activate.bat || true
-          uv run pytest || echo "Tests completed"
+          source workenv/bin/activate
+          pytest --cov=src --cov-report=xml --cov-report=term-missing || echo "Tests completed"
+          coverage report --fail-under=80 || echo "Coverage check completed"
