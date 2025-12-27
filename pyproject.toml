@@ -172,3 +172,6 @@ exclude_lines = [
 # provide-foundation = { path = "../provide-foundation", editable = true }
 # Note: provide-foundation removed from local sources for CI compatibility
 # Will use PyPI version when available
+
+[tool.bandit]
+exclude_dirs = [".venv", "tests", "workenv"]
