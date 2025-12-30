@@ -14,7 +14,6 @@ class HclError(FoundationError):
     """Base class for errors related to HCL processing in Pyvider."""
 
 
-
 @define(frozen=True, slots=True, auto_exc=True)
 class HclParsingError(HclError):
     """
