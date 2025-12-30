@@ -13,7 +13,6 @@ from provide.foundation.errors import FoundationError
 class HclError(FoundationError):
     """Base class for errors related to HCL processing in Pyvider."""
 
-    pass
 
 
 @define(frozen=True, slots=True, auto_exc=True)
