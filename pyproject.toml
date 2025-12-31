@@ -1,6 +1,12 @@
 #
 # pyvider-hcl/pyproject.toml
 #
+# HCL2 parser wrapper integrating with Pyvider's Cty type system
+#
+
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyvider-hcl"
@@ -50,10 +56,6 @@ dev = [
 docs = [
     "provide-testkit[docs]",
 ]
-
-[build-system]
-requires = ["setuptools>=75.0", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"} # Specifies that packages are under src
