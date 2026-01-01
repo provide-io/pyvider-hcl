@@ -41,7 +41,7 @@ def parse_with_context(content: str, source_file: Path | None = None) -> Any:
     source_str = str(source_file) if source_file else "string input"
 
     try:
-        return hcl2.loads(content)
+        return hcl2.loads(content)  # type: ignore[attr-defined]
     except Exception as e:
         logger.error(
             "HCL parsing failed",
