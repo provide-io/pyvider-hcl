@@ -71,5 +71,5 @@ pretty_print_cty(result)
 ## Need Help?
 
 - [User Guide](../docs/guide.md) - Detailed usage documentation
-- [API Reference](../docs/api/index.md) - Complete API documentation
+- [API Reference](../docs/reference/index.md) - Complete API documentation
 - [Architecture](../docs/architecture.md) - System design and internals
