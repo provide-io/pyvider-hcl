@@ -22,6 +22,46 @@ This library is mostly a wrapper around the excellent `python-hcl2` library. `py
 - Create `CtyValue` objects for Terraform variables and resources
 - Pretty print CTY values for debugging
 
+## Quick Start
+1. Install: `pip install pyvider-hcl`
+2. Read the [Getting Started guide](https://github.com/provide-io/pyvider-hcl/blob/main/docs/getting-started.md).
+3. Try the examples in [examples/README.md](https://github.com/provide-io/pyvider-hcl/blob/main/examples/README.md).
+
+## Documentation
+
+- **[User Guide](https://github.com/provide-io/pyvider-hcl/blob/main/docs/guide.md)**: Detailed usage examples and patterns
+- **[API Reference](https://github.com/provide-io/pyvider-hcl/blob/main/docs/reference/index.md)**: Complete API documentation
+- **[Architecture](https://github.com/provide-io/pyvider-hcl/blob/main/docs/architecture.md)**: System design and data flow diagrams
+- **[Contributing](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md)**: Guidelines for contributors
+- **[Changelog](https://github.com/provide-io/pyvider-hcl/blob/main/CHANGELOG.md)**: Version history and release notes
+
+## Development
+
+See [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md) for development setup and guidelines.
+
+Quick start for development:
+
+```bash
+# Clone and setup
+git clone https://github.com/provide-io/pyvider-hcl.git
+cd pyvider-hcl
+uv sync
+
+# Run tests
+uv run pytest -n auto
+
+# Format and lint
+uv run ruff format .
+uv run ruff check .
+```
+
+## Contributing
+See [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md) for contribution guidelines.
+
+## License
+
+Apache-2.0 License - see [LICENSE](https://github.com/provide-io/pyvider-hcl/blob/main/LICENSE) for details.
+
 ## Installation
 
 To install `pyvider-hcl`, you can use `uv`:
@@ -272,45 +312,15 @@ When no schema is provided, the library automatically infers:
 
 ### How do I contribute or report bugs?
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines. For bugs, please open an issue on the GitHub repository with:
+See [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md) for contribution guidelines. For bugs, please open an issue on the GitHub repository with:
 - The HCL content that fails
 - The error message
 - Expected vs. actual behavior
-
-## Documentation
-
-- **[User Guide](docs/guide.md)**: Detailed usage examples and patterns
-- **[API Reference](docs/api/index.md)**: Complete API documentation
-- **[Architecture](docs/architecture.md)**: System design and data flow diagrams
-- **[Contributing](CONTRIBUTING.md)**: Guidelines for contributors
-- **[Changelog](CHANGELOG.md)**: Version history and release notes
-
-## Development
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
-
-Quick start for development:
-
-```bash
-# Clone and setup
-git clone https://github.com/provide-io/pyvider-hcl.git
-cd pyvider-hcl
-uv sync
-
-# Run tests
-uv run pytest -n auto
-
-# Format and lint
-uv run ruff format .
-uv run ruff check .
-```
-
-## License
-
-Apache-2.0 License - see [LICENSE](LICENSE) for details.
 
 ## Related Projects
 
 - [pyvider-cty](https://github.com/provide-io/pyvider-cty): CTY type system for Python
 - [pyvider](https://github.com/provide-io/pyvider): Terraform provider framework for Python
 - [provide-foundation](https://github.com/provide-io/provide-foundation): Foundation services and utilities
+
+Copyright (c) Provide.io LLC.
