@@ -251,7 +251,7 @@ No, `pyvider-hcl` is currently focused on parsing HCL into CTY types. It does no
 
 ### Does this support HCL expressions like `var.name` or `length(list)`?
 
-Not yet. The library currently parses static HCL data. Expression evaluation (variables, functions, conditionals) is planned for a future release.
+Not yet. The library currently parses static HCL data. Expression evaluation (variables, functions, conditionals) is exploratory and may change or be removed.
 
 ### What's the difference between `parse_hcl_to_cty()` and `parse_with_context()`?
 
@@ -277,7 +277,7 @@ result = parse_hcl_to_cty(hcl_content, schema=schema)
 
 ### Can I use this with Terraform configurations?
 
-Yes! The library parses HCL syntax used by Terraform. The `create_variable_cty()` and `create_resource_cty()` factory functions help create Terraform-specific structures. However, full Terraform-specific validation (provider blocks, module blocks, etc.) is not yet implemented.
+Yes! The library parses HCL syntax used by Terraform. The `create_variable_cty()` and `create_resource_cty()` factory functions help create Terraform-specific structures. Full Terraform-specific validation (provider blocks, module blocks, etc.) is limited.
 
 ### What HCL version is supported?
 
@@ -323,4 +323,4 @@ See [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRI
 - [pyvider](https://github.com/provide-io/pyvider): Terraform provider framework for Python
 - [provide-foundation](https://github.com/provide-io/provide-foundation): Foundation services and utilities
 
-Copyright (c) Provide.io LLC.
+Copyright (c) provide.io LLC.
