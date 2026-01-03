@@ -29,7 +29,7 @@ uv add pyvider-hcl
 ### Using pip
 
 ```bash
-pip install pyvider-hcl
+uv add pyvider-hcl
 ```
 
 ### From Source
