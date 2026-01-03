@@ -161,9 +161,9 @@ _pretty_print_cty_recursive()
 **Modules:**
 - **`config.py`**: Terraform configuration parsing - contains `parse_terraform_config()`
 
-**Status:** Placeholder for future implementation
+**Status:** Placeholder for exploratory implementation
 
-**Planned Responsibilities:**
+**Exploratory Responsibilities:**
 - Parse Terraform-specific blocks (provider, module, data, etc.)
 - Handle Terraform configuration files
 - Validate Terraform-specific structures
@@ -383,5 +383,5 @@ User catches exception with:
 2. **Type Safety:** All values go through CTY type system
 3. **Error Context:** Rich error messages with source locations
 4. **Composability:** Small, focused modules that work together
-5. **Extensibility:** Clear extension points for future features
+5. **Extensibility:** Clear extension points for potential features
 6. **Testability:** All functions are pure and easily testable
