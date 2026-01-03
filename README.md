@@ -1,4 +1,4 @@
-# pyvider-hcl
+# 📄⚙️ Pyvider HCL
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -6,21 +6,18 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![CI](https://github.com/provide-io/pyvider-hcl/actions/workflows/ci.yml/badge.svg)](https://github.com/provide-io/pyvider-hcl/actions)
 
-`pyvider-hcl` is a Python library for parsing HCL (HashiCorp Configuration Language) into `pyvider.cty` types. It provides a simple and intuitive way to work with HCL data in your Python applications.
+**Python library for parsing HCL into pyvider.cty types**
 
-This library is mostly a wrapper around the excellent `python-hcl2` library. `pyvider-hcl` differentiates itself by providing:
+pyvider-hcl provides a simple and intuitive way to work with HCL (HashiCorp Configuration Language) data in your Python applications, with seamless integration into the pyvider ecosystem.
 
-- **Seamless `pyvider.cty` Integration:** `pyvider-hcl` is designed to work with `pyvider.cty` out of the box. It parses HCL directly into `CtyValue` objects, making it easy to integrate with other `pyvider` tools.
-- **Simplified API:** `pyvider-hcl` provides a simplified API for parsing HCL and creating Terraform variables and resources.
-- **Automatic Type Inference:** `pyvider-hcl` can automatically infer `CtyType` from HCL data, saving you the hassle of defining a schema for every HCL file.
+## ✨ Key Features
 
-## Features
-
-- Parse HCL strings into `pyvider.cty` values
-- Automatically infer `CtyType` from HCL data
-- Validate HCL data against a `CtyType` schema
-- Create `CtyValue` objects for Terraform variables and resources
-- Pretty print CTY values for debugging
+- 🔄 **CTY Integration** - Parses HCL directly into `CtyValue` objects for pyvider compatibility
+- 🎯 **Simplified API** - Clean interface for parsing HCL and creating Terraform structures
+- 🔍 **Automatic Type Inference** - Infer `CtyType` from HCL data without explicit schemas
+- ✅ **Schema Validation** - Validate HCL data against CTY type schemas
+- 🏭 **Factory Functions** - Create Terraform variables and resources programmatically
+- 🖨️ **Pretty Printing** - Debug-friendly output for CTY values
 
 ## Quick Start
 1. Install: `uv add pyvider-hcl`
