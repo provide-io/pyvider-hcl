@@ -20,6 +20,9 @@ pyvider-hcl provides a simple and intuitive way to work with HCL (HashiCorp Conf
 - 🖨️ **Pretty Printing** - Debug-friendly output for CTY values
 
 ## Quick Start
+
+> **Note**: pyvider-hcl is in pre-release (v0.x.x). APIs and features may change before 1.0 release.
+
 1. Install: `uv add pyvider-hcl`
 2. Read the [Getting Started guide](https://github.com/provide-io/pyvider-hcl/blob/main/docs/getting-started.md).
 3. Try the examples in [examples/README.md](https://github.com/provide-io/pyvider-hcl/blob/main/examples/README.md).
