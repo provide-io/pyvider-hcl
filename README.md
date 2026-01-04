@@ -37,18 +37,22 @@ pyvider-hcl provides a simple and intuitive way to work with HCL (HashiCorp Conf
 
 ## Development
 
-See [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md) for development setup and guidelines.
-
-Quick start for development:
+### Quick Start
 
 ```bash
-# Clone and setup
-git clone https://github.com/provide-io/pyvider-hcl.git
-cd pyvider-hcl
+# Set up environment
 uv sync
 
-# Run tests
-uv run pytest -n auto
+# Run common tasks
+we test           # Run tests
+we lint           # Check code
+we format         # Format code
+we tasks          # See all available commands
+```
+
+See [CLAUDE.md](https://github.com/provide-io/pyvider-hcl/blob/main/CLAUDE.md) for detailed development instructions and architecture information.
+
+For contribution guidelines, see [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md).
 
 # Format and lint
 uv run ruff format .
