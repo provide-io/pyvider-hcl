@@ -27,15 +27,12 @@ This document provides a visual and detailed overview of the pyvider-hcl archite
 │  │   cty_type()    │  │   type_string()  │  │                ││
 │  └─────────────────┘  └──────────────────┘  └────────────────┘│
 │                                                                 │
-│  ┌──────────────────┐  ┌──────────────────┐                   │
-│  │  terraform/      │  │  exceptions.py   │                   │
-│  │  └─ config.py    │  │  • HclError      │                   │
-│  │                  │  │  • HclParsing    │                   │
-│  │ • parse_         │  │    Error         │                   │
-│  │   terraform_     │  │                  │                   │
-│  │   config()       │  │                  │                   │
-│  │   (placeholder)  │  │                  │                   │
-│  └──────────────────┘  └──────────────────┘                   │
+│  ┌──────────────────┐                                           │
+│  │  exceptions.py   │                                           │
+│  │  • HclError      │                                           │
+│  │  • HclParsing    │                                           │
+│  │    Error         │                                           │
+│  └──────────────────┘                                           │
 └───────────────────────────────┬─────────────────────────────────┘
                                 │
                 ┌───────────────┼───────────────┐
@@ -156,24 +153,7 @@ _pretty_print_cty_recursive()
 
 ---
 
-### 4. Terraform Subpackage (`terraform/`)
-
-**Modules:**
-- **`config.py`**: Terraform configuration parsing - contains `parse_terraform_config()`
-
-**Status:** Placeholder for exploratory implementation
-
-**Exploratory Responsibilities:**
-- Parse Terraform-specific blocks (provider, module, data, etc.)
-- Handle Terraform configuration files
-- Validate Terraform-specific structures
-
-**Current:**
-- `parse_terraform_config(config_path)` returns placeholder (config.py)
-
----
-
-### 5. Exceptions Module (`exceptions.py`)
+### 4. Exceptions Module (`exceptions.py`)
 
 **Responsibilities:**
 - Define custom exception types
@@ -351,11 +331,6 @@ User catches exception with:
    - Extend `parse_hcl_type_string()` in `factories/types.py`
    - Update `PRIMITIVE_TYPE_MAP` or `COMPLEX_TYPE_REGEX`
    - Add corresponding CTY types from pyvider-cty
-
-4. **Terraform Features:**
-   - Implement in appropriate module in `terraform/` subpackage
-   - May need new parsing logic
-   - Will integrate with existing parser/factory modules
 
 ---
 
