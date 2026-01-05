@@ -18,7 +18,7 @@ Welcome to Pyvider HCL - HCL (HashiCorp Configuration Language) parsing with sea
 
 This project is part of a larger ecosystem of tools for Python and Terraform development.
 
-**[View Ecosystem Overview →](https://docs.provide.io/provide-foundation/ecosystem/)**
+**[View Ecosystem Overview →](https://foundry.provide.io/provide-foundation/ecosystem/)**
 
 Understand how provide-foundation, pyvider, flavorpack, and other projects work together.
 
@@ -100,7 +100,7 @@ validated = parse_hcl_to_cty(hcl_string, schema=schema)
 - **Using pyvider?** → pyvider-hcl is automatically included, no separate installation needed
 - **Need type handling?** → See [pyvider-cty](../pyvider-cty/) for working with cty types
 - **Building providers?** → See [pyvider](../pyvider/) for the full provider framework
-- **View ecosystem?** → See [Ecosystem Overview](https://docs.provide.io/provide-foundation/ecosystem/) for how all projects relate
+- **View ecosystem?** → See [Ecosystem Overview](https://foundry.provide.io/provide-foundation/ecosystem/) for how all projects relate
 
 ---
 
