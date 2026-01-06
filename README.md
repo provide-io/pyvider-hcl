@@ -255,7 +255,7 @@ No, `pyvider-hcl` is currently focused on parsing HCL into CTY types. It does no
 
 ### Does this support HCL expressions like `var.name` or `length(list)`?
 
-Not yet. The library currently parses static HCL data. Expression evaluation (variables, functions, conditionals) is exploratory and may change or be removed.
+Not yet. The library currently parses static HCL data. Expression evaluation (variables, functions, conditionals) is not implemented.
 
 ### What's the difference between `parse_hcl_to_cty()` and `parse_with_context()`?
 
