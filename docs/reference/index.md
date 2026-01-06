@@ -39,14 +39,14 @@ The library is organized into these main modules:
 
 | Import | Purpose | Documentation |
 |--------|---------|---------------|
-| `from pyvider.hcl import Parser` | Parse HCL content | [pyvider.hcl](pyvider/hcl/index/) |
-| `from pyvider.hcl.parser import Parser` | Parser class | [parser](pyvider/hcl/parser/index/) |
+| `from pyvider.hcl import Parser` | Parse HCL content | [pyvider.hcl](pyvider/hcl/index.md) |
+| `from pyvider.hcl.parser import Parser` | Parser class | [parser](pyvider/hcl/parser/index.md) |
 
 **Exceptions:**
 
 | Import | Purpose | Documentation |
 |--------|---------|---------------|
-| `from pyvider.hcl.exceptions import *` | HCL exceptions | [exceptions](pyvider/hcl/exceptions/) |
+| `from pyvider.hcl.exceptions import *` | HCL exceptions | [exceptions](pyvider/hcl/exceptions.md) |
 
 ## Using the API Reference
 

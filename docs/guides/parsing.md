@@ -79,6 +79,6 @@ result = parse_hcl_to_cty(hcl)
 
 ## See Also
 
-- [Schema Validation Guide](schema-validation/)
-- [Error Handling Guide](error-handling/)
+- [Schema Validation Guide](schema-validation.md)
+- [Error Handling Guide](error-handling.md)
 - <!-- [Examples](../../examples/01_basic_parsing.py) -->
