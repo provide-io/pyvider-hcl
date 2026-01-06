@@ -2,7 +2,7 @@
 
 !!! warning "Pre-release"
     pyvider-hcl is in its pre-release series.
-    Some documented items are exploratory and may change or be removed.
+    Some APIs may change during the pre-release series.
 
 Welcome to Pyvider HCL - HCL (HashiCorp Configuration Language) parsing with seamless pyvider.cty type system integration.
 
