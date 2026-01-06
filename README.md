@@ -54,7 +54,9 @@ See [CLAUDE.md](https://github.com/provide-io/pyvider-hcl/blob/main/CLAUDE.md) f
 
 For contribution guidelines, see [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md).
 
-# Format and lint
+### Format and lint
+
+```bash
 uv run ruff format .
 uv run ruff check .
 ```
