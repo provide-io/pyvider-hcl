@@ -40,7 +40,7 @@ Understand how provide-foundation, pyvider, flavorpack, and other projects work 
 
 - **Just need YAML/TOML** → Use standard libraries (`pyyaml`, `tomli`)
 - **Need full Terraform evaluation** → Use Terraform CLI directly
-- **Building Terraform providers** → Use [pyvider](../pyvider/) (includes HCL support automatically)
+- **Building Terraform providers** → Use [pyvider](https://github.com/provide-io/pyvider) (pair with pyvider-hcl for HCL parsing)
 - **Simple config files** → Consider JSON/YAML for simpler use cases
 - **No HCL involvement** → The library is specifically for HCL parsing
 
@@ -97,9 +97,9 @@ validated = parse_hcl_to_cty(hcl_string, schema=schema)
 
 ### Related Projects
 
-- **Using pyvider?** → pyvider-hcl is automatically included, no separate installation needed
-- **Need type handling?** → See [pyvider-cty](../pyvider-cty/) for working with cty types
-- **Building providers?** → See [pyvider](../pyvider/) for the full provider framework
+- **Using pyvider?** → Add pyvider-hcl when you need HCL parsing
+- **Need type handling?** → See [pyvider-cty](https://github.com/provide-io/pyvider-cty) for working with cty types
+- **Building providers?** → See [pyvider](https://github.com/provide-io/pyvider) for the full provider framework
 - **View ecosystem?** → See [Ecosystem Overview](https://foundry.provide.io/provide-foundation/ecosystem/) for how all projects relate
 
 ---
@@ -171,20 +171,22 @@ resource = create_resource_cty(
 ## Documentation
 
 ### Getting Started
-- **[Getting Started Guide](getting-started/)**: Installation and first steps
+- **[Getting Started Guide](getting-started.md)**: Installation and first steps
 
 ### Guides
-- **[User Guide](guide/)**: Detailed usage examples and patterns
-- **[HCL Parsing](guides/parsing/)**: Parsing HCL strings and files
-- **[Schema Validation](guides/schema-validation/)**: Validating with CTY schemas
-- **[Type Inference](guides/type-inference/)**: Automatic type inference
-- **[Terraform Integration](guides/terraform-integration/)**: Creating Terraform structures
-- **[Error Handling](guides/error-handling/)**: Exception handling patterns
-- **[Testing](guides/testing/)**: Testing with pyvider-hcl
+**Learn More:**
+
+- **[User Guide](guide.md)**: Detailed usage examples and patterns
+- **[HCL Parsing](guides/parsing.md)**: Parsing HCL strings and files
+- **[Schema Validation](guides/schema-validation.md)**: Validating with CTY schemas
+- **[Type Inference](guides/type-inference.md)**: Automatic type inference
+- **[Terraform Integration](guides/terraform-integration.md)**: Creating Terraform structures
+- **[Error Handling](guides/error-handling.md)**: Exception handling patterns
+- **[Testing](guides/testing.md)**: Testing with pyvider-hcl
 
 ### Reference
 - **[API Reference](reference/)**: Complete API documentation
-- **[Architecture](architecture/)**: System design and data flow diagrams
+- **[Architecture](architecture.md)**: System design and data flow diagrams
 
 ## Core API
 

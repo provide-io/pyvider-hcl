@@ -135,5 +135,5 @@ result = parse_hcl_to_cty(hcl_content)
 
 ## See Also
 
-- [Schema Validation Guide](schema-validation/)
-- [Parsing Guide](parsing/)
+- [Schema Validation Guide](schema-validation.md)
+- [Parsing Guide](parsing.md)
