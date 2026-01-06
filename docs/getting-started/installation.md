@@ -26,12 +26,6 @@ Complete installation guide for pyvider-hcl.
 uv add pyvider-hcl
 ```
 
-### Using pip
-
-```bash
-uv add pyvider-hcl
-```
-
 ### From Source
 
 For development or accessing the latest features:
