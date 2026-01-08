@@ -7,80 +7,16 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
-  quality:
-    name: 🎨 Code Quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: provide-io/ci-tooling/actions/setup-python-env@main
-        with:
-          python-version: '3.11'
-          install-extras: 'dev'
-
-      - name: 📦 Install Quality Tools
-        run: |
-          source workenv/bin/activate
-          pip install ruff mypy
-
-      - name: 🎨 Ruff Check
-        run: |
-          source workenv/bin/activate
-          ruff check . || echo "Lint completed"
-
-      - name: 🎨 Ruff Format
-        run: |
-          source workenv/bin/activate
-          ruff format . --check || echo "Format check completed"
-
-      - name: 🏷️ MyPy Type Check
-        run: |
-          source workenv/bin/activate
-          mypy src || echo "Type check completed"
-
-  test:
-    name: 🧪 Tests
-    needs: quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: provide-io/ci-tooling/actions/setup-python-env@main
-        with:
-          python-version: '3.11'
-          install-extras: 'dev'
-
-      - name: 📦 Install Test Tools
-        run: |
-          source workenv/bin/activate
-          pip install pytest pytest-cov coverage
-
-      - name: 🧪 Run Tests
-        run: |
-          source workenv/bin/activate
-          pytest --cov=src --cov-report=xml --cov-report=term-missing || echo "Tests completed"
-          coverage report --fail-under=80 || echo "Coverage check completed"
-
-  build:
-    name: 📦 Build Package
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: provide-io/ci-tooling/actions/setup-python-env@main
-        with:
-          python-version: '3.11'
-          install-extras: 'dev'
-
-      - name: 📦 Build Package
-        run: |
-          source workenv/bin/activate
-          uv build
-
-      - name: 📤 Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
+  ci:
+    uses: provide-io/ci-tooling/.github/workflows/python-ci.yml@v0
+    with:
+      python-version: '3.11'
+      coverage-threshold: 80
+      run-security: true
+      run-secret-scan: true
+    secrets: inherit
