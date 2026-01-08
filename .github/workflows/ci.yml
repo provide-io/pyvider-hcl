@@ -1,4 +1,4 @@
-name: 🧪 CI Pipeline
+name: ⚙️ Continuous Integration
 
 on:
   push:
