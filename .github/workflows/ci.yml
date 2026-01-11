@@ -1,3 +1,5 @@
+# CI workflow for Python projects
+# Uses wrknv tasks for consistency between local and CI environments.
 name: ⚙️ Continuous Integration
 
 on:
@@ -7,16 +9,57 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  security-events: write
-
 jobs:
   ci:
-    uses: provide-io/ci-tooling/.github/workflows/python-ci.yml@v0
-    with:
-      python-version: '3.11'
-      coverage-threshold: 80
-      run-security: true
-      run-secret-scan: true
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Install wrknv
+        run: uv pip install "wrknv @ git+https://github.com/provide-io/wrknv.git@main"
+
+      - name: Format check
+        run: |
+          source .venv/bin/activate
+          we run format.check
+
+      - name: Lint
+        run: |
+          source .venv/bin/activate
+          we run lint
+
+      - name: Type check
+        run: |
+          source .venv/bin/activate
+          we run typecheck
+
+      - name: Test
+        run: |
+          source .venv/bin/activate
+          we run test
+
+      - name: Build
+        run: |
+          source .venv/bin/activate
+          we run build
+
+      - name: Run security scan
+        run: |
+          source .venv/bin/activate
+          we run security
+
+      - name: 📤 Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
