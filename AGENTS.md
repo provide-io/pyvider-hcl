@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance for AI assistants when working with code in this repository.
 
 ## Project Overview
 
@@ -8,10 +8,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Environment Setup
 
-**IMPORTANT**: Use `uv sync` to set up the development environment. This script provisions a virtual environment in `workenv/` (NOT `.venv`). The environment setup handles:
+```bash
+# Install dependencies
+uv sync
+
+# Activate environment (if needed)
+source .venv/bin/activate
+```
+
+The environment setup handles:
 - Python 3.11+ requirement
 - UV package manager for dependency management
-- Platform-specific virtual environments (e.g., `workenv/pyvider-hcl_darwin_arm64`)
 
 ## Common Development Commands
 
