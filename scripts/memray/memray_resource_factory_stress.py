@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (c) 2026 provide.io llc. All rights reserved.
-# SPDX-License-Identifier: Apache-2.0
-
 """Memray stress test for resource and variable factory hot paths."""
 
 import os
@@ -34,11 +31,7 @@ RESOURCE_CONFIGS = [
         "r_type": "aws_db_instance",
         "r_name": "primary",
         "attributes_py": {"engine": "postgres", "instance_class": "db.t3.micro", "allocated_storage": 20},
-        "attributes_schema_py": {
-            "engine": "string",
-            "instance_class": "string",
-            "allocated_storage": "number",
-        },
+        "attributes_schema_py": {"engine": "string", "instance_class": "string", "allocated_storage": "number"},
     },
 ]
 
