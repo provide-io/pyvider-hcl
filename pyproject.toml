@@ -55,10 +55,7 @@ Issues = "https://github.com/provide-io/pyvider-hcl/issues"
 dev = [
     "hypothesis>=6.148.8",
     "provide-testkit[standard]",
-    # wrknv is not published to PyPI; CI installs it explicitly via
-    # uv pip install "wrknv @ git+https://github.com/provide-io/wrknv.git@main"
-    # (see .github/workflows/ci.yml). Keeping it out of dev deps so uv sync
-    # doesn't error locally.
+    "wrknv @ git+https://github.com/provide-io/wrknv.git@main",
 ]
 docs = [
     "provide-testkit[docs]",
