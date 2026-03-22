@@ -417,3 +417,6 @@ docs/.shared-theme/
 # Cache directories
 .mypy_cache/
 .ruff_cache/
+
+# Memray output
+memray-output/
