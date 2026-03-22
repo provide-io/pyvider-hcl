@@ -1,0 +1,5 @@
+{
+  "pretty_print_total_allocations": 4527,
+  "resource_factory_total_allocations": 881460,
+  "type_parsing_total_allocations": 24746
+}
