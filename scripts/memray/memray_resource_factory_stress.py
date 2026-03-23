@@ -31,7 +31,11 @@ RESOURCE_CONFIGS = [
         "r_type": "aws_db_instance",
         "r_name": "primary",
         "attributes_py": {"engine": "postgres", "instance_class": "db.t3.micro", "allocated_storage": 20},
-        "attributes_schema_py": {"engine": "string", "instance_class": "string", "allocated_storage": "number"},
+        "attributes_schema_py": {
+            "engine": "string",
+            "instance_class": "string",
+            "allocated_storage": "number",
+        },
     },
 ]
 

@@ -7,9 +7,9 @@ Provides post-run analysis for memray stress test binaries:
 - Generate ANALYSIS.md report with comparisons
 """
 
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 from typing import Any
 
 
@@ -96,25 +96,27 @@ def generate_analysis_report(output_dir: Path) -> str:
         else:
             report_lines.append(f"| {name} | {size} | {peak} | {allocs} |")
 
-    report_lines.extend([
-        "",
-        "## Hot Paths Profiled",
-        "",
-        "1. **Type parsing** (`memray_type_parsing_stress`): parse_hcl_type_string with primitives, lists, maps, objects, nested types",
-        "2. **Resource factory** (`memray_resource_factory_stress`): create_resource_cty schema validation, create_variable_cty lifecycle",
-        "3. **Pretty printing** (`memray_pretty_print_stress`): _pretty_print_cty_recursive with nested objects/lists/maps",
-        "",
-        "## Next Steps",
-        "",
-        "```bash",
-        "# View flamegraphs in browser",
-        "open memray-output/*_flamegraph.html",
-        "",
-        "# Update baselines after optimization",
-        "we run memray.update-baseline",
-        "```",
-        "",
-    ])
+    report_lines.extend(
+        [
+            "",
+            "## Hot Paths Profiled",
+            "",
+            "1. **Type parsing** (`memray_type_parsing_stress`): parse_hcl_type_string with primitives, lists, maps, objects, nested types",
+            "2. **Resource factory** (`memray_resource_factory_stress`): create_resource_cty schema validation, create_variable_cty lifecycle",
+            "3. **Pretty printing** (`memray_pretty_print_stress`): _pretty_print_cty_recursive with nested objects/lists/maps",
+            "",
+            "## Next Steps",
+            "",
+            "```bash",
+            "# View flamegraphs in browser",
+            "open memray-output/*_flamegraph.html",
+            "",
+            "# Update baselines after optimization",
+            "we run memray.update-baseline",
+            "```",
+            "",
+        ]
+    )
 
     return "\n".join(report_lines)
 
