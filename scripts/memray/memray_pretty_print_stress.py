@@ -14,21 +14,17 @@ from pyvider.hcl.output.formatting import _pretty_print_cty_recursive
 
 def build_nested_value() -> CtyValue:
     """Build a complex nested CtyValue for stress testing."""
-    inner_obj_type = CtyObject(
-        {
-            "name": CtyString(),
-            "age": CtyNumber(),
-            "active": CtyBool(),
-        }
-    )
+    inner_obj_type = CtyObject({
+        "name": CtyString(),
+        "age": CtyNumber(),
+        "active": CtyBool(),
+    })
     list_type = CtyList(element_type=inner_obj_type)
-    outer_type = CtyObject(
-        {
-            "users": list_type,
-            "count": CtyNumber(),
-            "metadata": CtyMap(element_type=CtyString()),
-        }
-    )
+    outer_type = CtyObject({
+        "users": list_type,
+        "count": CtyNumber(),
+        "metadata": CtyMap(element_type=CtyString()),
+    })
     outer_value = {
         "users": [
             {"name": "alice", "age": 30, "active": True},
