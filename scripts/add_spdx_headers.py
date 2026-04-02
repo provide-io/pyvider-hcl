@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) provide.io llc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 """Add SPDX copyright headers to Python files.
@@ -17,7 +17,7 @@ from pathlib import Path
 import sys
 
 HEADER_LINES = [
-    "# SPDX-FileCopyrightText: Copyright (c) 2025 provide.io llc. All rights reserved.",
+    "# SPDX-FileCopyrightText: Copyright (c) provide.io llc. All rights reserved.",
     "# SPDX-License-Identifier: Apache-2.0",
 ]
 
@@ -43,7 +43,7 @@ def check_header_correctness(content: str) -> tuple[bool, str]:
         return False, "Missing SPDX tags or incorrect license"
 
     # Check year and company
-    copyright_line = next((line for line in lines if "SPDX-FileCopyrightText" in line), "")
+    copyright_line = next((ln for ln in lines if "SPDX-FileCopyrightText" in ln), "")
     if "2025" not in copyright_line:
         return False, "Incorrect year (not 2025)"
     if "provide.io llc" not in copyright_line:
@@ -74,8 +74,8 @@ def has_shebang(content: str) -> bool:
     return content.startswith("#!")
 
 
-def _check_existing_header(file_path: Path, content: str, verbose: bool) -> tuple[bool, str] | None:
-    """Check existing header. Returns (modified, message) if handled, None to continue."""
+def _check_existing_header(content: str, file_path: Path, verbose: bool) -> tuple[bool, str] | None:
+    """Check existing header. Returns result tuple to return early, or None to continue."""
     if "SPDX-FileCopyrightText" not in content and "Copyright" not in content[:500]:
         return None
     is_correct, issue = check_header_correctness(content)
@@ -101,16 +101,24 @@ def add_header(file_path: Path, dry_run: bool = False, verbose: bool = False) ->
         return False, ""
 
     # Check for existing headers
-    header_result = _check_existing_header(file_path, content, verbose)
-    if header_result is not None:
-        return header_result
+    existing = _check_existing_header(content, file_path, verbose)
+    if existing is not None:
+        return existing
 
     # Determine header placement
     lines = content.split("\n")
-    insert_line = 1 if has_shebang(content) else 0
+    insert_line = 0
+
+    if has_shebang(content):
+        insert_line = 1  # After shebang
 
     # Insert header with blank line after
-    new_lines = lines[:insert_line] + HEADER_LINES + [""] + lines[insert_line:]
+    new_lines = (
+        lines[:insert_line]
+        + HEADER_LINES
+        + [""]  # Blank line after header
+        + lines[insert_line:]
+    )
     new_content = "\n".join(new_lines)
 
     # Validate syntax before writing

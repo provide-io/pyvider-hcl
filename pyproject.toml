@@ -36,9 +36,9 @@ classifiers = [
 dependencies = [
     "attrs>=25.4.0",
     "python-hcl2>=7.2.1",
-    "pyvider",
-    "pyvider-cty",
-    "provide-foundation>=0.3.21",
+    "pyvider>=0.3.22",
+    "pyvider-cty>=0.3.21",
+    "provide-foundation>=0.3.29",
     "regex>=2024.11.6",
 ]
 
