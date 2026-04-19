@@ -55,7 +55,7 @@ Issues = "https://github.com/provide-io/pyvider-hcl/issues"
 dev = [
     "hypothesis>=6.148.8",
     "provide-testkit[standard]",
-    "wrknv @ git+https://github.com/provide-io/wrknv.git@main",
+    "wrknv>=0.3.21",
 ]
 docs = [
     "provide-testkit[docs]",
