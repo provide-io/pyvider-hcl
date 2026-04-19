@@ -17,6 +17,7 @@ pyvider-hcl automatically infers CTY types from Python/HCL data structures. The 
 ### Complex Type Inference
 
 #### Nested Objects
+
 When a dictionary is encountered, type inference creates a `CtyObject` with attribute types inferred from each value:
 
 ```python
@@ -41,6 +42,7 @@ result = auto_infer_cty_type(data)
 ```
 
 #### List Type Inference
+
 Lists are analyzed to infer their element types. Homogeneous lists get specific element types, while mixed lists use `CtyDynamic()`:
 
 ```python
@@ -56,6 +58,7 @@ result = auto_infer_cty_type(data_mixed)
 ```
 
 #### Deeply Nested Structures
+
 The inference algorithm recursively processes nested structures:
 
 ```python
@@ -89,12 +92,14 @@ result = parse_hcl_to_cty(hcl_content)
 ## When to Use Inference
 
 **Use inference for:**
+
 - Prototyping and exploration
 - Scripts and tools
 - Flexible data structures
 - Quick parsing without validation
 
 **Use schemas for:**
+
 - Production code
 - API contracts
 - Type safety requirements
@@ -109,18 +114,21 @@ result = parse_hcl_to_cty(hcl_content)
 ### Current Limitations
 
 1. **No Union Types**: Cannot infer union or variant types
+
    ```python
    # Mixed types fall back to CtyDynamic
    mixed = {"value": some_complex_object}  # → value: CtyDynamic()
    ```
 
-2. **No Validation**: Inference accepts any valid structure without constraints
+1. **No Validation**: Inference accepts any valid structure without constraints
+
    ```python
    # No way to enforce required fields or value ranges
    data = {"port": 99999}  # Accepted even if invalid port number
    ```
 
-3. **Type Ambiguity**: Some values could map to multiple types
+1. **Type Ambiguity**: Some values could map to multiple types
+
    ```python
    # String "123" vs number 123
    value = "123"  # Always inferred as CtyString, not CtyNumber

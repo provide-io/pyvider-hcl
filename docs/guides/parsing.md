@@ -35,13 +35,17 @@ result = parse_with_context(content, source_file=file)
 ## Type Inference vs Schemas
 
 ### Automatic Inference
+
 Best for: Prototyping, exploration
+
 ```python
 result = parse_hcl_to_cty(hcl)  # Types inferred automatically
 ```
 
 ### Schema Validation
+
 Best for: Production, type safety
+
 ```python
 from pyvider.cty import CtyObject, CtyString
 
@@ -52,6 +56,7 @@ result = parse_hcl_to_cty(hcl, schema=schema)
 ## Handling Complex Structures
 
 ### Nested Objects
+
 ```python
 hcl = """
 server = {
@@ -65,6 +70,7 @@ result = parse_hcl_to_cty(hcl)
 ```
 
 ### Lists
+
 ```python
 hcl = 'tags = ["prod", "api"]'
 result = parse_hcl_to_cty(hcl)
@@ -73,9 +79,9 @@ result = parse_hcl_to_cty(hcl)
 ## Best Practices
 
 1. Always handle `HclParsingError`
-2. Use schemas for production code
-3. Use `parse_with_context` for file parsing
-4. Validate before processing
+1. Use schemas for production code
+1. Use `parse_with_context` for file parsing
+1. Validate before processing
 
 ## See Also
 

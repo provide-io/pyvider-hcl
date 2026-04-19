@@ -12,12 +12,14 @@ Thank you for your interest in contributing to pyvider-hcl! This document provid
 ### Development Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/provide-io/pyvider-hcl.git
    cd pyvider-hcl
    ```
 
-2. Set up the development environment:
+1. Set up the development environment:
+
    ```bash
    uv sync
    ```
@@ -117,13 +119,13 @@ pyvider-hcl/
 
 ### Module Responsibilities
 
-| Module | Responsibility | Key Functions |
-|--------|---------------|---------------|
-| `parser/` | HCL parsing, type inference | `parse_hcl_to_cty()`, `auto_infer_cty_type()` |
-| `factories/` | Terraform structure creation | `create_variable_cty()`, `create_resource_cty()` |
-| `output/` | CTY value formatting | `pretty_print_cty()` |
-| `terraform/` | Terraform-specific features | `parse_terraform_config()` |
-| `exceptions.py` | Error handling | `HclError`, `HclParsingError` |
+| Module          | Responsibility               | Key Functions                                    |
+| --------------- | ---------------------------- | ------------------------------------------------ |
+| `parser/`       | HCL parsing, type inference  | `parse_hcl_to_cty()`, `auto_infer_cty_type()`    |
+| `factories/`    | Terraform structure creation | `create_variable_cty()`, `create_resource_cty()` |
+| `output/`       | CTY value formatting         | `pretty_print_cty()`                             |
+| `terraform/`    | Terraform-specific features  | `parse_terraform_config()`                       |
+| `exceptions.py` | Error handling               | `HclError`, `HclParsingError`                    |
 
 ## Testing Guidelines
 
@@ -184,34 +186,38 @@ def parse_hcl_to_cty(hcl_content: str, schema: CtyType | None = None) -> CtyValu
 When adding new features or changing APIs:
 
 1. Update relevant docstrings
-2. Update `README.md` if adding user-facing features
-3. Update `docs/guide.md` with usage examples
-4. Update `CHANGELOG.md` under `[Unreleased]`
+1. Update `README.md` if adding user-facing features
+1. Update `docs/guide.md` with usage examples
+1. Update `CHANGELOG.md` under `[Unreleased]`
 
 ## Submitting Changes
 
 ### Pull Request Process
 
 1. Create a feature branch from `develop`:
+
    ```bash
    git checkout -b feature/your-feature-name develop
    ```
 
-2. Make your changes and commit with clear messages:
+1. Make your changes and commit with clear messages:
+
    ```bash
    git commit -m "Add feature: description of what was added"
    ```
 
-3. Ensure all tests pass and code quality checks pass:
+1. Ensure all tests pass and code quality checks pass:
+
    ```bash
    uv run pytest -n auto
    uv run ruff check .
    uv run mypy src/
    ```
 
-4. Push your branch and create a pull request against `develop`
+1. Push your branch and create a pull request against `develop`
 
-5. Ensure your PR:
+1. Ensure your PR:
+
    - Has a clear title and description
    - References any related issues
    - Includes tests for new functionality
@@ -226,6 +232,7 @@ When adding new features or changing APIs:
 - Reference issues and pull requests when relevant
 
 Examples:
+
 - `Add support for HCL template functions`
 - `Fix parsing error with nested objects`
 - `Update documentation for factory functions`

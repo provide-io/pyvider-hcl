@@ -2,8 +2,7 @@
 
 Welcome to pyvider-hcl! This guide will help you get started with parsing HCL (HashiCorp Configuration Language) and integrating it with the pyvider ecosystem.
 
-!!! tip "Installation"
-    If you haven't installed pyvider-hcl yet, see the [Installation Guide](getting-started/installation.md).
+!!! tip "Installation" If you haven't installed pyvider-hcl yet, see the [Installation Guide](getting-started/installation.md).
 
 ## Your First HCL Parse
 
@@ -207,6 +206,7 @@ Now that you've learned the basics, explore more advanced topics:
 - **[User Guide](guide.md)** - Comprehensive usage examples
 - **[API Reference](reference/index.md)** - Complete API documentation
 - **[Architecture](architecture.md)** - Understand how pyvider-hcl works
+
 <!-- - **[Examples](../examples/README.md)** - Working code examples -->
 
 ### Guides
@@ -260,7 +260,9 @@ def load_terraform_project(project_dir: Path):
 ## Getting Help
 
 <!-- - **Examples**: Check the [examples/](../examples/) directory for working code -->
+
 - **Issues**: Report bugs at [GitHub Issues](https://github.com/provide-io/pyvider-hcl/issues)
+
 <!-- - **Contributing**: See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines -->
 
 Happy parsing! 🚀
