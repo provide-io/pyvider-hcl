@@ -50,17 +50,20 @@ This document provides a visual and detailed overview of the pyvider-hcl archite
 ### 1. Parser Subpackage (`parser/`)
 
 **Modules:**
+
 - **`base.py`**: Core parsing logic - contains `parse_hcl_to_cty()`
 - **`inference.py`**: Type inference - contains `auto_infer_cty_type()`
 - **`context.py`**: Enhanced error context - contains `parse_with_context()`
 
 **Responsibilities:**
+
 - Parse HCL strings into Python data structures
 - Convert Python data to CTY types
 - Automatic type inference
 - Schema validation
 
 **Data Flow:**
+
 ```
 HCL String
     ↓
@@ -74,25 +77,29 @@ Schema provided?
 ```
 
 **Key Functions:**
+
 - `parse_hcl_to_cty(hcl_content, schema=None) → CtyValue` (base.py)
 - `parse_with_context(content, source_file=None) → dict` (context.py)
 - `auto_infer_cty_type(raw_data) → CtyValue` (inference.py)
 
----
+______________________________________________________________________
 
 ### 2. Factories Subpackage (`factories/`)
 
 **Modules:**
+
 - **`types.py`**: Type string parsing - contains `parse_hcl_type_string()`
 - **`variables.py`**: Variable factory - contains `create_variable_cty()`
 - **`resources.py`**: Resource factory - contains `create_resource_cty()`
 
 **Responsibilities:**
+
 - Create Terraform variable structures
 - Create Terraform resource structures
 - Parse HCL type strings into CTY types
 
 **Type String Parsing Flow:**
+
 ```
 Type String (e.g., "list(string)")
     ↓
@@ -104,6 +111,7 @@ parse_hcl_type_string() [types.py]
 ```
 
 **Variable Creation Flow:**
+
 ```
 Python inputs
     ↓
@@ -119,22 +127,26 @@ Validate with schema → CtyValue
 ```
 
 **Key Functions:**
+
 - `create_variable_cty(name, type_str, default_py=None, ...) → CtyValue` (variables.py)
 - `create_resource_cty(r_type, r_name, attributes_py, ...) → CtyValue` (resources.py)
 - `parse_hcl_type_string(type_str) → CtyType` (types.py)
 
----
+______________________________________________________________________
 
 ### 3. Output Subpackage (`output/`)
 
 **Modules:**
+
 - **`formatting.py`**: CTY value formatting - contains `pretty_print_cty()`
 
 **Responsibilities:**
+
 - Format CTY values for human-readable display
 - Handle nested structures (objects, lists, maps, tuples)
 
 **Printing Flow:**
+
 ```
 CtyValue
     ↓
@@ -149,18 +161,21 @@ _pretty_print_cty_recursive()
 ```
 
 **Key Functions:**
+
 - `pretty_print_cty(value) → None` (prints to stdout) (formatting.py)
 
----
+______________________________________________________________________
 
 ### 4. Exceptions Module (`exceptions.py`)
 
 **Responsibilities:**
+
 - Define custom exception types
 - Provide structured error information
 - Integrate with provide-foundation error handling
 
 **Exception Hierarchy:**
+
 ```
 provide.foundation.FoundationError
     ↓
@@ -173,7 +188,7 @@ HclParsingError
     └─ column: int | None
 ```
 
----
+______________________________________________________________________
 
 ## Data Flow Examples
 
@@ -233,7 +248,7 @@ Flow:
   5. Return CtyValue
 ```
 
----
+______________________________________________________________________
 
 ## Type System Integration
 
@@ -264,7 +279,7 @@ list               →    CtyList(CtyDynamic())
 dict               →    CtyObject({...})
 ```
 
----
+______________________________________________________________________
 
 ## Error Handling Flow
 
@@ -294,11 +309,12 @@ User catches exception with:
     - Original error context
 ```
 
----
+______________________________________________________________________
 
 ## Performance Characteristics
 
 **Current Implementation:**
+
 - **Parsing:** O(n) where n = HCL content size (via python-hcl2)
 - **Type Inference:** O(m) where m = number of fields in data structure
 - **Schema Validation:** O(m) for field validation
@@ -306,37 +322,42 @@ User catches exception with:
 - **No lazy evaluation:** All parsing happens immediately
 
 **Memory Usage:**
+
 - HCL string kept in memory
 - Full parse tree created in memory
 - CTY objects created for all values
 - Typical: ~2-5x HCL string size
 
----
+______________________________________________________________________
 
 ## Extension Points
 
 ### To Add New Features:
 
 1. **New Parser Functions:**
+
    - Add to appropriate module in `parser/` subpackage
    - Export in `__init__.py`
    - Add tests in `tests/parser/test_parser.py`
 
-2. **New Factory Types:**
+1. **New Factory Types:**
+
    - Add factory function to appropriate module in `factories/` subpackage
    - Export in `__init__.py`
    - Add tests in `tests/factories/test_factories.py`
 
-3. **New Type Support:**
+1. **New Type Support:**
+
    - Extend `parse_hcl_type_string()` in `factories/types.py`
    - Update `PRIMITIVE_TYPE_MAP` or `COMPLEX_TYPE_REGEX`
    - Add corresponding CTY types from pyvider-cty
 
----
+______________________________________________________________________
 
 ## Dependencies
 
 **Runtime Dependencies:**
+
 - `python-hcl2>=7.2.1` - Core HCL parsing
 - `pyvider-cty>=0.0.113` - Type system
 - `provide-foundation>=0.0.0` - Error handling/logging
@@ -344,19 +365,20 @@ User catches exception with:
 - `regex>=2024.11.6` - Enhanced regex
 
 **Development Dependencies:**
+
 - `pytest` - Testing framework
 - `pytest-xdist` - Parallel test execution
 - `ruff` - Linting and formatting
 - `mypy` - Type checking
 - `provide-testkit[standard,advanced-testing,typecheck,build]` - Test utilities
 
----
+______________________________________________________________________
 
 ## Design Principles
 
 1. **Simplicity:** Focused API with minimal abstractions
-2. **Type Safety:** All values go through CTY type system
-3. **Error Context:** Rich error messages with source locations
-4. **Composability:** Small, focused modules that work together
-5. **Extensibility:** Clear extension points for potential features
-6. **Testability:** All functions are pure and easily testable
+1. **Type Safety:** All values go through CTY type system
+1. **Error Context:** Rich error messages with source locations
+1. **Composability:** Small, focused modules that work together
+1. **Extensibility:** Clear extension points for potential features
+1. **Testability:** All functions are pure and easily testable

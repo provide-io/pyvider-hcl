@@ -3,6 +3,7 @@
 ## Why Use Schemas?
 
 Schemas provide:
+
 - Type safety
 - Early error detection
 - Clear contracts
@@ -23,6 +24,7 @@ schema = CtyObject({
 ## Complex Schemas
 
 ### Lists
+
 ```python
 from pyvider.cty import CtyList, CtyString
 
@@ -32,6 +34,7 @@ schema = CtyObject({
 ```
 
 ### Nested Objects
+
 ```python
 schema = CtyObject({
     "server": CtyObject({
@@ -42,6 +45,7 @@ schema = CtyObject({
 ```
 
 ### Lists of Objects
+
 ```python
 schema = CtyObject({
     "users": CtyList(
@@ -67,9 +71,9 @@ except HclParsingError as e:
 ## Schema Best Practices
 
 1. Define schemas for all external configuration
-2. Make schemas as specific as possible
-3. Document your schemas
-4. Test your schemas
+1. Make schemas as specific as possible
+1. Document your schemas
+1. Test your schemas
 
 ## See Also
 
