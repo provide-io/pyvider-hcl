@@ -38,7 +38,7 @@ def parse_hcl_to_cty(hcl_content: str, schema: CtyType[Any] | None = None) -> Ct
     """
 
     try:
-        raw_data = hcl2.loads(hcl_content)  # type: ignore[attr-defined]
+        raw_data = hcl2.loads(hcl_content)
     except Exception as e:
         raise HclParsingError(message=f"Failed to parse HCL: {e}") from e
 
