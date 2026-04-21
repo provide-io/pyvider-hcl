@@ -2,15 +2,13 @@
 
 Welcome to Pyvider HCL - HCL (HashiCorp Configuration Language) parsing with seamless pyvider.cty type system integration.
 
-```
-- **Current version:** v0.3.0
-- **Status:** Pre-release
-- **Production use:** Use with caution
+    - **Current version:** v0.3.0
+    - **Status:** Pre-release
+    - **Production use:** Use with caution
 
-Part of the [pyvider framework](https://github.com/provide-io/pyvider) ecosystem.
-```
+    Part of the [pyvider framework](https://github.com/provide-io/pyvider) ecosystem.
 
-______________________________________________________________________
+---
 
 ## Part of the provide.io Ecosystem
 
@@ -20,7 +18,7 @@ This project is part of a larger ecosystem of tools for Python and Terraform dev
 
 Understand how provide-foundation, pyvider, flavorpack, and other projects work together.
 
-______________________________________________________________________
+---
 
 ## When to Use Pyvider HCL
 
@@ -45,28 +43,24 @@ ______________________________________________________________________
 ### Typical Users
 
 **1. DevOps Tool Developers**
-
 - Building HCL-aware command-line tools
 - Creating Terraform configuration validators
 - Developing infrastructure automation scripts
 - Building custom HCL linters
 
 **2. Infrastructure Automation Engineers**
-
 - Reading Terraform configurations programmatically
 - Extracting data from `.tf` files
 - Validating Terraform syntax before apply
 - Building Terraform workflow tools
 
 **3. Configuration Validators**
-
 - Linting HCL files for best practices
 - Checking Terraform configurations for compliance
 - Validating provider configurations
 - Building security scanning tools
 
 **4. Migration Tool Authors**
-
 - Converting between configuration formats
 - Migrating from other IaC tools to Terraform
 - Generating Terraform from other sources
@@ -75,7 +69,6 @@ ______________________________________________________________________
 ### Common Use Cases
 
 **Parse Terraform variables:**
-
 ```python
 from pyvider.hcl import parse_hcl_to_cty
 
@@ -90,7 +83,6 @@ config = parse_hcl_to_cty(hcl_string)
 ```
 
 **Validate against schema:**
-
 ```python
 from pyvider.hcl import parse_hcl_to_cty
 from pyvider.cty import CtyObject, CtyString
@@ -106,7 +98,7 @@ validated = parse_hcl_to_cty(hcl_string, schema=schema)
 - **Building providers?** → See [pyvider](https://github.com/provide-io/pyvider) for the full provider framework
 - **View ecosystem?** → See [Ecosystem Overview](https://foundry.provide.io/provide-foundation/ecosystem/) for how all projects relate
 
-______________________________________________________________________
+---
 
 ## Features
 
@@ -175,11 +167,9 @@ resource = create_resource_cty(
 ## Documentation
 
 ### Getting Started
-
 - **[Getting Started Guide](getting-started.md)**: Installation and first steps
 
 ### Guides
-
 **Learn More:**
 
 - **[User Guide](guide.md)**: Detailed usage examples and patterns
@@ -191,7 +181,6 @@ resource = create_resource_cty(
 - **[Testing](guides/testing.md)**: Testing with pyvider-hcl
 
 ### Reference
-
 - **[API Reference](reference/)**: Complete API documentation
 - **[Architecture](architecture.md)**: System design and data flow diagrams
 

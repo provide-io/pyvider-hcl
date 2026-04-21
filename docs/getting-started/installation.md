@@ -4,19 +4,19 @@ Complete installation guide for pyvider-hcl.
 
 ## Prerequisites
 
---8\<-- ".provide/foundry/docs/\_partials/python-requirements.md"
+--8<-- ".provide/foundry/docs/_partials/python-requirements.md"
 
 ## Installing UV
 
---8\<-- ".provide/foundry/docs/\_partials/uv-installation.md"
+--8<-- ".provide/foundry/docs/_partials/uv-installation.md"
 
 ## Python Version Setup
 
---8\<-- ".provide/foundry/docs/\_partials/python-version-setup.md"
+--8<-- ".provide/foundry/docs/_partials/python-version-setup.md"
 
 ## Virtual Environment
 
---8\<-- ".provide/foundry/docs/\_partials/virtual-env-setup.md"
+--8<-- ".provide/foundry/docs/_partials/virtual-env-setup.md"
 
 ## Installing pyvider-hcl
 
@@ -70,14 +70,13 @@ These are installed automatically when you install pyvider-hcl.
 
 ## Troubleshooting
 
---8\<-- ".provide/foundry/docs/\_partials/troubleshooting-common.md"
+--8<-- ".provide/foundry/docs/_partials/troubleshooting-common.md"
 
 ### HCL-Specific Issues
 
 **Problem**: `ImportError: cannot import name 'parse_hcl_to_cty'`
 
 **Solution**: Ensure you have the latest version installed:
-
 ```bash
 uv add pyvider-hcl --upgrade
 ```
@@ -85,7 +84,6 @@ uv add pyvider-hcl --upgrade
 **Problem**: HCL parsing errors
 
 **Solution**: Verify your HCL syntax:
-
 - Check for proper quoting of strings
 - Ensure proper nesting of blocks
 - Validate type expressions (e.g., `list(string)`)
@@ -95,5 +93,5 @@ uv add pyvider-hcl --upgrade
 After installation:
 
 1. **[Getting Started](../getting-started.md)** - Learn HCL parsing basics
-1. **[User Guide](../guide.md)** - Comprehensive usage examples
-1. **[API Reference](../reference/)** - Complete API documentation
+2. **[User Guide](../guide.md)** - Comprehensive usage examples
+3. **[API Reference](../reference/)** - Complete API documentation

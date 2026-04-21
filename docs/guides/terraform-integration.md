@@ -57,13 +57,11 @@ Supported HCL type strings:
 ## Complex Types
 
 ### Nested Objects
-
 ```python
 type_str = "object({host=string, pool=object({min=number, max=number})})"
 ```
 
 ### Lists of Objects
-
 ```python
 type_str = "list(object({name=string, port=number}))"
 ```
@@ -171,21 +169,20 @@ except HclTypeParsingError as e:
 ### Best Practices for Error Handling
 
 1. **Always wrap factory calls in try-except blocks** for production code
-1. **Log errors** with provide-foundation logger for debugging
-1. **Provide meaningful error messages** to users
-1. **Validate inputs** before calling factory functions
-1. **Test error cases** in your test suite
+2. **Log errors** with provide-foundation logger for debugging
+3. **Provide meaningful error messages** to users
+4. **Validate inputs** before calling factory functions
+5. **Test error cases** in your test suite
 
 ## Best Practices
 
 1. Always provide schemas for resources
-1. Use descriptive variable names
-1. Add descriptions to all variables
-1. Mark sensitive data as sensitive
-1. Handle errors gracefully in production code
+2. Use descriptive variable names
+3. Add descriptions to all variables
+4. Mark sensitive data as sensitive
+5. Handle errors gracefully in production code
 
 ## See Also
 
 <!-- - [Examples](../../examples/04_terraform_variables.py) -->
-
 <!-- - [Examples](../../examples/05_terraform_resources.py) -->
