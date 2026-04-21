@@ -1,6 +1,10 @@
 # 📄⚙️ Pyvider HCL
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/) [![uv](https://img.shields.io/badge/uv-package_manager-FF6B35.svg)](https://github.com/astral-sh/uv) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![CI](https://github.com/provide-io/pyvider-hcl/actions/workflows/ci.yml/badge.svg)](https://github.com/provide-io/pyvider-hcl/actions)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![uv](https://img.shields.io/badge/uv-package_manager-FF6B35.svg)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![CI](https://github.com/provide-io/pyvider-hcl/actions/workflows/ci.yml/badge.svg)](https://github.com/provide-io/pyvider-hcl/actions)
 
 **Python library for parsing HCL into pyvider.cty types**
 
@@ -20,8 +24,8 @@ pyvider-hcl provides a simple and intuitive way to work with HCL (HashiCorp Conf
 > **Note**: pyvider-hcl is in pre-release (v0.x.x). APIs and features may change before 1.0 release.
 
 1. Install: `uv add pyvider-hcl`
-1. Read the [Getting Started guide](https://github.com/provide-io/pyvider-hcl/blob/main/docs/getting-started.md).
-1. Try the examples in [examples/README.md](https://github.com/provide-io/pyvider-hcl/blob/main/examples/README.md).
+2. Read the [Getting Started guide](https://github.com/provide-io/pyvider-hcl/blob/main/docs/getting-started.md).
+3. Try the examples in [examples/README.md](https://github.com/provide-io/pyvider-hcl/blob/main/examples/README.md).
 
 ## Documentation
 
@@ -58,7 +62,6 @@ uv run ruff check .
 ```
 
 ## Contributing
-
 See [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md) for contribution guidelines.
 
 ## License
@@ -307,7 +310,6 @@ You need to parse each file individually. For multi-file Terraform projects, par
 ### What types can be automatically inferred?
 
 When no schema is provided, the library automatically infers:
-
 - `string` → `CtyString`
 - `number` (int/float) → `CtyNumber`
 - `bool` → `CtyBool`
@@ -317,7 +319,6 @@ When no schema is provided, the library automatically infers:
 ### How do I contribute or report bugs?
 
 See [CONTRIBUTING.md](https://github.com/provide-io/pyvider-hcl/blob/main/CONTRIBUTING.md) for contribution guidelines. For bugs, please open an issue on the GitHub repository with:
-
 - The HCL content that fails
 - The error message
 - Expected vs. actual behavior

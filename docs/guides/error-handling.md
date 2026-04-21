@@ -25,14 +25,12 @@ except HclParsingError as e:
 ## Error Types
 
 ### Syntax Errors
-
 ```python
 invalid_hcl = "name = "  # Missing value
 # Raises: HclParsingError
 ```
 
 ### Validation Errors
-
 ```python
 schema = CtyObject({"port": CtyNumber()})
 invalid = 'port = "8080"'  # String instead of number
@@ -40,7 +38,6 @@ invalid = 'port = "8080"'  # String instead of number
 ```
 
 ### Factory Errors
-
 ```python
 from pyvider.hcl import HclFactoryError, create_variable_cty
 
@@ -57,7 +54,6 @@ except HclFactoryError as e:
 The `parse_with_context` function provides enhanced error reporting with source location information. Unlike `parse_hcl_to_cty`, it captures and includes the source file path in error messages, making debugging significantly easier.
 
 #### Basic Usage
-
 ```python
 from pathlib import Path
 from pyvider.hcl import parse_with_context, HclParsingError
@@ -178,10 +174,10 @@ def load_configs(files):
 ## Best Practices
 
 1. Always catch `HclParsingError`
-1. Log errors with context
-1. Provide helpful error messages to users
-1. Don't expose stack traces to end users
-1. Use error context for debugging
+2. Log errors with context
+3. Provide helpful error messages to users
+4. Don't expose stack traces to end users
+5. Use error context for debugging
 
 ## See Also
 

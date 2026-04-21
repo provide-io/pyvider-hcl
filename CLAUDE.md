@@ -9,7 +9,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Environment Setup
 
 **IMPORTANT**: Use `uv sync` to set up the development environment. This script provisions a virtual environment in `workenv/` (NOT `.venv`). The environment setup handles:
-
 - Python 3.11+ requirement
 - UV package manager for dependency management
 - Platform-specific virtual environments (e.g., `workenv/pyvider-hcl_darwin_arm64`)
@@ -46,15 +45,13 @@ uv publish                      # Publish to PyPI
 The library is organized as a modular package under `src/pyvider/hcl/`:
 
 1. **HCL Parser** (`parser/` subpackage)
-
    - `parse_hcl_to_cty(hcl_content, schema=None)`: Main parsing function that converts HCL strings to CTY values
    - `parse_with_context(content, source_file=None)`: Parse HCL with enhanced error context
    - `auto_infer_cty_type(raw_data)`: Automatically infer CTY types from Python data structures
    - Uses `python-hcl2` library for underlying HCL parsing
    - Modules: `base.py`, `inference.py`, `context.py`
 
-1. **Factory Functions** (`factories/` subpackage)
-
+2. **Factory Functions** (`factories/` subpackage)
    - `create_variable_cty(name, type_str, default_py=None, ...)`: Create Terraform variable CTY structures
    - `create_resource_cty(r_type, r_name, attributes_py, ...)`: Create Terraform resource CTY structures
    - `parse_hcl_type_string(type_str)`: Parse HCL type strings (e.g., "list(string)", "object({...})")
@@ -62,27 +59,23 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - Supports complex types: list(), map(), object()
    - Modules: `types.py`, `variables.py`, `resources.py`
 
-1. **Output Formatting** (`output/` subpackage)
-
+3. **Output Formatting** (`output/` subpackage)
    - `pretty_print_cty(value)`: Format and display CTY values in readable format
    - Recursive formatting for nested structures (objects, lists, maps, tuples)
    - Modules: `formatting.py`
 
-1. **Terraform Integration** (`terraform/` subpackage)
-
+4. **Terraform Integration** (`terraform/` subpackage)
    - `parse_terraform_config(config_path)`: Placeholder for future Terraform-specific config parsing
    - **Note**: Currently not fully implemented, returns placeholder
    - Modules: `config.py`
 
-1. **Error Handling** (`exceptions.py`)
-
+5. **Error Handling** (`exceptions.py`)
    - `HclError`: Base exception class (extends `provide.foundation.FoundationError`)
    - `HclParsingError`: Structured exception with source location information (file, line, column)
 
 ### Public API
 
 Exported in `__init__.py`:
-
 ```python
 from pyvider.hcl import (
     parse_hcl_to_cty,        # Main parser
@@ -99,18 +92,18 @@ from pyvider.hcl import (
 ### Key Design Patterns
 
 1. **CTY Integration**: All HCL values are converted to CTY types for type safety
-1. **Schema Validation**: Optional schema parameter for validating HCL against expected CTY types
-1. **Type Inference**: Automatic CTY type inference when no schema is provided
-1. **Error Context**: Rich error messages with source location information (file, line, column)
-1. **Factory Pattern**: Specialized factories for common Terraform structures
+2. **Schema Validation**: Optional schema parameter for validating HCL against expected CTY types
+3. **Type Inference**: Automatic CTY type inference when no schema is provided
+4. **Error Context**: Rich error messages with source location information (file, line, column)
+5. **Factory Pattern**: Specialized factories for common Terraform structures
 
 ### Important Implementation Notes
 
 1. **HCL Parsing**: Wraps `python-hcl2` library for HCL 2.x compatibility
-1. **CTY Type Safety**: All values validated using the pyvider-cty type system
-1. **Type String Parsing**: Supports Terraform type syntax (e.g., "list(string)", "object({name=string, age=number})")
-1. **Unicode Support**: Full Unicode support in configuration files
-1. **Structured Errors**: Uses `attrs` for structured exception classes
+2. **CTY Type Safety**: All values validated using the pyvider-cty type system
+3. **Type String Parsing**: Supports Terraform type syntax (e.g., "list(string)", "object({name=string, age=number})")
+4. **Unicode Support**: Full Unicode support in configuration files
+5. **Structured Errors**: Uses `attrs` for structured exception classes
 
 ## Testing Strategy
 
@@ -176,9 +169,9 @@ def test_variable_factory():
 ## Common Issues & Solutions
 
 1. **ModuleNotFoundError for dependencies**: Run `uv sync` to ensure proper environment setup
-1. **HCL parsing errors**: Check HCL syntax and ensure proper escaping
-1. **CTY conversion issues**: Verify type compatibility between HCL and CTY
-1. **Import errors**: Ensure PYTHONPATH includes both `src/` and project root
+2. **HCL parsing errors**: Check HCL syntax and ensure proper escaping
+3. **CTY conversion issues**: Verify type compatibility between HCL and CTY
+4. **Import errors**: Ensure PYTHONPATH includes both `src/` and project root
 
 ## Development Guidelines
 
@@ -292,14 +285,12 @@ The package has minimal dependencies:
 ### Current Implementation Status
 
 **Implemented:**
-
 - HCL string parsing via python-hcl2
 - CTY type inference and validation
 - Terraform variable and resource factory functions
 - Error handling with source location context
 
 **Planned/Not Yet Implemented:**
-
 - Full HCL expression evaluation (e.g., `var.name`, function calls)
 - Template processing with variable substitution
 - Configuration file loading pipeline

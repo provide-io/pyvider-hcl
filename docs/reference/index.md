@@ -9,49 +9,43 @@ This reference is automatically generated from source code docstrings. Every mod
 The library is organized into these main modules:
 
 - **pyvider.hcl** - Main HCL interface
-
   - Core parsing and generation functionality
   - Primary entry points for most use cases
 
 - **pyvider.hcl.parser** - Parsing implementation
-
   - `Parser` - Base parser class
   - `InferenceParser` - Type inference during parsing
   - `ParserContext` - Parsing context management
 
 - **pyvider.hcl.factories** - Object factories
-
   - `TypeFactory` - HCL type creation
   - `VariableFactory` - Variable declaration handling
   - `ResourceFactory` - Resource block creation
 
 - **pyvider.hcl.output** - Output formatting
-
   - `Formatter` - HCL output formatting
   - Output serialization and pretty-printing
 
 - **pyvider.hcl.terraform** - Terraform-specific
-
   - `TerraformConfig` - Terraform configuration handling
   - Terraform-specific HCL features
 
 - **pyvider.hcl.exceptions** - Exception hierarchy
-
   - Error types for parsing and generation
 
 ## Quick Links
 
 **Most commonly used:**
 
-| Import                                  | Purpose           | Documentation                         |
-| --------------------------------------- | ----------------- | ------------------------------------- |
-| `from pyvider.hcl import Parser`        | Parse HCL content | [pyvider.hcl](pyvider/hcl/index.md)   |
-| `from pyvider.hcl.parser import Parser` | Parser class      | [parser](pyvider/hcl/parser/index.md) |
+| Import | Purpose | Documentation |
+|--------|---------|---------------|
+| `from pyvider.hcl import Parser` | Parse HCL content | [pyvider.hcl](pyvider/hcl/index.md) |
+| `from pyvider.hcl.parser import Parser` | Parser class | [parser](pyvider/hcl/parser/index.md) |
 
 **Exceptions:**
 
-| Import                                 | Purpose        | Documentation                           |
-| -------------------------------------- | -------------- | --------------------------------------- |
+| Import | Purpose | Documentation |
+|--------|---------|---------------|
 | `from pyvider.hcl.exceptions import *` | HCL exceptions | [exceptions](pyvider/hcl/exceptions.md) |
 
 ## Using the API Reference
