@@ -19,6 +19,7 @@ from pyvider.hcl.parser.inference import auto_infer_cty_type
 
 def _cleanup_hcl_data(data: Any) -> Any:
     """Recursively clean up data from hcl2 (strip __is_block__ and unquote strings)."""
+
     def _clean_key(key: str) -> str:
         if len(key) >= 2 and key[0] == '"' and key[-1] == '"':
             return key[1:-1]
