@@ -14,6 +14,7 @@ import hcl2
 from provide.foundation import logger
 
 from pyvider.hcl.exceptions import HclParsingError
+from pyvider.hcl.parser.base import _cleanup_hcl_data
 
 
 def parse_with_context(content: str, source_file: Path | None = None) -> Any:
@@ -41,7 +42,7 @@ def parse_with_context(content: str, source_file: Path | None = None) -> Any:
     source_str = str(source_file) if source_file else "string input"
 
     try:
-        return hcl2.loads(content)
+        return _cleanup_hcl_data(hcl2.loads(content))
     except Exception as e:
         logger.error(
             "HCL parsing failed",
