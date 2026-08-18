@@ -38,8 +38,10 @@ classifiers = [
 ]
 dependencies = [
     "attrs>=25.4.0",
-    "python-hcl2>=7.2.1",
-    "pyvider>=0.4.0",
+    # 8.x is required: its serialized output keeps source syntax (quoted string
+    # literals, __is_block__ markers, heredoc markers), which the parser
+    # normalizes, and its typed rule tree supplies block source lines.
+    "python-hcl2>=8.1.2",
     "pyvider-cty>=0.4.0",
     "provide-foundation>=0.4.0",
     "regex>=2024.11.6",
@@ -212,5 +214,4 @@ exclude_dirs = [".venv", "tests", "workenv"]
 [tool.uv.sources]
 provide-foundation = { path = "../provide-foundation", editable = true }
 provide-testkit = { path = "../provide-testkit", editable = true }
-pyvider = { path = "../pyvider", editable = true }
 pyvider-cty = { path = "../pyvider-cty", editable = true }

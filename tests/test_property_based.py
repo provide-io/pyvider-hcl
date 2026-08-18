@@ -78,7 +78,18 @@ class TestPropertyBasedTypeStringParsing:
         # Filter out strings that might accidentally be valid
         if any(
             keyword in random_str.lower()
-            for keyword in ["list", "map", "object", "string", "number", "bool", "any"]
+            for keyword in [
+                "list",
+                "map",
+                "object",
+                "set",
+                "tuple",
+                "optional",
+                "string",
+                "number",
+                "bool",
+                "any",
+            ]
         ):
             pytest.skip("String contains valid type keywords")
 

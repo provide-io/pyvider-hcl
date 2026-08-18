@@ -253,7 +253,20 @@ result = parse_hcl_to_cty(hcl_content)
 
 ### Can this library generate HCL output?
 
-No, `pyvider-hcl` is currently focused on parsing HCL into CTY types. It does not generate HCL output. You can use the `pretty_print_cty()` function to display CTY values in a readable format, but this is not HCL syntax.
+Yes. `cty_to_hcl()` renders an object- or map-typed `CtyValue` back into formatted HCL text:
+
+```python
+from pyvider.hcl import cty_to_hcl, parse_hcl_to_cty
+
+print(cty_to_hcl(parse_hcl_to_cty('name = "example"\nport = 8080\n')))
+```
+
+Everything is emitted as an attribute — a `CtyValue` carries no notion of HCL
+blocks, so block structure cannot be recovered from one. Unknown values and
+marked (e.g. sensitive) values are refused rather than rendered.
+
+For a human-readable rendering rather than HCL, use `format_cty()` (returns a
+string) or `pretty_print_cty()` (prints it).
 
 ### Does this support HCL expressions like `var.name` or `length(list)`?
 

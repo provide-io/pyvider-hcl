@@ -7,10 +7,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import re
-from typing import Any
+from typing import Any, cast
 
-from pyvider.cty import CtyBool, CtyDynamic, CtyList, CtyMap, CtyNumber, CtyObject, CtyString, CtyType
+from pyvider.cty import (
+    CtyBool,
+    CtyDynamic,
+    CtyList,
+    CtyMap,
+    CtyNumber,
+    CtyObject,
+    CtySet,
+    CtyString,
+    CtyTuple,
+    CtyType,
+)
 
 
 class HclTypeParsingError(ValueError):
@@ -24,17 +36,118 @@ PRIMITIVE_TYPE_MAP: dict[str, CtyType[Any]] = {
     "any": CtyDynamic(),
 }
 
-COMPLEX_TYPE_REGEX = re.compile(r"^(list|object|map)\((.*)\)$", re.IGNORECASE | re.DOTALL)
+COMPLEX_TYPE_REGEX = re.compile(r"^(list|set|map|object|tuple)\((.*)\)$", re.IGNORECASE | re.DOTALL)
+OPTIONAL_TYPE_REGEX = re.compile(r"^optional\((.*)\)$", re.IGNORECASE | re.DOTALL)
+
+# Bracket pairs that must stay balanced when splitting on top-level commas.
+_OPENING_BRACKETS = "({["
+_CLOSING_BRACKETS = ")}]"
 
 
-def parse_hcl_type_string(type_str: str) -> CtyType[Any]:  # noqa: C901
+def _split_top_level(text: str, context: str) -> list[str]:
+    """Split ``text`` on commas that are not nested inside brackets.
+
+    Args:
+        text: Comma-separated fragment of a type string.
+        context: The enclosing fragment, used in error messages.
+
+    Returns:
+        The stripped, non-empty parts.
+
+    Raises:
+        HclTypeParsingError: If a part is empty or a trailing comma is present.
+    """
+    parts: list[str] = []
+    balance = 0
+    start = 0
+
+    for index, char in enumerate(text):
+        if char in _OPENING_BRACKETS:
+            balance += 1
+        elif char in _CLOSING_BRACKETS:
+            balance -= 1
+        elif char == "," and balance == 0:
+            part = text[start:index].strip()
+            if not part:
+                raise HclTypeParsingError(f"Empty attribute part found in '{context}'")
+            parts.append(part)
+            start = index + 1
+
+    last_part = text[start:].strip()
+    if last_part:
+        parts.append(last_part)
+    elif parts:
+        raise HclTypeParsingError(f"Trailing comma found in attribute string: '{context}'")
+
+    return parts
+
+
+def _parse_element_type(inner_content: str, keyword: str) -> CtyType[Any]:
+    """Parse the single element type of a ``list``/``set``/``map``."""
+    if not inner_content:
+        raise HclTypeParsingError(f"{keyword.capitalize()} type string is empty, e.g., '{keyword}()'")
+    return parse_hcl_type_string(inner_content)
+
+
+def _parse_list(inner_content: str) -> CtyType[Any]:
+    return CtyList(element_type=_parse_element_type(inner_content, "list"))
+
+
+def _parse_set(inner_content: str) -> CtyType[Any]:
+    return CtySet(element_type=_parse_element_type(inner_content, "set"))
+
+
+def _parse_map(inner_content: str) -> CtyType[Any]:
+    return CtyMap(element_type=_parse_element_type(inner_content, "map"))
+
+
+def _parse_tuple(inner_content: str) -> CtyType[Any]:
+    """Parse ``tuple([type, ...])`` into a :class:`CtyTuple`."""
+    if not inner_content.startswith("[") or not inner_content.endswith("]"):
+        raise HclTypeParsingError(f"Tuple type string content must be enclosed in [], got: '{inner_content}'")
+    elements_str = inner_content[1:-1].strip()
+    if not elements_str:
+        return CtyTuple(())
+    element_types = tuple(parse_hcl_type_string(part) for part in _split_top_level(elements_str, elements_str))
+    return CtyTuple(element_types)
+
+
+def _parse_object(inner_content: str) -> CtyType[Any]:
+    """Parse ``object({name = type, ...})`` into a :class:`CtyObject`."""
+    if not inner_content.startswith("{") or not inner_content.endswith("}"):
+        raise HclTypeParsingError(
+            f"Object type string content must be enclosed in {{}}, got: '{inner_content}'"
+        )
+
+    attrs_str = inner_content[1:-1].strip()
+    if not attrs_str:
+        return CtyObject({})
+
+    attributes, optional = _parse_object_attributes_str(attrs_str)
+    if optional:
+        # CtyObject declares optional_attributes with converter=frozenset, whose
+        # inferred parameter type carries an unbound TypeVar; cast past it.
+        return CtyObject(attributes, optional_attributes=cast("Any", optional))
+    return CtyObject(attributes)
+
+
+COMPLEX_TYPE_PARSERS: dict[str, Callable[[str], CtyType[Any]]] = {
+    "list": _parse_list,
+    "set": _parse_set,
+    "map": _parse_map,
+    "tuple": _parse_tuple,
+    "object": _parse_object,
+}
+
+
+def parse_hcl_type_string(type_str: str) -> CtyType[Any]:
     """Parse HCL type string into CTY type.
 
     Supports:
     - Primitives: string, number, bool, any
-    - Lists: list(element_type)
-    - Maps: map(element_type)
-    - Objects: object({attr=type, ...})
+    - Collections: list(element_type), set(element_type), map(element_type)
+    - Tuples: tuple([type, ...])
+    - Objects: object({attr=type, ...}), including optional(type) attributes
 
     Args:
         type_str: HCL type string (e.g., "list(string)", "object({name=string})")
@@ -51,73 +164,66 @@ def parse_hcl_type_string(type_str: str) -> CtyType[Any]:  # noqa: C901
     """
     type_str = type_str.strip()
 
-    if type_str.lower() in PRIMITIVE_TYPE_MAP:
-        return PRIMITIVE_TYPE_MAP[type_str.lower()]
+    primitive = PRIMITIVE_TYPE_MAP.get(type_str.lower())
+    if primitive is not None:
+        return primitive
 
     match = COMPLEX_TYPE_REGEX.match(type_str)
     if not match:
         raise HclTypeParsingError(f"Unknown or malformed type string: '{type_str}'")
 
-    type_keyword = match.group(1).lower()
-    inner_content = match.group(2).strip()
-
-    if type_keyword == "list":
-        if not inner_content:
-            raise HclTypeParsingError("List type string is empty, e.g., 'list()'")
-        element_type = parse_hcl_type_string(inner_content)
-        return CtyList(element_type=element_type)
-
-    if type_keyword == "map":
-        if not inner_content:
-            raise HclTypeParsingError("Map type string is empty, e.g., 'map()'")
-        element_type = parse_hcl_type_string(inner_content)
-        return CtyMap(element_type=element_type)
-
-    if type_keyword == "object":
-        if not inner_content.startswith("{") or not inner_content.endswith("}"):
-            raise HclTypeParsingError(
-                f"Object type string content must be enclosed in {{}}, got: '{inner_content}'"
-            )
-        if inner_content == "{}":
-            return CtyObject({})
-
-        attrs_str = inner_content[1:-1].strip()
-        if not attrs_str:
-            return CtyObject({})
-
-        attributes = _parse_object_attributes_str(attrs_str)
-        return CtyObject(attributes)
-
-    raise HclTypeParsingError(f"Unhandled type keyword: '{type_keyword}'")
+    return COMPLEX_TYPE_PARSERS[match.group(1).lower()](match.group(2).strip())
 
 
-def _parse_object_attributes_str(attrs_str: str) -> dict[str, CtyType[Any]]:
-    """Parse object attribute definitions from HCL type string."""
+def _unwrap_optional(type_str: str) -> tuple[str, bool]:
+    """Strip an ``optional(...)`` wrapper from an object attribute type.
+
+    Terraform's two-argument form, ``optional(type, default)``, is accepted; the
+    default is dropped because CTY object types carry no per-attribute defaults.
+
+    Args:
+        type_str: Attribute type fragment, possibly ``optional``-wrapped.
+
+    Returns:
+        A ``(type_string, is_optional)`` pair.
+
+    Raises:
+        HclTypeParsingError: If the wrapper holds no type.
+    """
+    match = OPTIONAL_TYPE_REGEX.match(type_str)
+    if match is None:
+        return type_str, False
+
+    inner = match.group(1).strip()
+    if not inner:
+        raise HclTypeParsingError("Optional type string is empty, e.g., 'optional()'")
+
+    parts = _split_top_level(inner, inner)
+    if not parts:
+        raise HclTypeParsingError("Optional type string is empty, e.g., 'optional()'")
+    return parts[0], True
+
+
+def _parse_object_attributes_str(attrs_str: str) -> tuple[dict[str, CtyType[Any]], frozenset[str]]:
+    """Parse object attribute definitions from an HCL type string.
+
+    Args:
+        attrs_str: The contents of an ``object({...})`` declaration.
+
+    Returns:
+        A ``(attribute_types, optional_attribute_names)`` pair.
+    """
     attributes: dict[str, CtyType[Any]] = {}
-    balance = 0
-    last_break = 0
+    optional: set[str] = set()
 
-    for i, char in enumerate(attrs_str):
-        if char in "({":
-            balance += 1
-        elif char in ")}":
-            balance -= 1
-        elif char == "," and balance == 0:
-            part = attrs_str[last_break:i].strip()
-            if not part:
-                raise HclTypeParsingError(f"Empty attribute part found in '{attrs_str}'")
-            name, type_str = _split_attr_part(part)
-            attributes[name] = parse_hcl_type_string(type_str)
-            last_break = i + 1
+    for part in _split_top_level(attrs_str, attrs_str):
+        name, type_str = _split_attr_part(part)
+        unwrapped, is_optional = _unwrap_optional(type_str)
+        attributes[name] = parse_hcl_type_string(unwrapped)
+        if is_optional:
+            optional.add(name)
 
-    last_part = attrs_str[last_break:].strip()
-    if last_part:
-        name, type_str = _split_attr_part(last_part)
-        attributes[name] = parse_hcl_type_string(type_str)
-    elif attrs_str.strip().endswith(","):
-        raise HclTypeParsingError(f"Trailing comma found in attribute string: '{attrs_str}'")
-
-    return attributes
+    return attributes, frozenset(optional)
 
 
 def _split_attr_part(part: str) -> tuple[str, str]:

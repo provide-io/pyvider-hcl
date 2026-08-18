@@ -48,44 +48,76 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - `parse_hcl_to_cty(hcl_content, schema=None)`: Main parsing function that converts HCL strings to CTY values
    - `parse_with_context(content, source_file=None)`: Parse HCL with enhanced error context
    - `auto_infer_cty_type(raw_data)`: Automatically infer CTY types from Python data structures
-   - Uses `python-hcl2` library for underlying HCL parsing
-   - Modules: `base.py`, `inference.py`, `context.py`
+   - `normalize_hcl_data(data)`: Strip python-hcl2 8.x serialization artifacts (quoted string
+     literals, `__is_block__`/`__comments__` markers, heredoc markers, escape sequences left raw,
+     `${-N}` for negative integer literals)
+   - `null_required_attributes(value)`: Report null non-optional object attributes (pyvider-cty
+     defers required-ness to the schema layer, so this package enforces it)
+   - Uses `python-hcl2` >= 8.1.2 for underlying HCL parsing
+   - Modules: `base.py`, `inference.py`, `context.py`, `normalize.py`, `diagnostics.py`, `required.py`
 
 2. **Factory Functions** (`factories/` subpackage)
    - `create_variable_cty(name, type_str, default_py=None, ...)`: Create Terraform variable CTY structures
    - `create_resource_cty(r_type, r_name, attributes_py, ...)`: Create Terraform resource CTY structures
    - `parse_hcl_type_string(type_str)`: Parse HCL type strings (e.g., "list(string)", "object({...})")
    - Supports primitive types: string, number, bool, any
-   - Supports complex types: list(), map(), object()
+   - Supports complex types: list(), set(), map(), tuple([...]), object({...})
+   - Supports optional(T) and optional(T, default) inside object() — the default is dropped,
+     since CTY object types carry no per-attribute defaults
    - Modules: `types.py`, `variables.py`, `resources.py`
 
-3. **Output Formatting** (`output/` subpackage)
-   - `pretty_print_cty(value)`: Format and display CTY values in readable format
-   - Recursive formatting for nested structures (objects, lists, maps, tuples)
-   - Modules: `formatting.py`
+3. **Output Formatting and Emission** (`output/` subpackage)
+   - `pretty_print_cty(value)`: Print CTY values in readable format
+   - `format_cty(value)`: Same rendering, returned as a string
+   - `cty_to_hcl(value)`: Render an object/map CTY value back into HCL text via `hcl2.dumps`
+   - `cty_to_hcl_data(value)`: The intermediate python-hcl2-convention structure
+   - Recursive formatting for nested structures (objects, lists, maps, sets, tuples), with
+     explicit rendering of null, unknown, and marked values
+   - Modules: `formatting.py`, `emitter.py`
 
 4. **Terraform Integration** (`terraform/` subpackage)
-   - `parse_terraform_config(config_path)`: Placeholder for future Terraform-specific config parsing
-   - **Note**: Currently not fully implemented, returns placeholder
+   - `parse_terraform_config(config_path)`: Parse a `.tf` file into a `TerraformConfig`
+   - `parse_terraform_blocks(content, source_file=None)`: Same, from a string
+   - `TerraformConfig`: `blocks`, `attributes`, `blocks_of(type)`, `block_at(type, *labels)`,
+     `block_types`
+   - `TerraformBlock`: `block_type`, `labels`, `body`, `start_line`, `end_line`, `address`
+   - Block source lines come from python-hcl2's typed rule tree (`hcl2.parses`), since
+     `SerializationOptions.with_meta` emits nothing in 8.1.2
    - Modules: `config.py`
 
 5. **Error Handling** (`exceptions.py`)
    - `HclError`: Base exception class (extends `provide.foundation.FoundationError`)
-   - `HclParsingError`: Structured exception with source location information (file, line, column)
+   - `HclParsingError`: Structured exception with source location information (file, line, column),
+     populated from the lark error the parser raises, plus a caret-annotated source snippet
+   - `HclEmitError` (`output/emitter.py`): Raised when a CTY value has no HCL representation
 
 ### Public API
 
 Exported in `__init__.py`:
 ```python
 from pyvider.hcl import (
-    parse_hcl_to_cty,        # Main parser
-    parse_with_context,      # Parser with error context
-    create_variable_cty,     # Variable factory
-    create_resource_cty,     # Resource factory
-    pretty_print_cty,        # Pretty printer
-    parse_terraform_config,  # Terraform parser (placeholder)
-    HclError,               # Base exception
-    HclParsingError,        # Parsing exception
+    parse_hcl_to_cty,          # Main parser
+    parse_with_context,        # Parser returning raw normalized data
+    load_hcl_data,             # Parse + normalize, no CTY conversion
+    normalize_hcl_data,        # Strip python-hcl2 8.x serialization artifacts
+    auto_infer_cty_type,       # Type inference (delegates to pyvider-cty)
+    null_required_attributes,  # Required-attribute checker
+    create_variable_cty,       # Variable factory
+    create_resource_cty,       # Resource factory
+    pretty_print_cty,          # Pretty printer (stdout)
+    format_cty,                # Pretty printer (string)
+    cty_to_hcl,                # CTY -> HCL text
+    cty_to_hcl_data,           # CTY -> python-hcl2 dict conventions
+    parse_terraform_config,    # Terraform file parser
+    parse_terraform_blocks,    # Terraform string parser
+    TerraformConfig,           # Parsed configuration
+    TerraformBlock,            # One top-level block, with source lines
+    TERRAFORM_BLOCK_TYPES,     # Terraform's own block type names
+    HclError,                  # Base exception
+    HclParsingError,           # Parsing exception
+    HclEmitError,              # Emission exception
+    HclFactoryError,           # Factory exception
+    HclTypeParsingError,       # Type-string exception
 )
 ```
 
@@ -99,7 +131,10 @@ from pyvider.hcl import (
 
 ### Important Implementation Notes
 
-1. **HCL Parsing**: Wraps `python-hcl2` library for HCL 2.x compatibility
+1. **HCL Parsing**: Wraps `python-hcl2` >= 8.1.2 for HCL 2.x compatibility. 8.x output preserves
+   source syntax for round-tripping, so `parser/normalize.py` reverses it. Do NOT use
+   `SerializationOptions(strip_string_quotes=True)` — it also strips quotes inside expressions
+   (`upper("x")` -> `${upper(x)}`), which corrupts them
 2. **CTY Type Safety**: All values validated using the pyvider-cty type system
 3. **Type String Parsing**: Supports Terraform type syntax (e.g., "list(string)", "object({name=string, age=number})")
 4. **Unicode Support**: Full Unicode support in configuration files
@@ -275,9 +310,10 @@ pretty_print_cty(resource)
 
 The package has minimal dependencies:
 
-- **python-hcl2**: Core HCL parsing (wrapped for enhanced functionality)
+- **python-hcl2** (>= 8.1.2): Core HCL parsing and emission (wrapped for enhanced functionality)
 - **pyvider-cty**: Type system integration
 - **provide-foundation**: Logging and error handling
+- **attrs**: Structured exception and config classes
 - **regex**: Enhanced regular expression support for parsing
 
 ## Current Limitations and Future Enhancements
@@ -285,17 +321,31 @@ The package has minimal dependencies:
 ### Current Implementation Status
 
 **Implemented:**
-- HCL string parsing via python-hcl2
-- CTY type inference and validation
+- HCL string parsing via python-hcl2, with 8.x serialization artifacts normalized away
+- CTY type inference and validation, including required-attribute enforcement
 - Terraform variable and resource factory functions
-- Error handling with source location context
+- Terraform type-string parsing: primitives, list/set/map/tuple/object, optional attributes
+- Terraform config parsing into typed blocks with source line ranges
+- CTY -> HCL emission
+- Error handling with source location context (line, column, caret snippet)
 
 **Planned/Not Yet Implemented:**
-- Full HCL expression evaluation (e.g., `var.name`, function calls)
+- Full HCL expression evaluation (e.g., `var.name`, function calls) — expressions are preserved
+  verbatim as `${...}` strings, never evaluated
 - Template processing with variable substitution
-- Configuration file loading pipeline
 - Performance optimizations (lazy parsing, caching, streaming)
-- Terraform block-specific validation (provider, data, module, etc.)
+- Terraform block-specific *semantic* validation (required arguments per block type, etc.)
+- Emitting HCL blocks (as opposed to attributes) from CTY values
+
+**Known python-hcl2 8.1.2 upstream bugs worked around or reported:**
+- Negative integer literals load as `${-N}` strings — worked around in `normalize.py`;
+  reported upstream as amplify-education/python-hcl2#307
+- Escape sequences left unprocessed — worked around in `normalize.py` (regression of upstream #171)
+- Heredoc markers retained in the value — worked around in `normalize.py` (see upstream #303)
+- Empty heredoc (`<<EOF\nEOF`) fails to parse — NOT worked around (grammar-level; upstream #101
+  regression)
+- `SerializationOptions.with_meta` emits nothing (upstream #291) — block lines are read from the
+  typed rule tree instead
 
 ### Security Considerations
 

@@ -14,28 +14,37 @@ import hcl2
 from pyvider.cty import CtyType, CtyValue
 from pyvider.cty.exceptions import CtyError as CtySchemaError, CtyValidationError
 from pyvider.hcl.exceptions import HclParsingError
+from pyvider.hcl.parser.diagnostics import source_location
 from pyvider.hcl.parser.inference import auto_infer_cty_type
+from pyvider.hcl.parser.normalize import normalize_hcl_data
+from pyvider.hcl.parser.required import null_required_attributes
 
 
-def _cleanup_hcl_data(data: Any) -> Any:
-    """Recursively clean up data from hcl2 (strip __is_block__ and unquote strings)."""
+def load_hcl_data(hcl_content: str) -> Any:
+    """Parse HCL text into normalized Python data.
 
-    def _clean_key(key: str) -> str:
-        if len(key) >= 2 and key[0] == '"' and key[-1] == '"':
-            return key[1:-1]
-        return key
+    Args:
+        hcl_content: HCL string to parse.
 
-    if isinstance(data, dict):
-        # Remove __is_block__ attribute injected by hcl2
-        return {_clean_key(k): _cleanup_hcl_data(v) for k, v in data.items() if k != "__is_block__"}
-    elif isinstance(data, list):
-        return [_cleanup_hcl_data(item) for item in data]
-    elif isinstance(data, str):
-        # hcl2 sometimes returns strings with extra quotes
-        if len(data) >= 2 and data[0] == '"' and data[-1] == '"':
-            return data[1:-1]
-        return data
-    return data
+    Returns:
+        Parsed data with python-hcl2 serialization artifacts removed.
+
+    Raises:
+        HclParsingError: If the HCL cannot be parsed, carrying the source line
+            and column when the parser reported them.
+    """
+    try:
+        return normalize_hcl_data(hcl2.loads(hcl_content))
+    except Exception as e:
+        location = source_location(e, hcl_content)
+        message = f"Failed to parse HCL: {e}"
+        if location.context:
+            message = f"{message}\n{location.context}"
+        raise HclParsingError(
+            message=message,
+            line=location.line,
+            column=location.column,
+        ) from e
 
 
 def parse_hcl_to_cty(hcl_content: str, schema: CtyType[Any] | None = None) -> CtyValue[Any]:
@@ -57,23 +66,25 @@ def parse_hcl_to_cty(hcl_content: str, schema: CtyType[Any] | None = None) -> Ct
         >>> result.value["name"].value
         'example'
     """
+    raw_data = load_hcl_data(hcl_content)
+
+    if schema is None:
+        return auto_infer_cty_type(raw_data)
 
     try:
-        raw_data = hcl2.loads(hcl_content)
-        # Clean up hcl2 artifacts
-        raw_data = _cleanup_hcl_data(raw_data)
-    except Exception as e:
-        raise HclParsingError(message=f"Failed to parse HCL: {e}") from e
+        validated_value = schema.validate(raw_data)
+    except (CtySchemaError, CtyValidationError) as e:
+        raise HclParsingError(message=f"Schema validation failed after HCL parsing: {e}") from e
 
-    if schema:
-        try:
-            validated_value = schema.validate(raw_data)
-            return validated_value
-        except (CtySchemaError, CtyValidationError) as e:
-            raise HclParsingError(message=f"Schema validation failed after HCL parsing: {e}") from e
-    else:
-        inferred_value = auto_infer_cty_type(raw_data)
-        return inferred_value
+    missing = null_required_attributes(validated_value)
+    if missing:
+        raise HclParsingError(
+            message=(
+                "Schema validation failed after HCL parsing: null value for "
+                f"required attribute(s): {', '.join(missing)}"
+            )
+        )
+    return validated_value
 
 
 # 📄⚙️🔚
