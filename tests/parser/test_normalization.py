@@ -95,6 +95,27 @@ class TestHeredocs:
         data = parse_with_context("script = <<EOT\n\nEOT\n")
         assert data["script"] == "\n"
 
+    def test_empty_heredoc_is_an_empty_string(self) -> None:
+        """A heredoc with no body lines holds no content.
+
+        python-hcl2 8.1.2 cannot parse this form, so the normalizer is
+        exercised directly; the shape is what a fixed parser emits.
+        """
+        assert normalize_hcl_data('"<<EOF\nEOF"') == ""
+
+    def test_empty_indented_heredoc_is_an_empty_string(self) -> None:
+        assert normalize_hcl_data('"<<-EOF\n  EOF"') == ""
+
+    def test_blank_line_heredoc_is_a_newline(self) -> None:
+        """One empty body line is a newline, distinct from no body at all."""
+        assert normalize_hcl_data('"<<EOF\n\nEOF"') == "\n"
+
+    def test_unterminated_heredoc_is_left_alone(self) -> None:
+        assert normalize_hcl_data('"<<EOF\nbody"') == "<<EOF\nbody"
+
+    def test_mismatched_closing_marker_is_left_alone(self) -> None:
+        assert normalize_hcl_data('"<<EOF\nbody\nOTHER"') == "<<EOF\nbody\nOTHER"
+
     def test_heredoc_through_cty(self) -> None:
         value = parse_hcl_to_cty("script = <<EOT\nbody\nEOT\n")
         assert isinstance(value.value["script"].type, CtyString)

@@ -148,7 +148,12 @@ def _unwrap_heredoc(value: str) -> str | None:
     rest = match.group("rest")
     tag = match.group("tag")
     body, separator, closing = rest.rpartition("\n")
-    if not separator or closing.strip() != tag:
+    if not separator:
+        # Nothing follows the opening marker but the closing one, so the
+        # heredoc has no body lines at all and holds the empty string. This is
+        # distinct from a single empty body line, which holds one newline.
+        return "" if rest.strip() == tag else None
+    if closing.strip() != tag:
         return None
 
     lines = body.split("\n")
