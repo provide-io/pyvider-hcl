@@ -200,9 +200,14 @@ def normalize_hcl_string(value: str) -> Any:
 
 
 def _normalize_key(key: str) -> str:
-    """Remove the quotes hcl2 8.x keeps around quoted object keys and labels."""
+    """Unquote and unescape an object key or block label kept quoted by hcl2 8.x.
+
+    A quoted key is a string literal and carries the same escapes a value does,
+    so it has to be resolved the same way -- otherwise ``{ "a\\nb" = "a\\nb" }``
+    yields a key and a value that spell the same source text differently.
+    """
     if len(key) >= 2 and key.startswith('"') and key.endswith('"'):
-        return key[1:-1]
+        return unescape_hcl_string(key[1:-1])
     return key
 
 

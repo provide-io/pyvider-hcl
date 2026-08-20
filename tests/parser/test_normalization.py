@@ -191,6 +191,32 @@ class TestBlockArtifacts:
         data = parse_with_context('tags = { "Name" = "web", env = "prod" }')
         assert data["tags"] == {"Name": "web", "env": "prod"}
 
+    def test_an_escape_in_a_quoted_key_is_resolved(self) -> None:
+        """A key is a string literal, so its escapes are string escapes.
+
+        `_normalize_key` used to strip the quotes hcl2 8.x keeps and stop
+        there, so a key kept its backslashes while the identical text on the
+        value side was unescaped.
+        """
+        data = parse_with_context('tags = { "a\\nb" = 1 }')
+        assert data["tags"] == {"a\nb": 1}
+
+    def test_a_key_and_a_value_spell_the_same_text_the_same_way(self) -> None:
+        """The property the bug broke, stated directly rather than by example."""
+        data = parse_with_context('m = { "a\\nb" = "a\\nb" }')
+        ((key, value),) = data["m"].items()
+        assert key == value
+
+    def test_an_escape_in_a_block_label_is_resolved(self) -> None:
+        """Labels go through the same path as object keys."""
+        content = 'resource "a\\tb" "web" {\n  ami = "ami-1"\n}\n'
+        data = parse_with_context(content)
+        assert list(data["resource"][0]) == ["a\tb"]
+
+    def test_a_key_needing_no_escape_is_untouched(self) -> None:
+        data = parse_with_context('tags = { "Name" = "web" }')
+        assert data["tags"] == {"Name": "web"}
+
     def test_comments_removed(self) -> None:
         data = parse_with_context('# leading comment\nname = "x"\n')
         assert data == {"name": "x"}
