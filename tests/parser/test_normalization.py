@@ -6,10 +6,9 @@
 """Tests for normalization of python-hcl2 8.x output artifacts.
 
 python-hcl2 8.x preserves source syntax in its serialized output: string
-literals keep their quotes, escape sequences are left raw, heredocs keep their
-markers, and negative integer literals are emitted as ``${-N}`` expression
-strings. These tests pin the normalization that turns that back into plain
-Python values before CTY inference runs.
+literals keep their quotes, escape sequences are left raw, and heredocs keep
+their markers. These tests pin the normalization that turns that back into
+plain Python values before CTY inference runs.
 """
 
 from decimal import Decimal
@@ -20,7 +19,12 @@ from pyvider.hcl.parser.normalize import normalize_hcl_data
 
 
 class TestNegativeNumbers:
-    """python-hcl2 8.x emits ``-3`` as the expression string ``${-3}``."""
+    """A negative literal is a number, not an expression string.
+
+    python-hcl2 8.0.0rc1 through 8.1.2 emitted ``-3`` as ``'${-3}'``, which this
+    package used to convert back. 8.1.3 fixed that upstream, so these pin the
+    fixed behaviour instead of the workaround.
+    """
 
     def test_negative_int_attribute_is_a_number(self) -> None:
         value = parse_hcl_to_cty("port = -3")
@@ -96,15 +100,11 @@ class TestHeredocs:
         assert data["script"] == "\n"
 
     def test_empty_heredoc_is_an_empty_string(self) -> None:
-        """A heredoc with no body lines holds no content.
-
-        python-hcl2 8.1.2 cannot parse this form, so the normalizer is
-        exercised directly; the shape is what a fixed parser emits.
-        """
-        assert normalize_hcl_data('"<<EOF\nEOF"') == ""
+        """A heredoc with no body lines holds no content."""
+        assert parse_with_context("script = <<EOF\nEOF\n")["script"] == ""
 
     def test_empty_indented_heredoc_is_an_empty_string(self) -> None:
-        assert normalize_hcl_data('"<<-EOF\n  EOF"') == ""
+        assert parse_with_context("script = <<-EOF\n  EOF\n")["script"] == ""
 
     def test_blank_line_heredoc_is_a_newline(self) -> None:
         """One empty body line is a newline, distinct from no body at all."""
@@ -115,6 +115,15 @@ class TestHeredocs:
 
     def test_mismatched_closing_marker_is_left_alone(self) -> None:
         assert normalize_hcl_data('"<<EOF\nbody\nOTHER"') == "<<EOF\nbody\nOTHER"
+
+    def test_text_after_the_closing_marker_is_left_alone(self) -> None:
+        """The heredoc patterns close on the delimiter, not the end of input.
+
+        They are matched against a token the grammar has already accepted, so
+        upstream needs no end anchor; here they run against any quoted string,
+        and a partial match means the text merely begins like a heredoc.
+        """
+        assert normalize_hcl_data('"<<EOF\nbody\nEOF and more"') == "<<EOF\nbody\nEOF and more"
 
     def test_heredoc_through_cty(self) -> None:
         value = parse_hcl_to_cty("script = <<EOT\nbody\nEOT\n")
@@ -176,6 +185,18 @@ class TestEscapeSequences:
 
     def test_trailing_backslash_is_preserved(self) -> None:
         assert normalize_hcl_data('"trailing\\"') == "trailing\\"
+
+    def test_lone_surrogate_escape_is_preserved(self) -> None:
+        """``\\uD800`` names no character that can be encoded.
+
+        ``chr`` accepts a lone surrogate, but the resulting string cannot be
+        encoded to UTF-8, so resolving the escape would hand callers a value
+        that raises the moment anything writes it out.
+        """
+        assert parse_with_context(r'msg = "lone \uD800 here"')["msg"] == r"lone \uD800 here"
+
+    def test_out_of_range_codepoint_escape_is_preserved(self) -> None:
+        assert parse_with_context(r'msg = "\U0011FFFF"')["msg"] == r"\U0011FFFF"
 
 
 class TestBlockArtifacts:

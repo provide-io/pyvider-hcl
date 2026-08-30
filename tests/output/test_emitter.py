@@ -102,6 +102,19 @@ class TestExpressionEmission:
     def test_template_roundtrips(self) -> None:
         assert _roundtrip('v = "a${var.x}b"') == {"v": "a${var.x}b"}
 
+    def test_two_interpolations_are_quoted(self) -> None:
+        """``"${a} ${b}"`` is a template, not one expression.
+
+        It starts with ``${`` and ends with ``}``, which is all
+        ``hcl2.utils.is_dollar_string`` checks, but emitting it bare would
+        produce ``v = ${a} ${b}`` -- not valid HCL.
+        """
+        value = CtyObject({"v": CtyString()}).validate({"v": "${var.a} ${var.b}"})
+        assert cty_to_hcl(value) == 'v = "${var.a} ${var.b}"\n'
+
+    def test_two_interpolations_roundtrip(self) -> None:
+        assert _roundtrip('v = "${var.a} ${var.b}"') == {"v": "${var.a} ${var.b}"}
+
 
 class TestContainerEmission:
     """Collections and structural types map onto HCL tuples and objects."""

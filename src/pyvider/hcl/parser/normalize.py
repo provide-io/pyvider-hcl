@@ -9,15 +9,33 @@
 result can be reconstructed back into HCL:
 
 * string literals keep their surrounding quotes (``'"web"'``),
-* escape sequences are left raw (``'a\\\\"b'``),
+* escape sequences are left raw (``'a\\\\tb'``),
 * heredocs keep their markers (``'"<<EOT\\nbody\\nEOT"'``),
 * block bodies carry ``__is_block__`` markers and ``__comments__`` entries,
-* object keys keep their quotes when the source quoted them,
-* negative integer literals are emitted as ``'${-3}'`` expression strings.
+* object keys keep their quotes when the source quoted them.
 
 None of that is useful for CTY conversion, which wants plain Python values, so
 this module reverses it. Expressions (``'${var.x}'``) are deliberately left
 alone: this package parses HCL, it does not evaluate it.
+
+The pieces python-hcl2 already gets right are imported rather than rewritten:
+``HEREDOC_PATTERN`` and ``HEREDOC_TRIM_PATTERN``, which the library documents as
+tracking its own grammar terminals (so delimiters containing ``.`` or ``-``,
+single-character delimiters, and CRLF line endings all follow automatically),
+and ``process_escape_sequences``, which resolves escapes in a single pass.
+
+What stays here is the heredoc body, because python-hcl2's own value form —
+``SerializationOptions(preserve_heredocs=False, strip_string_quotes=True)`` —
+disagrees with HCL on every case ``tests/parser/test_hcl_semantics.py`` checks
+against OpenTofu: it drops the newline before the closing marker, dedents
+whitespace-only lines, and measures ``<<-`` indentation in spaces only, so a
+tab-indented heredoc is not dedented at all.
+
+``strip_string_quotes`` is unusable here for a second reason. It resolves
+escapes before this module sees the value, and a quoted literal spelling
+``"<<EOT\\nbody\\nEOT"`` then becomes byte-identical to a real heredoc — two
+different values by OpenTofu's reckoning. Unwrapping the heredoc first, while
+its escapes are still raw, is what keeps them apart.
 """
 
 from __future__ import annotations
@@ -25,106 +43,32 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from hcl2.utils import (
+    HEREDOC_PATTERN,
+    HEREDOC_TRIM_PATTERN,
+    process_escape_sequences,
+)
+
 # hcl2 8.x metadata keys injected into serialized block bodies.
 HCL2_METADATA_KEYS = frozenset({"__is_block__", "__comments__", "__inline_comments__"})
 
-# A bare (unquoted) interpolation wrapping nothing but a negative number.
-# hcl2 8.x lexes ``-3`` as unary-minus applied to an int literal rather than as
-# a negative int literal, so it serializes as an expression string.
-_NEGATIVE_NUMBER_RE = re.compile(r"^\$\{-(\d+(?:\.\d+)?)\}$")
-
-# Heredoc as serialized by hcl2 8.x, after the outer quotes are removed:
-# ``<<TAG\n<body>\n<indent>TAG``. ``<<-`` requests dedenting of the body.
-_HEREDOC_RE = re.compile(r"^<<(?P<dash>-?)(?P<tag>[A-Za-z_][A-Za-z0-9_]*)\n(?P<rest>.*)$", re.DOTALL)
-
-# Escape sequences HCL defines inside quoted templates. ``$${`` and ``%%{``
-# (escaped interpolation/directive markers) are intentionally absent, which is a
-# deliberate deviation from Terraform: Terraform resolves ``$${x}`` to the
-# literal text ``${x}``, but Terraform also evaluates interpolations, so it can
-# tell the two apart afterwards. This package preserves expressions verbatim
-# instead of evaluating them, so unescaping here would make a literal
-# indistinguishable from a live interpolation. The escape is left in place and
-# the distinction preserved.
-_SIMPLE_ESCAPES = {
-    "n": "\n",
-    "r": "\r",
-    "t": "\t",
-    '"': '"',
-    "\\": "\\",
-}
-_UNICODE_ESCAPE_WIDTHS = {"u": 4, "U": 8}
-
-
-def _decode_unicode_escape(text: str, index: int) -> tuple[str, int] | None:
-    """Decode a ``\\uNNNN`` / ``\\UNNNNNNNN`` escape starting at ``index``.
-
-    Args:
-        text: The string being scanned.
-        index: Offset of the ``u``/``U`` marker (just past the backslash).
-
-    Returns:
-        A ``(character, next_index)`` pair, or ``None`` when the escape is
-        malformed and should be preserved verbatim.
-    """
-    width = _UNICODE_ESCAPE_WIDTHS[text[index]]
-    digits = text[index + 1 : index + 1 + width]
-    if len(digits) != width or any(char not in "0123456789abcdefABCDEF" for char in digits):
-        return None
-    try:
-        return chr(int(digits, 16)), index + 1 + width
-    except ValueError:  # pragma: no cover - guarded by the digit check above
-        return None
-
-
-def unescape_hcl_string(value: str) -> str:
-    """Process HCL escape sequences in a quoted string literal.
-
-    Unrecognized escapes are preserved verbatim, backslash included. Terraform
-    itself rejects them ("The symbol \"q\" is not a valid escape sequence
-    selector"), but python-hcl2 accepts them, and a parser is a poor place to
-    add a hard error the underlying grammar does not raise.
-
-    Args:
-        value: String literal contents, without the surrounding quotes.
-
-    Returns:
-        The string with escape sequences resolved.
-    """
-    if "\\" not in value:
-        return value
-
-    parts: list[str] = []
-    index = 0
-    length = len(value)
-    while index < length:
-        char = value[index]
-        if char != "\\" or index + 1 >= length:
-            parts.append(char)
-            index += 1
-            continue
-
-        marker = value[index + 1]
-        if marker in _SIMPLE_ESCAPES:
-            parts.append(_SIMPLE_ESCAPES[marker])
-            index += 2
-            continue
-        if marker in _UNICODE_ESCAPE_WIDTHS:
-            decoded = _decode_unicode_escape(value, index + 1)
-            if decoded is not None:
-                parts.append(decoded[0])
-                index = decoded[1]
-                continue
-
-        # Not an escape we recognize: keep the backslash and the character.
-        parts.append(char)
-        parts.append(marker)
-        index += 2
-
-    return "".join(parts)
+# The indentation of the closing heredoc marker, which sits on its own line and
+# is not part of the value. Nothing else trailing is removed: a blank final line
+# and spaces at the end of a content line are both content, and a content line
+# always ends with its own newline, so this can never reach past one.
+_CLOSING_MARKER_INDENT_RE = re.compile(r"[ \t]*\Z")
 
 
 def _dedent_heredoc(lines: list[str]) -> list[str]:
-    """Strip the common leading whitespace from ``<<-`` heredoc lines."""
+    """Strip the common leading whitespace from ``<<-`` heredoc lines.
+
+    The spec measures "any literal string at the start of each line", so a
+    whitespace-only line offers no measurement and is left exactly as it was:
+    OpenTofu reports ``"a\\n      \\nb\\n"`` for a heredoc indented by four
+    spaces whose middle line is six, neither measuring that line nor trimming
+    it. Indentation is counted in characters, not spaces, so a tab-indented
+    heredoc dedents like a space-indented one.
+    """
     indents = [len(line) - len(line.lstrip()) for line in lines if line.strip()]
     if not indents:
         return lines
@@ -141,60 +85,44 @@ def _unwrap_heredoc(value: str) -> str | None:
     Returns:
         The heredoc body, or ``None`` when ``value`` is not a heredoc.
     """
-    match = _HEREDOC_RE.match(value)
+    match = HEREDOC_TRIM_PATTERN.match(value)
+    dedent = match is not None
     if match is None:
+        match = HEREDOC_PATTERN.match(value)
+    # Both patterns close on the last occurrence of the delimiter rather than
+    # anchoring at the end, so a match that stops short is text that merely
+    # begins like a heredoc.
+    if match is None or match.end() != len(value):
         return None
 
-    rest = match.group("rest")
-    tag = match.group("tag")
-    body, separator, closing = rest.rpartition("\n")
-    if not separator:
-        # Nothing follows the opening marker but the closing one, so the
-        # heredoc has no body lines at all and holds the empty string. This is
-        # distinct from a single empty body line, which holds one newline.
-        return "" if rest.strip() == tag else None
-    if closing.strip() != tag:
-        return None
-
-    lines = body.split("\n")
-    if match.group("dash"):
-        lines = _dedent_heredoc(lines)
-    # HCL heredoc content includes the newline that precedes the closing marker,
-    # so `<<EOT\nline\nEOT` is "line\n", not "line". Verified against
+    # Everything between the opening marker's newline and the closing one: the
+    # content lines with the newlines that terminate them, then the closing
+    # marker's indentation. HCL counts the newline before the closing marker as
+    # content, so `<<EOT\nline\nEOT` is "line\n", not "line" -- verified against
     # OpenTofu, which reports the same for the same source.
-    return "\n".join(lines) + "\n"
+    body = _CLOSING_MARKER_INDENT_RE.sub("", match.group(2))
+    if not dedent:
+        return body
+    return "\n".join(_dedent_heredoc(body.split("\n")))
 
 
-def _coerce_negative_number(value: str) -> int | float | None:
-    """Convert a bare ``${-N}`` expression string back into a number."""
-    match = _NEGATIVE_NUMBER_RE.match(value)
-    if match is None:
-        return None
-    digits = match.group(1)
-    return -float(digits) if "." in digits else -int(digits)
-
-
-def normalize_hcl_string(value: str) -> Any:
+def normalize_hcl_string(value: str) -> str:
     """Normalize one string as serialized by hcl2 8.x.
 
     Args:
         value: A string straight out of ``hcl2.loads``.
 
     Returns:
-        A plain Python value: a number for ``${-N}``, the unescaped literal for
-        a quoted string, the body for a heredoc, or ``value`` unchanged for a
-        bare expression or identifier.
+        A plain Python string: the body for a heredoc, the resolved literal for
+        a quoted string, or ``value`` unchanged for a bare expression or
+        identifier.
     """
-    number = _coerce_negative_number(value)
-    if number is not None:
-        return number
-
     if len(value) >= 2 and value.startswith('"') and value.endswith('"'):
         inner = value[1:-1]
         heredoc = _unwrap_heredoc(inner)
         if heredoc is not None:
             return heredoc
-        return unescape_hcl_string(inner)
+        return process_escape_sequences(inner)
 
     return value
 
@@ -207,7 +135,7 @@ def _normalize_key(key: str) -> str:
     yields a key and a value that spell the same source text differently.
     """
     if len(key) >= 2 and key.startswith('"') and key.endswith('"'):
-        return unescape_hcl_string(key[1:-1])
+        return process_escape_sequences(key[1:-1])
     return key
 
 

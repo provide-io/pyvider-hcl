@@ -41,7 +41,10 @@ from pyvider.hcl.exceptions import HclError
 
 # A string that is nothing but one interpolation is emitted as an expression, so
 # that `${var.x}` survives a parse/emit round trip as HCL rather than becoming a
-# quoted literal.
+# quoted literal. `hcl2.utils.is_dollar_string` tests only that the string starts
+# with `${` and ends with `}`, which also accepts `"${a} ${b}"` -- two
+# interpolations, which is a template. Emitting that bare produces `x = ${a}
+# ${b}`, which is not valid HCL, so the whole string has to be one interpolation.
 _WHOLE_INTERPOLATION_RE = re.compile(r"^\$\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}$", re.DOTALL)
 
 # Characters that must be escaped inside an HCL quoted string literal. `${` is

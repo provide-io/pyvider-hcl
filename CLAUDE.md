@@ -49,11 +49,13 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - `parse_with_context(content, source_file=None)`: Parse HCL with enhanced error context
    - `auto_infer_cty_type(raw_data)`: Automatically infer CTY types from Python data structures
    - `normalize_hcl_data(data)`: Strip python-hcl2 8.x serialization artifacts (quoted string
-     literals, `__is_block__`/`__comments__` markers, heredoc markers, escape sequences left raw,
-     `${-N}` for negative integer literals)
+     literals, `__is_block__`/`__comments__` markers, heredoc markers, escape sequences left raw).
+     Heredoc patterns and escape resolution are imported from `hcl2.utils` rather than
+     reimplemented; only the heredoc *body* is computed locally, because hcl2's own value form
+     disagrees with HCL (see `Important Implementation Notes`)
    - `null_required_attributes(value)`: Report null non-optional object attributes (pyvider-cty
      defers required-ness to the schema layer, so this package enforces it)
-   - Uses `python-hcl2` >= 8.1.2 for underlying HCL parsing
+   - Uses `python-hcl2` >= 8.1.3 for underlying HCL parsing
    - Modules: `base.py`, `inference.py`, `context.py`, `normalize.py`, `diagnostics.py`, `required.py`
 
 2. **Factory Functions** (`factories/` subpackage)
@@ -82,7 +84,7 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
      `block_types`
    - `TerraformBlock`: `block_type`, `labels`, `body`, `start_line`, `end_line`, `address`
    - Block source lines come from python-hcl2's typed rule tree (`hcl2.parses`), since
-     `SerializationOptions.with_meta` emits nothing in 8.1.2
+     `SerializationOptions.with_meta` emits nothing (upstream #291)
    - Modules: `config.py`
 
 5. **Error Handling** (`exceptions.py`)
@@ -131,10 +133,20 @@ from pyvider.hcl import (
 
 ### Important Implementation Notes
 
-1. **HCL Parsing**: Wraps `python-hcl2` >= 8.1.2 for HCL 2.x compatibility. 8.x output preserves
-   source syntax for round-tripping, so `parser/normalize.py` reverses it. Do NOT use
-   `SerializationOptions(strip_string_quotes=True)` — it also strips quotes inside expressions
-   (`upper("x")` -> `${upper(x)}`), which corrupts them
+1. **HCL Parsing**: Wraps `python-hcl2` >= 8.1.3 for HCL 2.x compatibility. 8.x output preserves
+   source syntax for round-tripping, so `parser/normalize.py` reverses it, reusing
+   `hcl2.utils.HEREDOC_PATTERN`, `HEREDOC_TRIM_PATTERN` and `process_escape_sequences`.
+   Do NOT switch the parser to `SerializationOptions(strip_string_quotes=True,
+   preserve_heredocs=False)` to skip that normalization. Two reasons, both pinned by tests:
+   - hcl2's value form disagrees with HCL on every heredoc case in
+     `tests/parser/test_hcl_semantics.py` — it drops the newline before the closing marker,
+     dedents whitespace-only lines, and measures `<<-` indentation in spaces only, so a
+     tab-indented heredoc is not dedented at all
+   - it resolves escapes before this package sees the value, at which point the literal
+     `"<<EOT\nbody\nEOT"` is byte-identical to a real heredoc, though the two have different
+     values. Unwrapping heredocs *before* resolving escapes is what keeps them apart
+   Likewise do NOT use `hcl2.utils.is_dollar_string` in the emitter: it accepts `"${a} ${b}"`,
+   which emitted bare is invalid HCL
 2. **CTY Type Safety**: All values validated using the pyvider-cty type system
 3. **Type String Parsing**: Supports Terraform type syntax (e.g., "list(string)", "object({name=string, age=number})")
 4. **Unicode Support**: Full Unicode support in configuration files
@@ -310,7 +322,7 @@ pretty_print_cty(resource)
 
 The package has minimal dependencies:
 
-- **python-hcl2** (>= 8.1.2): Core HCL parsing and emission (wrapped for enhanced functionality)
+- **python-hcl2** (>= 8.1.3): Core HCL parsing and emission (wrapped for enhanced functionality)
 - **pyvider-cty**: Type system integration
 - **provide-foundation**: Logging and error handling
 - **attrs**: Structured exception and config classes
@@ -337,15 +349,23 @@ The package has minimal dependencies:
 - Terraform block-specific *semantic* validation (required arguments per block type, etc.)
 - Emitting HCL blocks (as opposed to attributes) from CTY values
 
-**Known python-hcl2 8.1.2 upstream bugs worked around or reported:**
-- Negative integer literals load as `${-N}` strings — worked around in `normalize.py`;
-  reported upstream as amplify-education/python-hcl2#307
-- Escape sequences left unprocessed — worked around in `normalize.py` (regression of upstream #171)
-- Heredoc markers retained in the value — worked around in `normalize.py` (see upstream #303)
-- Empty heredoc (`<<EOF\nEOF`) fails to parse — NOT worked around (grammar-level; upstream #101
-  regression)
-- `SerializationOptions.with_meta` emits nothing (upstream #291) — block lines are read from the
-  typed rule tree instead
+**python-hcl2 upstream status (as of 8.1.3):**
+
+Fixed upstream, workarounds removed here:
+- Negative integer literals loaded as `${-N}` strings (#307, fixed by PR #311)
+- Empty heredoc (`<<EOF\nEOF`) failed to parse, silently swallowing the attributes that
+  followed (#309, fixed by PR #312)
+- `strip_string_quotes` stripped quotes inside expressions and left escapes unresolved
+  (#308/#310, fixed by PR #313) — the option is still unused here, for the reasons in
+  `Important Implementation Notes`
+
+Still open upstream, still handled here:
+- `SerializationOptions.with_meta` emits nothing (#291) — block lines are read from the typed
+  rule tree instead
+- hcl2's own heredoc value form (`preserve_heredocs=False`) drops the trailing newline, dedents
+  whitespace-only lines, and ignores tab indentation — `normalize.py` computes the body itself
+- Heredoc markers are retained in the default (round-trippable) value form (#303) — by design
+  upstream, reversed in `normalize.py`
 
 ### Security Considerations
 

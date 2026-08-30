@@ -39,6 +39,23 @@ GROUND_TRUTH: list[tuple[str, object]] = [
     ("x = <<-EOF\n    indented\n      more\n    EOF\n", "indented\n  more\n"),
     ('x = <<EOT\nsay "hi"\nEOT\n', 'say "hi"\n'),
     ("x = <<EOT\nliteral\\nbackslash\nEOT\n", "literal\\nbackslash\n"),
+    # A trailing blank line and trailing spaces on a content line are content;
+    # only the closing marker's own indentation is not.
+    ("x = <<EOT\nbody  \n\nEOT\n", "body  \n\n"),
+    # `<<-` measures indentation in characters, so a tab-indented heredoc
+    # dedents by one tab rather than not at all.
+    ("x = <<-EOT\n\ta\n\t\tb\n\tEOT\n", "a\n\tb\n"),
+    # A whitespace-only line is neither measured for the dedent nor trimmed
+    # by it.
+    ("x = <<-EOT\n    a\n      \n    b\n    EOT\n", "a\n      \nb\n"),
+    # Any HCL identifier is a valid delimiter, one character included.
+    ("x = <<E\nbody\nE\n", "body\n"),
+    ("x = <<EO-T\nbody\nEO-T\n", "body\n"),
+    # A CRLF file's line endings are content inside a heredoc body.
+    ("x = <<EOT\r\na\r\nb\r\nEOT\r\n", "a\r\nb\r\n"),
+    # A quoted literal that spells a heredoc is a string, not a heredoc: it has
+    # no trailing newline, because it never had a closing marker line.
+    ('x = "<<EOT\\nbody\\nEOT"', "<<EOT\nbody\nEOT"),
 ]
 
 
