@@ -19,7 +19,11 @@ from typing import Any
 
 import attrs
 import hcl2
-from hcl2.rules.base import AttributeRule, BlockRule, IdentifierRule
+from hcl2.rules.base import AttributeRule, BlockRule
+
+# IdentifierRule is defined in literal_rules; hcl2.rules.base only imports it,
+# and mypy strict will not follow an implicit re-export.
+from hcl2.rules.literal_rules import IdentifierRule
 from hcl2.rules.strings import StringRule
 from provide.foundation import logger
 
