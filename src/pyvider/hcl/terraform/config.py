@@ -6,10 +6,14 @@
 """Terraform configuration parsing with block structure and source lines.
 
 ``hcl2.loads`` flattens a configuration into nested dicts, which loses both the
-block/attribute distinction and every source position. This module parses to
-python-hcl2's typed rule tree instead, so each top-level block keeps its type,
-its labels, and the line range it occupies — the information diagnostics need
-to point at a specific block.
+block/attribute distinction and every source position. This module reads
+python-hcl2's typed rule tree through ``hcl2.query`` instead, so each top-level
+block keeps its type, its labels, and the line range it occupies — the
+information diagnostics need to point at a specific block.
+
+Source lines come from the rule's own ``_meta``, not from
+``SerializationOptions(with_meta=True)``, which still emits nothing as of 8.1.3
+(amplify-education/python-hcl2#291).
 """
 
 from __future__ import annotations
@@ -18,18 +22,13 @@ from pathlib import Path
 from typing import Any
 
 import attrs
-import hcl2
-from hcl2.rules.base import AttributeRule, BlockRule
-
-# IdentifierRule is defined in literal_rules; hcl2.rules.base only imports it,
-# and mypy strict will not follow an implicit re-export.
-from hcl2.rules.literal_rules import IdentifierRule
-from hcl2.rules.strings import StringRule
+from hcl2.query import BlockView, DocumentView
+from hcl2.utils import process_escape_sequences
 from provide.foundation import logger
 
 from pyvider.hcl.exceptions import HclParsingError
 from pyvider.hcl.parser.diagnostics import source_location
-from pyvider.hcl.parser.normalize import normalize_hcl_data, normalize_hcl_string
+from pyvider.hcl.parser.normalize import normalize_hcl_data
 
 # Terraform's own top-level block types, for callers that want to distinguish
 # them from provider- or tool-specific blocks.
@@ -96,64 +95,23 @@ class TerraformConfig:
         return tuple(seen)
 
 
-def _rule_text(node: Any) -> str:
-    """Render a label or identifier rule as plain text."""
-    serialized = node.serialize()
-    return normalize_hcl_string(serialized) if isinstance(serialized, str) else str(serialized)
+def _block_from_view(view: BlockView) -> TerraformBlock:
+    """Build a :class:`TerraformBlock` from an ``hcl2.query`` block view.
 
-
-def _block_from_rule(rule: Any) -> TerraformBlock:
-    """Build a :class:`TerraformBlock` from a python-hcl2 ``BlockRule``."""
-    block_type = ""
-    labels: list[str] = []
-
-    for child in rule.children:
-        if isinstance(child, IdentifierRule) and not block_type:
-            block_type = _rule_text(child)
-        elif isinstance(child, StringRule | IdentifierRule):
-            labels.append(_rule_text(child))
-
-    meta = getattr(rule, "_meta", None)
-    body = normalize_hcl_data(_block_body(rule))
+    ``name_labels`` drops the block type and the quotes around each label but
+    leaves escapes raw, so a quoted label still needs resolving. An unquoted
+    label is an identifier and cannot carry an escape, so the same call is a
+    no-op for it.
+    """
+    meta = getattr(view.raw, "_meta", None)
+    body = normalize_hcl_data(view.body.to_dict())
     return TerraformBlock(
-        block_type=block_type,
-        labels=tuple(labels),
+        block_type=view.block_type,
+        labels=tuple(process_escape_sequences(label) for label in view.name_labels),
         body=body if isinstance(body, dict) else {},
         start_line=getattr(meta, "line", None),
         end_line=getattr(meta, "end_line", None),
     )
-
-
-def _block_body(rule: Any) -> Any:
-    """Serialize a block's body, stripping the label nesting hcl2 adds."""
-    serialized = rule.serialize()
-    # hcl2 nests one dict level per label; unwrap them to reach the body.
-    for _ in range(_label_count(rule)):
-        if isinstance(serialized, dict) and len(serialized) == 1:
-            serialized = next(iter(serialized.values()))
-    return serialized
-
-
-def _label_count(rule: Any) -> int:
-    """Count a block's labels."""
-    identifiers = 0
-    labels = 0
-    for child in rule.children:
-        if isinstance(child, IdentifierRule):
-            if identifiers:
-                labels += 1
-            identifiers += 1
-        elif isinstance(child, StringRule):
-            labels += 1
-    return labels
-
-
-def _top_level_children(tree: Any) -> list[Any]:
-    """Return the children of the configuration's root body."""
-    body = getattr(tree, "body", None)
-    if body is None:
-        return []
-    return list(getattr(body, "children", []) or [])
 
 
 def parse_terraform_blocks(content: str, source_file: Path | None = None) -> TerraformConfig:
@@ -175,7 +133,7 @@ def parse_terraform_blocks(content: str, source_file: Path | None = None) -> Ter
         'variable.a'
     """
     try:
-        tree = hcl2.parses(content)
+        document = DocumentView.parse(content)
     except Exception as e:
         location = source_location(e, content)
         logger.error(
@@ -193,18 +151,17 @@ def parse_terraform_blocks(content: str, source_file: Path | None = None) -> Ter
             column=location.column,
         ) from e
 
-    blocks: list[TerraformBlock] = []
+    # blocks() and attributes() are annotated as returning the NodeView base
+    # class though they only ever yield BlockView and AttributeView; narrowing
+    # here is what makes that concrete.
     attributes: dict[str, Any] = {}
-    for child in _top_level_children(tree):
-        if isinstance(child, BlockRule):
-            blocks.append(_block_from_rule(child))
-        elif isinstance(child, AttributeRule):
-            serialized = normalize_hcl_data(child.serialize())
-            if isinstance(serialized, dict):
-                attributes.update(serialized)
+    for attribute in document.attributes():
+        serialized = normalize_hcl_data(attribute.to_dict())
+        if isinstance(serialized, dict):
+            attributes.update(serialized)
 
     return TerraformConfig(
-        blocks=tuple(blocks),
+        blocks=tuple(_block_from_view(view) for view in document.blocks() if isinstance(view, BlockView)),
         attributes=attributes,
         source_file=str(source_file) if source_file else None,
     )

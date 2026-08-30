@@ -66,6 +66,19 @@ class TestBlockExtraction:
         assert block is not None
         assert block.labels == ("aws_instance", "web")
 
+    def test_escapes_in_labels_are_resolved(self) -> None:
+        """A quoted label is a string literal and carries string escapes.
+
+        ``hcl2.query`` unquotes labels but leaves their escapes raw, so a label
+        reaches here spelled the way the source spelled it.
+        """
+        config = parse_terraform_blocks('resource "a\\tb" "c" {\n  x = 1\n}\n')
+        assert config.blocks[0].labels == ("a\tb", "c")
+
+    def test_unquoted_label_is_kept_verbatim(self) -> None:
+        config = parse_terraform_blocks("locals {\n  x = 1\n}\n")
+        assert config.blocks[0].labels == ()
+
     def test_body_is_normalized(self) -> None:
         config = parse_terraform_blocks(SAMPLE)
         block = config.block_at("resource", "aws_instance", "web")

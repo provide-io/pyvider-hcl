@@ -43,14 +43,16 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from hcl2.const import COMMENTS_KEY, INLINE_COMMENTS_KEY, IS_BLOCK
 from hcl2.utils import (
     HEREDOC_PATTERN,
     HEREDOC_TRIM_PATTERN,
     process_escape_sequences,
 )
 
-# hcl2 8.x metadata keys injected into serialized block bodies.
-HCL2_METADATA_KEYS = frozenset({"__is_block__", "__comments__", "__inline_comments__"})
+# hcl2 8.x metadata keys injected into serialized block bodies, named by the
+# library rather than spelled out again here.
+HCL2_METADATA_KEYS = frozenset({IS_BLOCK, COMMENTS_KEY, INLINE_COMMENTS_KEY})
 
 # The indentation of the closing heredoc marker, which sits on its own line and
 # is not part of the value. Nothing else trailing is removed: a blank final line
@@ -127,7 +129,7 @@ def normalize_hcl_string(value: str) -> str:
     return value
 
 
-def _normalize_key(key: str) -> str:
+def normalize_hcl_key(key: str) -> str:
     """Unquote and unescape an object key or block label kept quoted by hcl2 8.x.
 
     A quoted key is a string literal and carries the same escapes a value does,
@@ -153,7 +155,7 @@ def normalize_hcl_data(data: Any) -> Any:
     """
     if isinstance(data, dict):
         return {
-            _normalize_key(key): normalize_hcl_data(value)
+            normalize_hcl_key(key): normalize_hcl_data(value)
             for key, value in data.items()
             if key not in HCL2_METADATA_KEYS
         }
