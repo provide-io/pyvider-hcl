@@ -13,8 +13,8 @@ from provide.foundation import logger
 
 from pyvider.cty import CtyList, CtyObject, CtyType, CtyValue
 from pyvider.cty.exceptions import CtyError, CtyValidationError
-from pyvider.hcl.factories.types import HclTypeParsingError, parse_hcl_type_string
-from pyvider.hcl.factories.variables import HclFactoryError
+from pyvider.hcl.exceptions import HclFactoryError, HclTypeParsingError
+from pyvider.hcl.factories.types import parse_hcl_type_string
 from pyvider.hcl.parser import auto_infer_cty_type
 
 

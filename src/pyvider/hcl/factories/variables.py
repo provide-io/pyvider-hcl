@@ -13,11 +13,8 @@ from provide.foundation import logger
 
 from pyvider.cty import CtyBool, CtyList, CtyObject, CtyString, CtyType, CtyValue
 from pyvider.cty.exceptions import CtyError, CtyValidationError
-from pyvider.hcl.factories.types import HclTypeParsingError, parse_hcl_type_string
-
-
-class HclFactoryError(ValueError):
-    """Custom exception for errors during HCL factory operations."""
+from pyvider.hcl.exceptions import HclFactoryError, HclTypeParsingError
+from pyvider.hcl.factories.types import parse_hcl_type_string
 
 
 def create_variable_cty(  # noqa: C901

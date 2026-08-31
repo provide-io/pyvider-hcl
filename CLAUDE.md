@@ -88,10 +88,17 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - Modules: `config.py`
 
 5. **Error Handling** (`exceptions.py`)
+   - Every exception the package raises lives here, and every one derives from `HclError`, so
+     `except HclError` catches all of them
    - `HclError`: Base exception class (extends `provide.foundation.FoundationError`)
    - `HclParsingError`: Structured exception with source location information (file, line, column),
      populated from the lark error the parser raises, plus a caret-annotated source snippet
-   - `HclEmitError` (`output/emitter.py`): Raised when a CTY value has no HCL representation
+   - `HclEmitError`: Raised when a CTY value has no HCL representation
+   - `HclFactoryError`, `HclTypeParsingError`: Raised by the factories. Both also derive from
+     `ValueError`, which they derived from alone before 0.6.1 -- keep that base, dropping it
+     would break a caller catching `ValueError` around a factory call
+   - The modules that used to define these still expose them, so a deep import such as
+     `from pyvider.hcl.output.emitter import HclEmitError` keeps working
 
 ### Public API
 

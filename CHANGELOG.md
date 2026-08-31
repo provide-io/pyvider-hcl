@@ -5,6 +5,22 @@ All notable changes to the pyvider-hcl project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-08-30
+
+### Fixed
+- **`except HclError` now catches everything this package raises.**
+  `HclFactoryError` and `HclTypeParsingError` derived from `ValueError` alone,
+  so the one thing a caller would reasonably reach for -- catching the
+  package's own base class around a call into it -- silently missed both. Both
+  keep `ValueError` in their bases, so code written against the old hierarchy
+  still works.
+
+### Changed
+- All five exceptions are defined in `exceptions.py` rather than scattered
+  across the modules that raise them. The modules that used to define them
+  still expose them, so `from pyvider.hcl.output.emitter import HclEmitError`
+  and the equivalent factory imports keep working.
+
 ## [0.6.0] - 2026-08-30
 
 Requires python-hcl2 >= 8.1.3 and pyvider-cty >= 0.5.0. The exported API in

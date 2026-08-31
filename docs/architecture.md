@@ -221,16 +221,20 @@ HclError (base class)
     │     ├─ source_file: str | None
     │     ├─ line: int | None
     │     └─ column: int | None
-    └─ HclEmitError           raised when a CTY value has no HCL form
-                              (output/emitter.py)
-
-ValueError
+    ├─ HclEmitError           raised when a CTY value has no HCL form
     ├─ HclFactoryError        raised by the variable and resource factories
+    │                         (also a ValueError)
     └─ HclTypeParsingError    raised by parse_hcl_type_string()
+                              (also a ValueError)
 ```
 
-Note that the two factory exceptions derive from `ValueError` rather than
-`HclError`, so `except HclError` does not catch them.
+`except HclError` catches everything this package raises. The two factory
+errors additionally derive from `ValueError`, which is what they derived from
+alone before 0.6.1, so code catching that still works.
+
+All five are defined in `exceptions.py`. The modules that used to define them
+still expose them, so `from pyvider.hcl.output.emitter import HclEmitError`
+keeps working.
 
 ---
 

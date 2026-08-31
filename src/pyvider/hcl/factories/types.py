@@ -23,11 +23,7 @@ from pyvider.cty import (
     CtyTuple,
     CtyType,
 )
-
-
-class HclTypeParsingError(ValueError):
-    """Custom exception for errors during HCL type string parsing."""
-
+from pyvider.hcl.exceptions import HclTypeParsingError
 
 PRIMITIVE_TYPE_MAP: dict[str, CtyType[Any]] = {
     "string": CtyString(),

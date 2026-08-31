@@ -37,7 +37,7 @@ from pyvider.cty import (
     CtyTuple,
     CtyValue,
 )
-from pyvider.hcl.exceptions import HclError
+from pyvider.hcl.exceptions import HclEmitError
 
 # A string that is nothing but one interpolation is emitted as an expression, so
 # that `${var.x}` survives a parse/emit round trip as HCL rather than becoming a
@@ -57,10 +57,6 @@ _STRING_ESCAPES = {
     "\r": "\\r",
     "\t": "\\t",
 }
-
-
-class HclEmitError(HclError):
-    """Raised when a CTY value cannot be represented as HCL."""
 
 
 def _quote_string(value: str) -> str:

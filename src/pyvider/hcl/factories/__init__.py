@@ -5,9 +5,10 @@
 
 """Factory functions for creating Terraform CTY structures."""
 
+from pyvider.hcl.exceptions import HclFactoryError, HclTypeParsingError
 from pyvider.hcl.factories.resources import create_resource_cty
-from pyvider.hcl.factories.types import HclTypeParsingError, parse_hcl_type_string
-from pyvider.hcl.factories.variables import HclFactoryError, create_variable_cty
+from pyvider.hcl.factories.types import parse_hcl_type_string
+from pyvider.hcl.factories.variables import create_variable_cty
 
 __all__ = [
     "HclFactoryError",

@@ -4,8 +4,16 @@
 
 ```
 HclError (base)
-└── HclParsingError (parsing and validation errors)
+├── HclParsingError      parsing and schema validation failures, with a
+│                        source location and a caret-annotated snippet
+├── HclEmitError         a CTY value that has no HCL representation
+├── HclFactoryError      invalid input to a variable or resource factory
+└── HclTypeParsingError  a malformed HCL type string
 ```
+
+`except HclError` catches everything this package raises. The two factory
+errors are also `ValueError` subclasses, which is what they were alone before
+0.6.1, so code catching that keeps working.
 
 ## Catching Errors
 
