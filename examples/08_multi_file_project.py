@@ -8,15 +8,19 @@
 This example demonstrates parsing multiple HCL files
 in a real-world project structure."""
 
+import io
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
+from typing import Any
 
 from pyvider.hcl import parse_with_context
 
 # Redirected stdout is encoded with the locale's codec -- cp1252 on Windows, which
 # cannot represent the emoji below. A Windows console already uses UTF-8 (PEP 528).
-sys.stdout.reconfigure(encoding="utf-8")
+# The guard is for a replaced stdout, which has no reconfigure() to call.
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 
 def create_sample_project(base_dir: Path) -> None:
@@ -201,13 +205,11 @@ def example_aggregate_configuration() -> None:
         base_dir = Path(tmpdir)
         create_sample_project(base_dir)
 
-        # Aggregate all configuration
-        all_config = {
-            "variables": {},
-            "outputs": {},
-            "modules": [],
-            "resources": [],
-        }
+        # Aggregate all configuration. Separate names rather than one dict,
+        # because the values have different types and a mixed dict hides that.
+        variables: dict[str, Any] = {}
+        outputs: dict[str, Any] = {}
+        modules: list[str] = []
 
         for hcl_file in base_dir.glob("*.hcl"):
             content = hcl_file.read_text()
@@ -216,25 +218,25 @@ def example_aggregate_configuration() -> None:
             # Extract variables
             if "variable" in config:
                 for var_block in config["variable"]:
-                    all_config["variables"].update(var_block)
+                    variables.update(var_block)
 
             # Extract outputs
             if "output" in config:
                 for output_block in config["output"]:
-                    all_config["outputs"].update(output_block)
+                    outputs.update(output_block)
 
             # Extract modules
             if "module" in config:
                 for module_block in config["module"]:
-                    all_config["modules"].extend(module_block.keys())
+                    modules.extend(module_block.keys())
 
         print("\n📊 Project Summary:")
-        print(f"  Variables: {len(all_config['variables'])}")
-        print(f"  Outputs: {len(all_config['outputs'])}")
-        print(f"  Modules: {len(all_config['modules'])}")
+        print(f"  Variables: {len(variables)}")
+        print(f"  Outputs: {len(outputs)}")
+        print(f"  Modules: {len(modules)}")
 
         print("\n📋 Variable Names:")
-        for var_name in all_config["variables"]:
+        for var_name in variables:
             print(f"    - {var_name}")
 
 

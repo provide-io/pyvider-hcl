@@ -8,13 +8,16 @@
 This example demonstrates how pyvider-hcl automatically infers
 CTY types from HCL data when no schema is provided."""
 
+import io
 import sys
 
 from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
 
 # Redirected stdout is encoded with the locale's codec -- cp1252 on Windows, which
 # cannot represent the emoji below. A Windows console already uses UTF-8 (PEP 528).
-sys.stdout.reconfigure(encoding="utf-8")
+# The guard is for a replaced stdout, which has no reconfigure() to call.
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 
 def example_primitive_inference() -> None:
@@ -32,9 +35,9 @@ def example_primitive_inference() -> None:
     result = parse_hcl_to_cty(hcl_content)
 
     print("\n📊 Types automatically inferred:")
-    print(f"string_value → {result.value['string_value'].type}")
-    print(f"number_value → {result.value['number_value'].type}")
-    print(f"bool_value → {result.value['bool_value'].type}")
+    print(f"string_value → {result['string_value'].type}")
+    print(f"number_value → {result['number_value'].type}")
+    print(f"bool_value → {result['bool_value'].type}")
 
     pretty_print_cty(result)
 
@@ -54,9 +57,9 @@ def example_list_inference() -> None:
     result = parse_hcl_to_cty(hcl_content)
 
     print("\n📊 List types inferred:")
-    print(f"string_list → {result.value['string_list'].type}")
-    print(f"number_list → {result.value['number_list'].type}")
-    print(f"mixed_list → {result.value['mixed_list'].type}")
+    print(f"string_list → {result['string_list'].type}")
+    print(f"number_list → {result['number_list'].type}")
+    print(f"mixed_list → {result['mixed_list'].type}")
 
     pretty_print_cty(result)
 
@@ -83,11 +86,11 @@ def example_object_inference() -> None:
     result = parse_hcl_to_cty(hcl_content)
 
     print("\n📊 Object types inferred:")
-    user_obj = result.value["user"]
+    user_obj = result["user"]
     print(f"user → {user_obj.type}")
-    print(f"  name: {user_obj.value['name'].type}")
-    print(f"  age: {user_obj.value['age'].type}")
-    print(f"  admin: {user_obj.value['admin'].type}")
+    print(f"  name: {user_obj['name'].type}")
+    print(f"  age: {user_obj['age'].type}")
+    print(f"  admin: {user_obj['admin'].type}")
 
     pretty_print_cty(result)
 
@@ -168,7 +171,7 @@ Example: Schema provides type safety
     # Without schema - accepts anything
     hcl = 'port = "8080"'
     result = parse_hcl_to_cty(hcl)
-    print(f"\nInference accepted: port = {result.value['port'].value} (type: {result.value['port'].type})")
+    print(f"\nInference accepted: port = {result['port'].value} (type: {result['port'].type})")
 
 
 def main() -> None:

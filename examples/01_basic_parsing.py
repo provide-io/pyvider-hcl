@@ -31,9 +31,9 @@ def example_simple_values() -> None:
     pretty_print_cty(result)
 
     # Access individual values
-    print(f"\nName: {result.value['name'].value}")
-    print(f"Count: {result.value['count'].value}")
-    print(f"Enabled: {result.value['enabled'].value}")
+    print(f"\nName: {result['name'].value}")
+    print(f"Count: {result['count'].value}")
+    print(f"Enabled: {result['enabled'].value}")
 
 
 def example_lists() -> None:
@@ -53,8 +53,8 @@ def example_lists() -> None:
     pretty_print_cty(result)
 
     # Access list values
-    print(f"\nTags: {[tag.value for tag in result.value['tags'].value]}")
-    print(f"Ports: {[port.value for port in result.value['ports'].value]}")
+    print(f"\nTags: {[tag.value for tag in result['tags']]}")
+    print(f"Ports: {[port.value for port in result['ports']]}")
 
 
 def example_objects() -> None:
@@ -82,7 +82,7 @@ def example_objects() -> None:
     pretty_print_cty(result)
 
     # Access nested values
-    server = result.value["server"].value
+    server = result["server"]
     print(f"\nServer host: {server['host'].value}")
     print(f"Server port: {server['port'].value}")
 

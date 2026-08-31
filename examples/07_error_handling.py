@@ -8,6 +8,7 @@
 This example demonstrates proper error handling when
 parsing HCL and using factory functions."""
 
+import io
 import sys
 
 from pyvider.cty import CtyNumber, CtyObject
@@ -16,7 +17,9 @@ from pyvider.hcl.factories import HclFactoryError
 
 # Redirected stdout is encoded with the locale's codec -- cp1252 on Windows, which
 # cannot represent the emoji below. A Windows console already uses UTF-8 (PEP 528).
-sys.stdout.reconfigure(encoding="utf-8")
+# The guard is for a replaced stdout, which has no reconfigure() to call.
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 
 def example_syntax_error() -> None:
