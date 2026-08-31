@@ -8,9 +8,15 @@
 This example demonstrates proper error handling when
 parsing HCL and using factory functions."""
 
+import sys
+
 from pyvider.cty import CtyNumber, CtyObject
 from pyvider.hcl import HclParsingError, parse_hcl_to_cty
 from pyvider.hcl.factories import HclFactoryError
+
+# Redirected stdout is encoded with the locale's codec -- cp1252 on Windows, which
+# cannot represent the emoji below. A Windows console already uses UTF-8 (PEP 528).
+sys.stdout.reconfigure(encoding="utf-8")
 
 
 def example_syntax_error() -> None:
@@ -27,7 +33,7 @@ def example_syntax_error() -> None:
     try:
         parse_hcl_to_cty(invalid_hcl)
     except HclParsingError as e:
-        print("\nCaught HCL parsing error:")
+        print("\n❌ Caught HCL parsing error:")
         print(f"Error message: {e.message}")
 
 
@@ -48,9 +54,9 @@ def example_schema_validation_error() -> None:
     try:
         parse_hcl_to_cty(invalid_hcl, schema=schema)
     except HclParsingError as e:
-        print("\nCaught validation error:")
+        print("\n❌ Caught validation error:")
         print(f"Error: {e}")
-        print("\nTip: Check that your HCL types match the schema!")
+        print("\n💡 Tip: Check that your HCL types match the schema!")
 
 
 def example_factory_error() -> None:
@@ -68,9 +74,9 @@ def example_factory_error() -> None:
             type_str="string",
         )
     except HclFactoryError as e:
-        print("\nCaught factory error:")
+        print("\n❌ Caught factory error:")
         print(f"Error: {e}")
-        print("\nTip: Variable names must be valid Python identifiers!")
+        print("\n💡 Tip: Variable names must be valid Python identifiers!")
 
 
 def example_type_mismatch_error() -> None:
@@ -89,9 +95,9 @@ def example_type_mismatch_error() -> None:
             default_py="8080",  # String instead of number
         )
     except HclFactoryError as e:
-        print("\nCaught type mismatch error:")
+        print("\n❌ Caught type mismatch error:")
         print(f"Error: {e}")
-        print("\nTip: Ensure default values match the declared type!")
+        print("\n💡 Tip: Ensure default values match the declared type!")
 
 
 def example_graceful_recovery() -> None:
@@ -115,14 +121,14 @@ def example_graceful_recovery() -> None:
             results.append(result)
         except HclParsingError as e:
             errors.append((i, str(e)))
-            print(f"  Config {i}: Failed to parse")
+            print(f"❌ Config {i}: Failed to parse")
 
-    print("\nSummary:")
+    print("\n📊 Summary:")
     print(f"  Successful: {len(results)}")
     print(f"  Failed: {len(errors)}")
 
     if errors:
-        print("\nErrors:")
+        print("\n❌ Errors:")
         for idx, error in errors:
             print(f"  Config {idx}: {error}")
 
@@ -145,11 +151,11 @@ def example_with_context() -> None:
     try:
         parse_with_context(content, source_file=Path("config.hcl"))
     except HclParsingError as e:
-        print("\nCaught parsing error with context:")
+        print("\n❌ Caught parsing error with context:")
         print(f"Message: {e.message}")
         if e.source_file:
             print(f"File: {e.source_file}")
-        print("\nContext helps locate errors in multi-file projects!")
+        print("\n💡 Context helps locate errors in multi-file projects!")
 
 
 def main() -> None:

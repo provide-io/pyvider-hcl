@@ -9,9 +9,14 @@ This example demonstrates parsing multiple HCL files
 in a real-world project structure."""
 
 from pathlib import Path
+import sys
 from tempfile import TemporaryDirectory
 
 from pyvider.hcl import parse_with_context
+
+# Redirected stdout is encoded with the locale's codec -- cp1252 on Windows, which
+# cannot represent the emoji below. A Windows console already uses UTF-8 (PEP 528).
+sys.stdout.reconfigure(encoding="utf-8")
 
 
 def create_sample_project(base_dir: Path) -> None:
@@ -122,7 +127,7 @@ def example_parse_all_files() -> None:
                 content = file.read_text()
                 parse_with_context(content, source_file=file)
             except Exception as e:
-                print(f"  failed:  {rel_path}: {e}")
+                print(f"  ❌ {rel_path}: {e}")
 
 
 def example_parse_specific_files() -> None:
@@ -170,20 +175,20 @@ def example_validate_project_structure() -> None:
             "outputs.hcl",
         ]
 
-        print("\nChecking for required files:")
+        print("\n🔍 Checking for required files:")
         all_present = True
         for filename in required_files:
             file_path = base_dir / filename
             if file_path.exists():
-                print(f"  found:   {filename}")
+                print(f"  ✅ {filename}")
             else:
-                print(f"  missing: {filename}")
+                print(f"  ❌ {filename} (missing)")
                 all_present = False
 
         if all_present:
-            print("\nProject structure is complete!")
+            print("\n✅ Project structure is complete!")
         else:
-            print("\nProject structure is incomplete!")
+            print("\n❌ Project structure is incomplete!")
 
 
 def example_aggregate_configuration() -> None:
@@ -223,12 +228,12 @@ def example_aggregate_configuration() -> None:
                 for module_block in config["module"]:
                     all_config["modules"].extend(module_block.keys())
 
-        print("\nProject Summary:")
+        print("\n📊 Project Summary:")
         print(f"  Variables: {len(all_config['variables'])}")
         print(f"  Outputs: {len(all_config['outputs'])}")
         print(f"  Modules: {len(all_config['modules'])}")
 
-        print("\nVariable Names:")
+        print("\n📋 Variable Names:")
         for var_name in all_config["variables"]:
             print(f"    - {var_name}")
 

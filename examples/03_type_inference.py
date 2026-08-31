@@ -8,7 +8,13 @@
 This example demonstrates how pyvider-hcl automatically infers
 CTY types from HCL data when no schema is provided."""
 
+import sys
+
 from pyvider.hcl import parse_hcl_to_cty, pretty_print_cty
+
+# Redirected stdout is encoded with the locale's codec -- cp1252 on Windows, which
+# cannot represent the emoji below. A Windows console already uses UTF-8 (PEP 528).
+sys.stdout.reconfigure(encoding="utf-8")
 
 
 def example_primitive_inference() -> None:
@@ -25,10 +31,10 @@ def example_primitive_inference() -> None:
 
     result = parse_hcl_to_cty(hcl_content)
 
-    print("\nTypes automatically inferred:")
-    print(f"string_value -> {result.value['string_value'].type}")
-    print(f"number_value -> {result.value['number_value'].type}")
-    print(f"bool_value -> {result.value['bool_value'].type}")
+    print("\n📊 Types automatically inferred:")
+    print(f"string_value → {result.value['string_value'].type}")
+    print(f"number_value → {result.value['number_value'].type}")
+    print(f"bool_value → {result.value['bool_value'].type}")
 
     pretty_print_cty(result)
 
@@ -47,10 +53,10 @@ def example_list_inference() -> None:
 
     result = parse_hcl_to_cty(hcl_content)
 
-    print("\nList types inferred:")
-    print(f"string_list -> {result.value['string_list'].type}")
-    print(f"number_list -> {result.value['number_list'].type}")
-    print(f"mixed_list -> {result.value['mixed_list'].type}")
+    print("\n📊 List types inferred:")
+    print(f"string_list → {result.value['string_list'].type}")
+    print(f"number_list → {result.value['number_list'].type}")
+    print(f"mixed_list → {result.value['mixed_list'].type}")
 
     pretty_print_cty(result)
 
@@ -76,9 +82,9 @@ def example_object_inference() -> None:
 
     result = parse_hcl_to_cty(hcl_content)
 
-    print("\nObject types inferred:")
+    print("\n📊 Object types inferred:")
     user_obj = result.value["user"]
-    print(f"user -> {user_obj.type}")
+    print(f"user → {user_obj.type}")
     print(f"  name: {user_obj.value['name'].type}")
     print(f"  age: {user_obj.value['age'].type}")
     print(f"  admin: {user_obj.value['admin'].type}")
@@ -117,7 +123,7 @@ def example_complex_inference() -> None:
 
     result = parse_hcl_to_cty(hcl_content)
 
-    print("\nComplex structure - all types inferred automatically!")
+    print("\n📊 Complex structure - all types inferred automatically!")
     pretty_print_cty(result)
 
 
@@ -129,17 +135,17 @@ def example_when_to_use_schemas() -> None:
 
     print("""
 Use INFERENCE when:
-  - Exploring HCL data
-  - Prototyping
-  - Data structure is flexible
-  - Quick scripts and tools
+  ✓ Exploring HCL data
+  ✓ Prototyping
+  ✓ Data structure is flexible
+  ✓ Quick scripts and tools
 
 Use SCHEMAS when:
-  - Production code
-  - Type safety is critical
-  - Clear validation requirements
-  - Need specific error messages
-  - API contracts and interfaces
+  ✓ Production code
+  ✓ Type safety is critical
+  ✓ Clear validation requirements
+  ✓ Need specific error messages
+  ✓ API contracts and interfaces
 
 Example: Schema provides type safety
 """)

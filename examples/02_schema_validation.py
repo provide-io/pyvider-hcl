@@ -8,8 +8,14 @@
 This example demonstrates how to validate HCL data against
 CTY type schemas for type safety."""
 
+import sys
+
 from pyvider.cty import CtyBool, CtyList, CtyNumber, CtyObject, CtyString
 from pyvider.hcl import HclParsingError, parse_hcl_to_cty, pretty_print_cty
+
+# Redirected stdout is encoded with the locale's codec -- cp1252 on Windows, which
+# cannot represent the emoji below. A Windows console already uses UTF-8 (PEP 528).
+sys.stdout.reconfigure(encoding="utf-8")
 
 
 def example_simple_schema() -> None:
@@ -62,7 +68,7 @@ def example_validation_failure() -> None:
     try:
         parse_hcl_to_cty(invalid_hcl, schema=schema)
     except HclParsingError as e:
-        print("\nValidation failed as expected:")
+        print("\n❌ Validation failed as expected:")
         print(f"Error: {e}")
 
 
