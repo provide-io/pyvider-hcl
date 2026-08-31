@@ -122,7 +122,7 @@ def example_parse_all_files() -> None:
                 content = file.read_text()
                 parse_with_context(content, source_file=file)
             except Exception as e:
-                print(f"  ❌ {rel_path}: {e}")
+                print(f"  failed:  {rel_path}: {e}")
 
 
 def example_parse_specific_files() -> None:
@@ -170,20 +170,20 @@ def example_validate_project_structure() -> None:
             "outputs.hcl",
         ]
 
-        print("\n🔍 Checking for required files:")
+        print("\nChecking for required files:")
         all_present = True
         for filename in required_files:
             file_path = base_dir / filename
             if file_path.exists():
-                print(f"  ✅ {filename}")
+                print(f"  found:   {filename}")
             else:
-                print(f"  ❌ {filename} (missing)")
+                print(f"  missing: {filename}")
                 all_present = False
 
         if all_present:
-            print("\n✅ Project structure is complete!")
+            print("\nProject structure is complete!")
         else:
-            print("\n❌ Project structure is incomplete!")
+            print("\nProject structure is incomplete!")
 
 
 def example_aggregate_configuration() -> None:
@@ -223,12 +223,12 @@ def example_aggregate_configuration() -> None:
                 for module_block in config["module"]:
                     all_config["modules"].extend(module_block.keys())
 
-        print("\n📊 Project Summary:")
+        print("\nProject Summary:")
         print(f"  Variables: {len(all_config['variables'])}")
         print(f"  Outputs: {len(all_config['outputs'])}")
         print(f"  Modules: {len(all_config['modules'])}")
 
-        print("\n📋 Variable Names:")
+        print("\nVariable Names:")
         for var_name in all_config["variables"]:
             print(f"    - {var_name}")
 

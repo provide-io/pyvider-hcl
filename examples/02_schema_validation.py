@@ -62,7 +62,7 @@ def example_validation_failure() -> None:
     try:
         parse_hcl_to_cty(invalid_hcl, schema=schema)
     except HclParsingError as e:
-        print("\n❌ Validation failed as expected:")
+        print("\nValidation failed as expected:")
         print(f"Error: {e}")
 
 

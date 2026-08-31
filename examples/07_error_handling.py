@@ -27,7 +27,7 @@ def example_syntax_error() -> None:
     try:
         parse_hcl_to_cty(invalid_hcl)
     except HclParsingError as e:
-        print("\n❌ Caught HCL parsing error:")
+        print("\nCaught HCL parsing error:")
         print(f"Error message: {e.message}")
 
 
@@ -48,9 +48,9 @@ def example_schema_validation_error() -> None:
     try:
         parse_hcl_to_cty(invalid_hcl, schema=schema)
     except HclParsingError as e:
-        print("\n❌ Caught validation error:")
+        print("\nCaught validation error:")
         print(f"Error: {e}")
-        print("\n💡 Tip: Check that your HCL types match the schema!")
+        print("\nTip: Check that your HCL types match the schema!")
 
 
 def example_factory_error() -> None:
@@ -68,9 +68,9 @@ def example_factory_error() -> None:
             type_str="string",
         )
     except HclFactoryError as e:
-        print("\n❌ Caught factory error:")
+        print("\nCaught factory error:")
         print(f"Error: {e}")
-        print("\n💡 Tip: Variable names must be valid Python identifiers!")
+        print("\nTip: Variable names must be valid Python identifiers!")
 
 
 def example_type_mismatch_error() -> None:
@@ -89,9 +89,9 @@ def example_type_mismatch_error() -> None:
             default_py="8080",  # String instead of number
         )
     except HclFactoryError as e:
-        print("\n❌ Caught type mismatch error:")
+        print("\nCaught type mismatch error:")
         print(f"Error: {e}")
-        print("\n💡 Tip: Ensure default values match the declared type!")
+        print("\nTip: Ensure default values match the declared type!")
 
 
 def example_graceful_recovery() -> None:
@@ -115,14 +115,14 @@ def example_graceful_recovery() -> None:
             results.append(result)
         except HclParsingError as e:
             errors.append((i, str(e)))
-            print(f"❌ Config {i}: Failed to parse")
+            print(f"  Config {i}: Failed to parse")
 
-    print("\n📊 Summary:")
+    print("\nSummary:")
     print(f"  Successful: {len(results)}")
     print(f"  Failed: {len(errors)}")
 
     if errors:
-        print("\n❌ Errors:")
+        print("\nErrors:")
         for idx, error in errors:
             print(f"  Config {idx}: {error}")
 
@@ -145,11 +145,11 @@ def example_with_context() -> None:
     try:
         parse_with_context(content, source_file=Path("config.hcl"))
     except HclParsingError as e:
-        print("\n❌ Caught parsing error with context:")
+        print("\nCaught parsing error with context:")
         print(f"Message: {e.message}")
         if e.source_file:
             print(f"File: {e.source_file}")
-        print("\n💡 Context helps locate errors in multi-file projects!")
+        print("\nContext helps locate errors in multi-file projects!")
 
 
 def main() -> None:
