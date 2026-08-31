@@ -171,9 +171,21 @@ print(cty_to_hcl(schema.validate(block.body)))
 # instance_type = "t2.micro"
 ```
 
-`cty_to_hcl` emits attributes only. A `CtyValue` carries no notion of HCL
-blocks, so the surrounding `resource "aws_instance" "web" { … }` cannot be
-reconstructed from one.
+`cty_to_hcl` emits attributes only. To emit the surrounding
+`resource "aws_instance" "web" { … }`, pass the block type and labels to
+`cty_to_hcl_block`, which cannot infer them from a `CtyValue`:
+
+```python
+from pyvider.hcl import cty_to_hcl_block
+
+print(cty_to_hcl_block("resource", block.labels, schema.validate(block.body)), end="")
+# resource "aws_instance" "web" {
+#   ami           = "ami-123"
+#   instance_type = "t2.micro"
+# }
+```
+
+See the [emission guide](emission.md) for the details.
 
 ### Parse errors
 

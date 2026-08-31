@@ -24,6 +24,8 @@ from pyvider.hcl.factories import (
 )
 from pyvider.hcl.output import (
     cty_to_hcl,
+    cty_to_hcl_block,
+    cty_to_hcl_block_data,
     cty_to_hcl_data,
     format_cty,
     pretty_print_cty,
@@ -58,6 +60,8 @@ __all__ = [
     "create_resource_cty",
     "create_variable_cty",
     "cty_to_hcl",
+    "cty_to_hcl_block",
+    "cty_to_hcl_block_data",
     "cty_to_hcl_data",
     "format_cty",
     "load_hcl_data",

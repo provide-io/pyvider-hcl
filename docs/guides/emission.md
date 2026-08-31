@@ -83,12 +83,94 @@ print(cty_to_hcl(parse_hcl_to_cty("v = <<EOT\nline\nEOT\n")), end="")
 
 The value is correct; the syntax is not preserved.
 
-**Blocks cannot be emitted.** `cty_to_hcl` emits attributes only. A `CtyValue`
-carries no notion of HCL blocks, so `resource "aws_instance" "web" { … }` cannot
-be reconstructed from one. If you need blocks, drive `hcl2.dumps` directly with
-`__is_block__` markers.
-
 **Comments are not preserved.** They are dropped at parse time.
+
+**A bare identifier comes back quoted.** `type = string` parses to the string
+`"string"`, and nothing in the resulting value distinguishes it from a literal,
+so it re-emits as `type = "string"`.
+
+## Emitting blocks
+
+`cty_to_hcl` emits attributes, because that is all a `CtyValue` can tell you:
+nothing in one records that it was written as a block. `cty_to_hcl_block` takes
+that missing piece — the block type and its labels — from you instead:
+
+```python
+from pyvider.hcl import cty_to_hcl_block, parse_hcl_to_cty
+
+body = parse_hcl_to_cty('ami = "ami-123"\ninstance_type = "t2.micro"\n')
+print(cty_to_hcl_block("resource", ("aws_instance", "web"), body), end="")
+# resource "aws_instance" "web" {
+#   ami           = "ami-123"
+#   instance_type = "t2.micro"
+# }
+```
+
+Any label arity works, including none:
+
+```python
+print(cty_to_hcl_block("locals", (), parse_hcl_to_cty('prefix = "app"\n')), end="")
+# locals {
+#   prefix = "app"
+# }
+```
+
+What comes out parses back to what went in:
+
+```python
+from pyvider.hcl import load_hcl_data
+
+rendered = cty_to_hcl_block("resource", ("aws_instance", "web"), parse_hcl_to_cty('ami = "a"'))
+load_hcl_data(rendered)
+# {'resource': [{'aws_instance': {'web': {'ami': 'a'}}}]}
+```
+
+That is the same shape `create_resource_cty` produces and the parser returns,
+so a block can be built, emitted, and read back without changing shape.
+
+### Refusals
+
+The block type must be an HCL identifier and labels must be strings, because
+neither has a valid rendering otherwise:
+
+```python
+from pyvider.hcl import HclEmitError
+
+try:
+    cty_to_hcl_block("my type", (), body)
+except HclEmitError as e:
+    print(e)   # Block type must be an HCL identifier, got 'my type'
+```
+
+The body must be object- or map-typed, and the unknown and marked rules above
+apply to it unchanged.
+
+### Emitting several blocks
+
+`cty_to_hcl_block_data()` returns the structure without rendering it, so several
+blocks can be merged and written in one pass:
+
+```python
+import hcl2
+from pyvider.hcl import cty_to_hcl_block_data, parse_hcl_to_cty
+
+one = cty_to_hcl_block_data("locals", (), parse_hcl_to_cty("a = 1"))
+two = cty_to_hcl_block_data("locals", (), parse_hcl_to_cty("b = 2"))
+print(hcl2.dumps({"locals": one["locals"] + two["locals"]}), end="")
+# locals {
+#   a = 1
+# }
+#
+#
+# locals {
+#   b = 2
+# }
+```
+
+The marker that makes this work is `__is_block__`, which sits on the innermost
+body — that is how `hcl2.dumps` tells where the labels stop and the attributes
+start. `cty_to_hcl_block_data` places it for you, and refuses a body that
+carries a key by that name.
 
 ## Values with no HCL representation
 

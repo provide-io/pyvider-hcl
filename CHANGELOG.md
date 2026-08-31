@@ -5,6 +5,34 @@ All notable changes to the pyvider-hcl project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-08-30
+
+### Added
+- **`cty_to_hcl_block()` and `cty_to_hcl_block_data()`** emit HCL blocks.
+  `cty_to_hcl` emits attributes, because that is all a `CtyValue` can tell you —
+  nothing in one records that it was written as a block rather than as an
+  object. The new functions take the missing piece, the block type and its
+  labels, from the caller instead of guessing:
+
+  ```python
+  cty_to_hcl_block("resource", ("aws_instance", "web"), body)
+  # resource "aws_instance" "web" {
+  #   ami = "ami-123"
+  # }
+  ```
+
+  Any label arity works, `locals` with none included. Output parses back to the
+  shape `create_resource_cty` produces and the parser returns, so a block can be
+  built, emitted, and read back without changing shape.
+
+  `cty_to_hcl_block_data()` returns the structure unrendered, carrying the
+  `__is_block__` marker on the innermost body, so several blocks can be merged
+  and written in one pass.
+
+  A block type that is not an HCL identifier, a non-string label, a body that is
+  not object- or map-typed, and a body carrying its own `__is_block__` key are
+  all refused rather than emitted as broken HCL.
+
 ## [0.6.2] - 2026-08-30
 
 ### Changed

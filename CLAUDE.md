@@ -77,6 +77,10 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - `format_cty(value)`: Same rendering, returned as a string
    - `cty_to_hcl(value)`: Render an object/map CTY value back into HCL text via `hcl2.dumps`
    - `cty_to_hcl_data(value)`: The intermediate python-hcl2-convention structure
+   - `cty_to_hcl_block(block_type, labels, body)`: Render one HCL block. A `CtyValue` records no
+     block-ness, so the type and labels come from the caller rather than being inferred
+   - `cty_to_hcl_block_data(...)`: The same, unrendered, carrying `__is_block__` on the innermost
+     body — merge several before calling `hcl2.dumps` to emit them together
    - Recursive formatting for nested structures (objects, lists, maps, sets, tuples), with
      explicit rendering of null, unknown, and marked values
    - Modules: `formatting.py`, `emitter.py`
@@ -121,6 +125,8 @@ from pyvider.hcl import (
     format_cty,                # Pretty printer (string)
     cty_to_hcl,                # CTY -> HCL text
     cty_to_hcl_data,           # CTY -> python-hcl2 dict conventions
+    cty_to_hcl_block,          # CTY -> one HCL block
+    cty_to_hcl_block_data,     # CTY -> block dict, for merging
     parse_terraform_config,    # Terraform file parser
     parse_terraform_blocks,    # Terraform string parser
     TerraformConfig,           # Parsed configuration
@@ -358,7 +364,6 @@ The package has minimal dependencies:
 - Template processing with variable substitution
 - Performance optimizations (lazy parsing, caching, streaming)
 - Terraform block-specific *semantic* validation (required arguments per block type, etc.)
-- Emitting HCL blocks (as opposed to attributes) from CTY values
 
 **python-hcl2 upstream status (as of 8.1.3):**
 

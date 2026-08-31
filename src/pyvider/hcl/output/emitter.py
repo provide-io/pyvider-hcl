@@ -11,19 +11,21 @@ the same conventions its reader emits: a string literal is wrapped in quotes
 is an identifier. This module maps CTY values onto those conventions so a
 parsed configuration can be rendered back out.
 
-Everything is emitted as an attribute. A ``CtyValue`` carries no notion of HCL
-blocks, so block structure cannot be recovered from one; callers who need
-blocks should drive ``hcl2.dumps`` directly with ``__is_block__`` markers.
+``cty_to_hcl`` emits attributes, because that is all a ``CtyValue`` can tell us:
+nothing in one records that it was written as a block rather than as an object.
+``cty_to_hcl_block`` takes that missing piece -- the block type and its labels --
+from the caller instead of guessing at it.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from decimal import Decimal
 import re
 from typing import Any, cast
 
 import hcl2
+from hcl2.const import IS_BLOCK
 
 from pyvider.cty import (
     CtyBool,
@@ -46,6 +48,10 @@ from pyvider.hcl.exceptions import HclEmitError
 # interpolations, which is a template. Emitting that bare produces `x = ${a}
 # ${b}`, which is not valid HCL, so the whole string has to be one interpolation.
 _WHOLE_INTERPOLATION_RE = re.compile(r"^\$\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}$", re.DOTALL)
+
+# An HCL identifier, which is what a block type and an unquoted label must be.
+# Emitting anything else would produce text this package could not parse back.
+_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
 
 # Characters that must be escaped inside an HCL quoted string literal. `${` is
 # deliberately absent: parsed values keep interpolation markers verbatim, so
@@ -178,6 +184,93 @@ def cty_to_hcl(value: CtyValue[Any]) -> str:
     if not isinstance(data, dict):
         raise HclEmitError("cty_to_hcl requires a CtyValue that renders to an HCL body")
 
+    try:
+        rendered: str = hcl2.dumps(data)
+    except Exception as e:
+        raise HclEmitError(f"Failed to render CTY value as HCL: {e}") from e
+    return rendered
+
+
+def cty_to_hcl_block_data(
+    block_type: str,
+    labels: Sequence[str],
+    body: CtyValue[Any],
+) -> dict[str, Any]:
+    """Build the ``hcl2.dumps`` structure for one HCL block.
+
+    Args:
+        block_type: The block's type, e.g. ``"resource"``. Must be an HCL
+            identifier.
+        labels: The block's labels, e.g. ``("aws_instance", "web")``. Empty for
+            a block that takes none, such as ``locals``.
+        body: An object- or map-typed CTY value holding the block's attributes.
+
+    Returns:
+        A structure using python-hcl2's conventions, carrying the
+        ``__is_block__`` marker that makes ``hcl2.dumps`` render a block rather
+        than an attribute. Merge several before rendering to emit them together.
+
+    Raises:
+        HclEmitError: If the block type is not an identifier, a label is not a
+            string, or the body has no HCL representation.
+
+    Example:
+        >>> from pyvider.hcl import parse_hcl_to_cty
+        >>> data = cty_to_hcl_block_data(
+        ...     "resource", ("aws_instance", "web"), parse_hcl_to_cty('ami = "a"')
+        ... )
+        >>> data["resource"][0]['"aws_instance"']['"web"']["ami"]
+        '"a"'
+    """
+    if not _IDENTIFIER_RE.match(block_type):
+        raise HclEmitError(f"Block type must be an HCL identifier, got {block_type!r}")
+
+    for label in labels:
+        if not isinstance(label, str):
+            raise HclEmitError(f"Block labels must be strings, got {label!r}")
+
+    rendered = cty_to_hcl_data(body)
+    if not isinstance(rendered, dict):
+        raise HclEmitError("A block body must be an object- or map-typed CtyValue")
+    if IS_BLOCK in rendered:
+        raise HclEmitError(f"A block body cannot carry its own {IS_BLOCK!r} key")
+
+    # The marker sits on the innermost body, which is how hcl2.dumps tells the
+    # label levels apart from an attribute that happens to hold an object.
+    nested: dict[str, Any] = {**rendered, IS_BLOCK: True}
+    for label in reversed(list(labels)):
+        # Quoted, because an unquoted label emits as a bare identifier, which
+        # Terraform rejects.
+        nested = {_quote_string(label): nested}
+    return {block_type: [nested]}
+
+
+def cty_to_hcl_block(
+    block_type: str,
+    labels: Sequence[str],
+    body: CtyValue[Any],
+) -> str:
+    """Render one HCL block as text.
+
+    Args:
+        block_type: The block's type, e.g. ``"resource"``.
+        labels: The block's labels, e.g. ``("aws_instance", "web")``.
+        body: An object- or map-typed CTY value holding the block's attributes.
+
+    Returns:
+        Formatted HCL text, terminated by a newline.
+
+    Raises:
+        HclEmitError: If the block cannot be represented as HCL.
+
+    Example:
+        >>> from pyvider.hcl import parse_hcl_to_cty
+        >>> print(cty_to_hcl_block("locals", (), parse_hcl_to_cty('a = 1')), end="")
+        locals {
+          a = 1
+        }
+    """
+    data = cty_to_hcl_block_data(block_type, labels, body)
     try:
         rendered: str = hcl2.dumps(data)
     except Exception as e:
