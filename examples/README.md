@@ -52,6 +52,21 @@ uv run python examples/01_basic_parsing.py
    - Organize Terraform configurations
    - Real-world project structure
 
+9. **[09_terraform_blocks.py](09_terraform_blocks.py)** - Terraform blocks and source lines
+   - Parse into typed blocks rather than nested dicts
+   - Find blocks by type or by exact labels
+   - Report diagnostics against a block's line range
+
+10. **[10_emitting_hcl.py](10_emitting_hcl.py)** - Emitting HCL
+    - Render CTY values back into HCL text
+    - Emit blocks, and merge several into one file
+    - What round-trips, what does not, and what is refused
+
+11. **[11_required_attributes.py](11_required_attributes.py)** - Required attributes
+    - Explicit null on a required attribute is rejected
+    - Collect every offender instead of raising on the first
+    - Dotted paths for nested attributes
+
 ## Quick Start
 
 The simplest way to get started:
@@ -71,5 +86,8 @@ pretty_print_cty(result)
 ## Need Help?
 
 - [User Guide](../docs/guide.md) - Detailed usage documentation
+- [Terraform integration](../docs/guides/terraform-integration.md) - Blocks, labels, source lines
+- [Emission guide](../docs/guides/emission.md) - Rendering CTY values back to HCL
+- [Required attributes](../docs/guides/required-attributes.md) - Null vs missing
 - [API Reference](../docs/reference/index.md) - Complete API documentation
 - [Architecture](../docs/architecture.md) - System design and internals
