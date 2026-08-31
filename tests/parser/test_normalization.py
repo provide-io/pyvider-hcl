@@ -62,7 +62,7 @@ class TestNegativeNumbers:
 
 
 class TestHeredocs:
-    """python-hcl2 8.x keeps heredoc markers in the serialized string.
+    """A heredoc reaches this package as the string its body spells.
 
     The expected values below were taken from OpenTofu evaluating the same
     source, so they are HCL's semantics rather than python-hcl2 7.x's (which
@@ -106,24 +106,23 @@ class TestHeredocs:
     def test_empty_indented_heredoc_is_an_empty_string(self) -> None:
         assert parse_with_context("script = <<-EOF\n  EOF\n")["script"] == ""
 
-    def test_blank_line_heredoc_is_a_newline(self) -> None:
-        """One empty body line is a newline, distinct from no body at all."""
-        assert normalize_hcl_data('"<<EOF\n\nEOF"') == "\n"
+    def test_a_literal_spelling_a_heredoc_stays_a_literal(self) -> None:
+        """A quoted string is a string, however much it looks like a heredoc.
 
-    def test_unterminated_heredoc_is_left_alone(self) -> None:
-        assert normalize_hcl_data('"<<EOF\nbody"') == "<<EOF\nbody"
-
-    def test_mismatched_closing_marker_is_left_alone(self) -> None:
-        assert normalize_hcl_data('"<<EOF\nbody\nOTHER"') == "<<EOF\nbody\nOTHER"
-
-    def test_text_after_the_closing_marker_is_left_alone(self) -> None:
-        """The heredoc patterns close on the delimiter, not the end of input.
-
-        They are matched against a token the grammar has already accepted, so
-        upstream needs no end anchor; here they run against any quoted string,
-        and a partial match means the text merely begins like a heredoc.
+        It has no closing marker line, so it carries no trailing newline -- the
+        one thing that always separates it from the heredoc it spells.
         """
-        assert normalize_hcl_data('"<<EOF\nbody\nEOF and more"') == "<<EOF\nbody\nEOF and more"
+        assert parse_with_context(r'script = "<<EOF\nbody\nEOF"')["script"] == "<<EOF\nbody\nEOF"
+
+    def test_a_literal_that_only_begins_like_a_heredoc(self) -> None:
+        assert parse_with_context(r'script = "<<EOF\nbody"')["script"] == "<<EOF\nbody"
+
+    def test_a_literal_whose_closing_marker_does_not_match(self) -> None:
+        assert parse_with_context(r'script = "<<EOF\nbody\nOTHER"')["script"] == "<<EOF\nbody\nOTHER"
+
+    def test_a_literal_with_text_after_the_closing_marker(self) -> None:
+        content = r'script = "<<EOF\nbody\nEOF and more"'
+        assert parse_with_context(content)["script"] == "<<EOF\nbody\nEOF and more"
 
     def test_heredoc_through_cty(self) -> None:
         value = parse_hcl_to_cty("script = <<EOT\nbody\nEOT\n")

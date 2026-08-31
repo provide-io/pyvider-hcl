@@ -49,13 +49,13 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - `parse_with_context(content, source_file=None)`: Parse HCL with enhanced error context
    - `auto_infer_cty_type(raw_data)`: Automatically infer CTY types from Python data structures
    - `normalize_hcl_data(data)`: Strip python-hcl2 8.x serialization artifacts (quoted string
-     literals, `__is_block__`/`__comments__` markers, heredoc markers, escape sequences left raw).
-     Heredoc patterns and escape resolution are imported from `hcl2.utils` rather than
-     reimplemented; only the heredoc *body* is computed locally, because hcl2's own value form
-     disagrees with HCL (see `Important Implementation Notes`)
+     literals, `__is_block__`/`__comments__` markers, escape sequences left raw). Every parse
+     passes `normalize.HCL2_OPTIONS`, which turns off `preserve_heredocs` so hcl2 resolves
+     heredoc bodies itself; escape resolution stays here (see `Important Implementation Notes`)
    - `null_required_attributes(value)`: Report null non-optional object attributes (pyvider-cty
      defers required-ness to the schema layer, so this package enforces it)
-   - Uses `python-hcl2` >= 8.1.3 for underlying HCL parsing
+   - Uses `python-hcl2` for underlying HCL parsing (see the upstream status note: the
+     currently required version is unreleased)
    - Modules: `base.py`, `inference.py`, `context.py`, `normalize.py`, `diagnostics.py`, `required.py`
 
 2. **Factory Functions** (`factories/` subpackage)
@@ -91,8 +91,9 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - `TerraformConfig`: `blocks`, `attributes`, `blocks_of(type)`, `block_at(type, *labels)`,
      `block_types`
    - `TerraformBlock`: `block_type`, `labels`, `body`, `start_line`, `end_line`, `address`
-   - Block source lines come from python-hcl2's typed rule tree (`hcl2.parses`), since
-     `SerializationOptions.with_meta` emits nothing (upstream #291)
+   - Block source lines come from `SerializationOptions(with_meta=True)`, which annotates each
+     block with `__start_line__`/`__end_line__`. `config.BLOCK_OPTIONS` adds that to the shared
+     `HCL2_OPTIONS`; the keys are read off the block dict before `normalize_hcl_data` drops them
    - Modules: `config.py`
 
 5. **Error Handling** (`exceptions.py`)
@@ -150,18 +151,17 @@ from pyvider.hcl import (
 
 ### Important Implementation Notes
 
-1. **HCL Parsing**: Wraps `python-hcl2` >= 8.1.3 for HCL 2.x compatibility. 8.x output preserves
-   source syntax for round-tripping, so `parser/normalize.py` reverses it, reusing
-   `hcl2.utils.HEREDOC_PATTERN`, `HEREDOC_TRIM_PATTERN` and `process_escape_sequences`.
-   Do NOT switch the parser to `SerializationOptions(strip_string_quotes=True,
-   preserve_heredocs=False)` to skip that normalization. Two reasons, both pinned by tests:
-   - hcl2's value form disagrees with HCL on every heredoc case in
-     `tests/parser/test_hcl_semantics.py` — it drops the newline before the closing marker,
-     dedents whitespace-only lines, and measures `<<-` indentation in spaces only, so a
-     tab-indented heredoc is not dedented at all
-   - it resolves escapes before this package sees the value, at which point the literal
-     `"<<EOT\nbody\nEOT"` is byte-identical to a real heredoc, though the two have different
-     values. Unwrapping heredocs *before* resolving escapes is what keeps them apart
+1. **HCL Parsing**: Wraps `python-hcl2` for HCL 2.x compatibility. 8.x output preserves source
+   syntax for round-tripping, so `parser/normalize.py` reverses it, reusing
+   `hcl2.utils.process_escape_sequences`. Every call site passes `normalize.HCL2_OPTIONS`
+   (`SerializationOptions(preserve_heredocs=False)`), so hcl2 hands back the string a heredoc
+   body spells, with the dedent and trailing newline HCL gives it.
+   Do NOT add `strip_string_quotes=True` to those options. It resolves escapes before this
+   package sees the value, and the resolved quoted literal `"<<EOT\nbody\nEOT"` is a string
+   that must stay distinct from the heredoc it spells — pinned by
+   `tests/parser/test_hcl_semantics.py`. Leaving escapes raw until `normalize_hcl_string` keeps
+   the two apart, because hcl2 has already turned the real heredoc into its body and whatever
+   is still quoted is a literal.
    Likewise do NOT use `hcl2.utils.is_dollar_string` in the emitter: it accepts `"${a} ${b}"`,
    which emitted bare is invalid HCL
 2. **CTY Type Safety**: All values validated using the pyvider-cty type system
@@ -339,7 +339,9 @@ pretty_print_cty(resource)
 
 The package has minimal dependencies:
 
-- **python-hcl2** (>= 8.1.3): Core HCL parsing and emission (wrapped for enhanced functionality)
+- **python-hcl2**: Core HCL parsing and emission (wrapped for enhanced functionality). The
+  declared floor is `>=8.1.3`, but the code now needs the unreleased fixes described under
+  `python-hcl2 upstream status`
 - **pyvider-cty**: Type system integration
 - **provide-foundation**: Logging and error handling
 - **attrs**: Structured exception and config classes
@@ -365,7 +367,25 @@ The package has minimal dependencies:
 - Performance optimizations (lazy parsing, caching, streaming)
 - Terraform block-specific *semantic* validation (required arguments per block type, etc.)
 
-**python-hcl2 upstream status (as of 8.1.3):**
+**python-hcl2 upstream status:**
+
+> **This package currently requires an unreleased python-hcl2.** The three fixes below are
+> committed only on local branches in `../python-hcl2` (merged on `integration/all-three`), not
+> filed, not released. Against PyPI 8.1.3 this package fails to import — `hcl2.const` has no
+> `START_LINE`/`END_LINE` — and its heredoc values are wrong. Raise the floor in
+> `pyproject.toml` when the release carrying them lands.
+>
+> Until then the checkout has to be installed by hand — `uv pip install
+> /Volumes/data/pyv/python-hcl2` — and **`uv sync` / `uv run` put the published 8.1.3 back**,
+> because that is what `uv.lock` pins. Export `UV_NO_SYNC=1` in any shell used here: without it
+> the `mypy strict` pre-commit hook (`uv run mypy src/`) reverts the environment and then fails
+> on the five resulting import errors. Nothing in the repo is configured around this, so there
+> is nothing to undo later.
+>
+> Install it non-editable. `-e` works at runtime but mypy cannot follow an editable install (it
+> does not read `.pth` files) and reports `hcl2` as missing; a plain install also avoids the
+> stale `site-packages/hcl2/` directory that uv's uninstall leaves behind, which shadows an
+> editable install as a namespace package.
 
 Fixed upstream, workarounds removed here:
 - Negative integer literals loaded as `${-N}` strings (#307, fixed by PR #311)
@@ -375,13 +395,19 @@ Fixed upstream, workarounds removed here:
   (#308/#310, fixed by PR #313) — the option is still unused here, for the reasons in
   `Important Implementation Notes`
 
+Fixed locally, not yet upstream (branches in `../python-hcl2`):
+- `SerializationOptions.with_meta` emitted nothing (#291) — now emits `__start_line__` and
+  `__end_line__` per block, which is where `config.py` reads them from
+- hcl2's heredoc value form dropped the trailing newline, dedented whitespace-only lines, and
+  measured `<<-` indentation in spaces only — now matches OpenTofu, so `normalize.py` no longer
+  computes the body itself. The same change stopped `strings_to_heredocs` writing a body one
+  line longer than the value it came from
+- `BodyView.blocks()`/`.attributes()` were annotated `List[NodeView]` — now the concrete view
+  classes, so `config.py` no longer narrows with `isinstance`
+
 Still open upstream, still handled here:
-- `SerializationOptions.with_meta` emits nothing (#291) — block lines are read from the typed
-  rule tree instead
-- hcl2's own heredoc value form (`preserve_heredocs=False`) drops the trailing newline, dedents
-  whitespace-only lines, and ignores tab indentation — `normalize.py` computes the body itself
 - Heredoc markers are retained in the default (round-trippable) value form (#303) — by design
-  upstream, reversed in `normalize.py`
+  upstream, avoided here with `preserve_heredocs=False`
 
 ### Security Considerations
 
