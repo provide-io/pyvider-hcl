@@ -61,4 +61,4 @@ def test_parse_strings(value):
 ## See Also
 
 <!-- - [Examples](../../examples/) -->
-- [Test Suite](../../tests/)
+- [Test Suite](https://github.com/provide-io/pyvider-hcl/tree/main/tests)

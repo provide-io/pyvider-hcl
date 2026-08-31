@@ -94,4 +94,4 @@ After installation:
 
 1. **[Getting Started](../getting-started.md)** - Learn HCL parsing basics
 2. **[User Guide](../guide.md)** - Comprehensive usage examples
-3. **[API Reference](../reference/)** - Complete API documentation
+3. **[API Reference](../reference/index.md)** - Complete API documentation
