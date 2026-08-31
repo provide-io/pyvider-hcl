@@ -75,3 +75,4 @@ except HclParsingError as e:
 
 - [API Reference](../reference/index.md)
 - <!-- [Examples](../../examples/02_schema_validation.py) -->
+- [Required attributes guide](required-attributes.md)

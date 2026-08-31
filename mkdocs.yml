@@ -58,8 +58,10 @@ nav:
   - Guides:
     - Parsing HCL: guides/parsing.md
     - Schema Validation: guides/schema-validation.md
+    - Required Attributes: guides/required-attributes.md
     - Type Inference: guides/type-inference.md
     - Terraform Integration: guides/terraform-integration.md
+    - Emission: guides/emission.md
     - Error Handling: guides/error-handling.md
     - Testing: guides/testing.md
   - API Reference: reference/

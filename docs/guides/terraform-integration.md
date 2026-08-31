@@ -323,4 +323,6 @@ except HclTypeParsingError as e:
 - [examples/05_terraform_resources.py](https://github.com/provide-io/pyvider-hcl/blob/main/examples/05_terraform_resources.py)
 - [Parsing guide](parsing.md)
 - [Schema validation guide](schema-validation.md)
+- [Required attributes guide](required-attributes.md)
+- [Emission guide](emission.md)
 - [Error handling guide](error-handling.md)
