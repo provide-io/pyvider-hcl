@@ -5,6 +5,43 @@ All notable changes to the pyvider-hcl project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] - 2026-08-31
+
+### Changed
+- **`pyvider-cty>=0.5.3`**, raised from `>=0.5.0`. The published floor understated
+  what this package is tested against. 0.5.3 is also what makes the type
+  workaround below unnecessary: 0.5.0 through 0.5.2 declared
+  `CtyObject.optional_attributes` with `converter=frozenset`, and attrs derives
+  the `__init__` parameter type from the converter, so the annotation carried an
+  unbound TypeVar that rejected every concrete argument.
+
+  This is a floor correction, not a break. Nothing here fails on 0.5.0 at
+  runtime; the mismatch was only ever visible to a type checker.
+
+- The development floor for `provide-testkit` is now `>=0.4.5`, for a `.pth`
+  bug that aborted interpreter startup under the C locale on Python 3.11 and
+  3.12. It does not affect installing or using this package.
+
+### Removed
+- The internal `cast("Any", ...)` around `optional_attributes` in
+  `factories/types.py`, along with the branch that existed only to avoid passing
+  an empty frozenset. No behaviour change: `object({a=string, b=number})` still
+  yields an empty `optional_attributes` and compares equal to the same
+  `CtyObject` built without the argument.
+
+### Documentation
+- `examples/` gained 09 (Terraform blocks and source lines), 10 (emission) and
+  11 (required attributes), covering the three public paths that had guides but
+  nothing runnable.
+- `tests/test_examples.py` runs every example as a subprocess. That caught four
+  older examples aborting mid-run with `UnicodeEncodeError` wherever stdout is
+  redirected under a narrow locale — Windows CI included — because Python
+  encodes redirected output with the locale's codec. They now write UTF-8
+  explicitly and keep their emoji, and the test asserts the characters survive
+  rather than that they are absent.
+- The examples type-check, and the `typecheck` task covers them, so they cannot
+  drift back out.
+
 ## [0.6.3] - 2026-08-30
 
 ### Added
