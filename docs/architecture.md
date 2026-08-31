@@ -5,44 +5,51 @@ This document provides a visual and detailed overview of the pyvider-hcl archite
 ## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         User Application                         │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      pyvider.hcl Package                         │
-│                                                                  │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐│
-│  │  parser/         │  │  factories/      │  │  output/       ││
-│  │  ├─ base.py     │  │  ├─ types.py     │  │  └─ formatting ││
-│  │  ├─ inference.py│  │  ├─ variables.py │  │      .py       ││
-│  │  └─ context.py  │  │  └─ resources.py │  │                ││
-│  │                  │  │                  │  │                ││
-│  │ • parse_hcl_    │  │ • create_        │  │ • pretty_print ││
-│  │   to_cty()      │  │   variable_cty   │  │   _cty()       ││
-│  │ • parse_with_   │  │ • create_        │  │                ││
-│  │   context()     │  │   resource_cty   │  │                ││
-│  │ • auto_infer_   │  │ • parse_hcl_     │  │                ││
-│  │   cty_type()    │  │   type_string()  │  │                ││
-│  └─────────────────┘  └──────────────────┘  └────────────────┘│
-│                                                                 │
-│  ┌──────────────────┐                                           │
-│  │  exceptions.py   │                                           │
-│  │  • HclError      │                                           │
-│  │  • HclParsing    │                                           │
-│  │    Error         │                                           │
-│  └──────────────────┘                                           │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-                ┌───────────────┼───────────────┐
-                │               │               │
-                ▼               ▼               ▼
-    ┌──────────────────┐ ┌──────────────┐ ┌──────────────────┐
-    │  python-hcl2     │ │ pyvider-cty  │ │ provide-         │
-    │  (HCL parser)    │ │ (type system)│ │ foundation       │
-    │                  │ │              │ │ (errors/logging) │
-    └──────────────────┘ └──────────────┘ └──────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                          User Application                            │
+└──────────────────────────────────┬───────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                         pyvider.hcl Package                          │
+│                                                                      │
+│  ┌────────────────────┐  ┌───────────────────┐  ┌─────────────────┐  │
+│  │  parser/           │  │  factories/       │  │  output/        │  │
+│  │  ├─ base.py        │  │  ├─ types.py      │  │  ├─ formatting  │  │
+│  │  ├─ context.py     │  │  ├─ variables.py  │  │  │    .py       │  │
+│  │  ├─ normalize.py   │  │  └─ resources.py  │  │  └─ emitter.py  │  │
+│  │  ├─ inference.py   │  │                   │  │                 │  │
+│  │  ├─ diagnostics.py │  │ • create_         │  │ • pretty_print  │  │
+│  │  └─ required.py    │  │    variable_cty   │  │    _cty()       │  │
+│  │                    │  │ • create_         │  │ • format_cty()  │  │
+│  │ • parse_hcl_to_cty │  │    resource_cty   │  │ • cty_to_hcl()  │  │
+│  │ • parse_with_      │  │ • parse_hcl_      │  │ • cty_to_hcl_   │  │
+│  │    context()       │  │    type_string()  │  │    data()       │  │
+│  │ • load_hcl_data()  │  │                   │  │                 │  │
+│  │ • normalize_hcl_   │  └───────────────────┘  └─────────────────┘  │
+│  │    data()          │                                              │
+│  │ • auto_infer_      │  ┌───────────────────┐  ┌─────────────────┐  │
+│  │    cty_type()      │  │  terraform/       │  │  exceptions.py  │  │
+│  │ • null_required_   │  │  └─ config.py     │  │                 │  │
+│  │    attributes()    │  │                   │  │ • HclError      │  │
+│  └────────────────────┘  │ • parse_terraform │  │ • HclParsing    │  │
+│                          │    _config()      │  │    Error        │  │
+│                          │ • parse_terraform │  │ • HclEmitError  │  │
+│                          │    _blocks()      │  │ • HclFactory    │  │
+│                          │ • TerraformConfig │  │    Error        │  │
+│                          │ • TerraformBlock  │  │ • HclTypeParsing│  │
+│                          └───────────────────┘  │    Error        │  │
+│                                                 └─────────────────┘  │
+└──────────────────────────────────┬───────────────────────────────────┘
+                                   │
+                   ┌───────────────┼───────────────┐
+                   │               │               │
+                   ▼               ▼               ▼
+       ┌──────────────────┐ ┌──────────────┐ ┌──────────────────┐
+       │  python-hcl2     │ │ pyvider-cty  │ │ provide-         │
+       │  (HCL parser +   │ │ (type system)│ │ foundation       │
+       │   emitter)       │ │              │ │ (errors/logging) │
+       └──────────────────┘ └──────────────┘ └──────────────────┘
 ```
 
 ## Module Breakdown
@@ -51,8 +58,13 @@ This document provides a visual and detailed overview of the pyvider-hcl archite
 
 **Modules:**
 - **`base.py`**: Core parsing logic - contains `parse_hcl_to_cty()`
-- **`inference.py`**: Type inference - contains `auto_infer_cty_type()`
 - **`context.py`**: Enhanced error context - contains `parse_with_context()`
+- **`normalize.py`**: Reverses python-hcl2 8.x serialization artifacts - contains
+  `normalize_hcl_data()`
+- **`inference.py`**: Type inference - contains `auto_infer_cty_type()`
+- **`diagnostics.py`**: Source location extraction - contains `source_location()`
+- **`required.py`**: Required-attribute checking - contains
+  `null_required_attributes()`
 
 **Responsibilities:**
 - Parse HCL strings into Python data structures
@@ -66,17 +78,31 @@ HCL String
     ↓
 parse_hcl_to_cty() [base.py]
     ↓
-python-hcl2.loads()  ──→  Python dict/list
+hcl2.loads()  ──→  dict, with source syntax preserved
+    │              ('"web"', '"<<EOT\nbody\nEOT"', __is_block__ markers)
+    ↓
+normalize_hcl_data() [normalize.py]  ──→  plain Python dict/list
+    │   unquotes literals, resolves escapes, unwraps heredocs,
+    │   drops hcl2 metadata keys. Expressions stay as '${...}'.
     ↓
 Schema provided?
     ├─ Yes → schema.validate(data)  ──→  CtyValue
+    │            ↓
+    │        null_required_attributes() [required.py] reports null
+    │        non-optional attributes, which cty defers to the schema layer
     └─ No  → auto_infer_cty_type() [inference.py]  ──→  CtyValue
+
+On a parse failure, source_location() [diagnostics.py] pulls line, column and a
+caret snippet off the lark error and HclParsingError carries them.
 ```
 
 **Key Functions:**
 - `parse_hcl_to_cty(hcl_content, schema=None) → CtyValue` (base.py)
 - `parse_with_context(content, source_file=None) → dict` (context.py)
+- `load_hcl_data(hcl_content) → dict` (base.py)
+- `normalize_hcl_data(data) → Any` (normalize.py)
 - `auto_infer_cty_type(raw_data) → CtyValue` (inference.py)
+- `null_required_attributes(value) → list[str]` (required.py)
 
 ---
 
@@ -128,11 +154,16 @@ Validate with schema → CtyValue
 ### 3. Output Subpackage (`output/`)
 
 **Modules:**
-- **`formatting.py`**: CTY value formatting - contains `pretty_print_cty()`
+- **`formatting.py`**: CTY value formatting - contains `pretty_print_cty()` and
+  `format_cty()`
+- **`emitter.py`**: CTY → HCL text - contains `cty_to_hcl()` and
+  `cty_to_hcl_data()`
 
 **Responsibilities:**
 - Format CTY values for human-readable display
-- Handle nested structures (objects, lists, maps, tuples)
+- Handle nested structures (objects, lists, maps, sets, tuples), rendering null,
+  unknown and marked values explicitly
+- Render an object- or map-typed CTY value back into HCL text
 
 **Printing Flow:**
 ```
@@ -145,11 +176,31 @@ _pretty_print_cty_recursive()
     ├─ CtyList    → Format as JSON array
     ├─ CtyMap     → Format as JSON object
     ├─ CtyTuple   → Format as JSON array
+    ├─ CtySet     → Format as JSON array, deterministically ordered
     └─ Primitive  → Format as string/number/bool
 ```
 
+**Emission Flow:**
+```
+CtyValue (object or map at the root)
+    ↓
+cty_to_hcl() [emitter.py]
+    ↓
+cty_to_hcl_data()  ──→  dict in python-hcl2's conventions
+    │   a literal is quoted ('"web"'), a whole interpolation stays bare
+    │   ('${var.x}'); unknown and marked values raise HclEmitError
+    ↓
+hcl2.dumps()  ──→  HCL text
+```
+
+Emission is attribute-only. A `CtyValue` carries no notion of HCL blocks, so
+`resource "x" "y" { … }` cannot be reconstructed from one.
+
 **Key Functions:**
 - `pretty_print_cty(value) → None` (prints to stdout) (formatting.py)
+- `format_cty(value) → str` (same rendering, returned) (formatting.py)
+- `cty_to_hcl(value) → str` (emitter.py)
+- `cty_to_hcl_data(value) → Any` (emitter.py)
 
 ---
 
@@ -165,13 +216,59 @@ _pretty_print_cty_recursive()
 provide.foundation.FoundationError
     ↓
 HclError (base class)
-    ↓
-HclParsingError
-    ├─ message: str
-    ├─ source_file: str | None
-    ├─ line: int | None
-    └─ column: int | None
+    ├─ HclParsingError        raised by the parser and the Terraform reader
+    │     ├─ message: str
+    │     ├─ source_file: str | None
+    │     ├─ line: int | None
+    │     └─ column: int | None
+    └─ HclEmitError           raised when a CTY value has no HCL form
+                              (output/emitter.py)
+
+ValueError
+    ├─ HclFactoryError        raised by the variable and resource factories
+    └─ HclTypeParsingError    raised by parse_hcl_type_string()
 ```
+
+Note that the two factory exceptions derive from `ValueError` rather than
+`HclError`, so `except HclError` does not catch them.
+
+---
+
+### 5. Terraform Subpackage (`terraform/`)
+
+**Modules:**
+- **`config.py`**: Terraform configuration reading - contains
+  `parse_terraform_config()`, `parse_terraform_blocks()`, `TerraformConfig`,
+  `TerraformBlock` and `TERRAFORM_BLOCK_TYPES`
+
+**Responsibilities:**
+- Read a configuration into top-level blocks that keep their type, labels and
+  source line range
+- Collect attributes written outside any block separately from blocks
+
+**Block Reading Flow:**
+```
+Terraform config text
+    ↓
+hcl2.query.DocumentView.parse()  ──→  typed rule tree
+    │   `hcl2.loads` flattens a config into nested dicts, losing both the
+    │   block/attribute distinction and every source position
+    ↓
+    ├─ .blocks()      → BlockView  ──→  TerraformBlock
+    │      block_type, name_labels, body.to_dict(), and the line range
+    │      from the rule's own _meta
+    └─ .attributes()  → AttributeView  ──→  TerraformConfig.attributes
+    ↓
+normalize_hcl_data() on each body  ──→  plain Python values
+```
+
+Source lines come from each rule's `_meta` rather than from
+`SerializationOptions(with_meta=True)`, which emits nothing as of python-hcl2
+8.1.3 (amplify-education/python-hcl2#291).
+
+**Key Functions:**
+- `parse_terraform_config(config_path) → TerraformConfig` (config.py)
+- `parse_terraform_blocks(content, source_file=None) → TerraformConfig` (config.py)
 
 ---
 
@@ -240,29 +337,38 @@ Flow:
 ### CTY Type Mapping
 
 ```
-HCL Type String    →    CTY Type
-─────────────────────────────────────
-"string"           →    CtyString()
-"number"           →    CtyNumber()
-"bool"             →    CtyBool()
-"any"              →    CtyDynamic()
-"list(string)"     →    CtyList(element_type=CtyString())
-"map(number)"      →    CtyMap(element_type=CtyNumber())
-"object({...})"    →    CtyObject(attributes={...})
+HCL Type String           →    CTY Type
+──────────────────────────────────────────────────────────
+"string"                  →    CtyString()
+"number"                  →    CtyNumber()
+"bool"                    →    CtyBool()
+"any"                     →    CtyDynamic()
+"list(string)"            →    CtyList(element_type=CtyString())
+"set(string)"             →    CtySet(element_type=CtyString())
+"map(number)"             →    CtyMap(element_type=CtyNumber())
+"tuple([string, number])" →    CtyTuple(element_types=(...))
+"object({...})"           →    CtyObject(attribute_types={...})
+"object({a=optional(T)})" →    CtyObject(..., optional_attributes={"a"})
 ```
+
+`optional(T, default)` parses, but the default is dropped: CTY object types
+carry no per-attribute defaults.
 
 ### Python to CTY Inference
 
 ```
 Python Value       →    CTY Type
-─────────────────────────────────────
+──────────────────────────────────────────────────────
 str                →    CtyString()
 int/float/Decimal  →    CtyNumber()
 bool               →    CtyBool()
 None               →    CtyDynamic()
-list               →    CtyList(CtyDynamic())
-dict               →    CtyObject({...})
+list               →    CtyList, element type inferred from the elements
+                        (["a"] → list(string); [] → list(dynamic))
+dict               →    CtyObject, one attribute per key
 ```
+
+Inference delegates to pyvider-cty's `infer_cty_type_from_raw`.
 
 ---
 

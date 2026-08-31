@@ -42,7 +42,7 @@ invalid = 'port = "8080"'  # String instead of number
 from pyvider.hcl import HclFactoryError, create_variable_cty
 
 try:
-    create_variable_cty(name="invalid-name", ...)
+    create_variable_cty(name="invalid-name", type_str="string")
 except HclFactoryError as e:
     print(f"Factory error: {e}")
 ```

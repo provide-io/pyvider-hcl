@@ -113,77 +113,17 @@ work they describe shipped by v0.3.0.
 - Fixed pretty_print_cty handling of nested CtyValue objects
 - Fixed integration test fixtures to use pytest's tmp_path
 
-### Deprecated
-- N/A (initial release)
-
-### Removed
-- N/A (initial release)
-
 ### Security
 - Input validation for all HCL parsing operations via python-hcl2
 - Schema validation to ensure type safety
 
-### Planned for Future Releases
-- Full HCL expression evaluation (e.g., `var.name`, function calls, conditionals)
-- Template processing with variable substitution and HCL template functions
-- Configuration file loading and validation pipeline
-- Performance optimizations (lazy parsing, caching, streaming)
-- Terraform block-specific validation (provider, data, module, locals, outputs)
-- Direct file parsing API (currently requires manual file reading)
+## [0.0.1000] - initial release
 
-## Release Notes
+HCL parsing with pyvider-cty integration: `parse_hcl_to_cty()`,
+`parse_with_context()`, automatic type inference, schema validation, the
+`create_variable_cty()` / `create_resource_cty()` factories, Terraform type
+string parsing, `pretty_print_cty()`, and structured errors carrying a source
+location. Built on python-hcl2 7.x.
 
-### v0.0.1000 (Initial Release)
-
-This is the first release of pyvider-hcl, providing HCL (HashiCorp Configuration Language) parsing with seamless pyvider.cty type system integration.
-
-**Core Features:**
-- **HCL Parsing**: Parse HCL strings using python-hcl2 library
-- **CTY Integration**: Automatic conversion of HCL data to CTY type-safe values
-- **Type Inference**: Automatic CTY type inference from HCL data structures
-- **Schema Validation**: Validate HCL data against CTY type schemas
-- **Factory Functions**: Create Terraform variable and resource structures programmatically
-
-**Parser Capabilities:**
-- **String Parsing**: Parse HCL content from strings via `parse_hcl_to_cty()`
-- **Context Parsing**: Enhanced error reporting with `parse_with_context()`
-- **Type String Parsing**: Parse Terraform type syntax (e.g., `"list(string)"`, `"object({name=string})"`)
-- **Automatic Inference**: Infer CTY types when no schema is provided
-
-**CTY Type System Integration:**
-- **Type Safety**: All HCL values converted to type-safe CTY values
-- **Type Validation**: Schema validation using CTY type definitions
-- **Value Conversion**: Automatic conversion from HCL/Python to CTY types
-- **Supported Types**: string, number, bool, list(), map(), object(), any/dynamic
-
-**Factory Functions:**
-- **Variables**: `create_variable_cty()` for Terraform variable structures
-- **Resources**: `create_resource_cty()` for Terraform resource structures
-- **Type String Support**: Parse and validate Terraform type syntax
-
-**Development Features:**
-- **Rich Errors**: Structured exceptions with source location (file, line, column)
-- **Pretty Printing**: `pretty_print_cty()` for formatted CTY value output
-- **Unicode Support**: Full Unicode support in HCL configuration strings
-- **Testing Suite**: Comprehensive tests including property-based testing
-- **Logging Integration**: Error handling via provide-foundation
-
-**Integration Points:**
-- **pyvider-cty**: Type system for all value handling
-- **provide-foundation**: Error handling and logging infrastructure
-- **python-hcl2**: Underlying HCL parser
-
-**Dependencies:**
-- `python-hcl2>=7.2.1`: Core HCL parsing
-- `pyvider-cty>=0.0.113`: CTY type system
-- `provide-foundation>=0.0.0`: Foundation services
-- `attrs>=25.3.0`: Structured exception classes
-- `regex>=2024.11.6`: Enhanced regex support
-
-**Current Limitations:**
-- No direct file parsing (use manual `Path.read_text()` + `parse_hcl_to_cty()`)
-- No HCL expression evaluation (e.g., `var.name`, function calls)
-- No template processing or variable substitution
-- `parse_terraform_config()` is a placeholder, not yet implemented
-
-This release establishes pyvider-hcl as a focused HCL-to-CTY parser for the pyvider ecosystem, with plans for expanded Terraform-specific features in future releases.
+Expression evaluation, template processing and `parse_terraform_config()` were
+not implemented at this point; the last of those arrived in 0.5.0.
