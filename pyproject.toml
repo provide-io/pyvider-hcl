@@ -60,12 +60,18 @@ Repository = "https://github.com/provide-io/pyvider-hcl"
 Issues = "https://github.com/provide-io/pyvider-hcl/issues"
 
 [dependency-groups]
+# 0.4.5 for the .pth file testkit installs into site-packages: before 0.4.4 it
+# carried a literal emoji, which site.py decodes with the locale's codec on
+# Python 3.11 and 3.12 -- so under the C locale it aborted interpreter startup
+# for every program in the environment. 0.4.5 is what makes that fix land: until
+# then the file was written to the base interpreter rather than the venv, so an
+# upgrade never replaced the broken copy.
 dev = [
     "hypothesis>=6.148.8",
-    "provide-testkit[standard]>=0.4.0",
+    "provide-testkit[standard]>=0.4.5",
 ]
 docs = [
-    "provide-testkit[docs]>=0.4.0",
+    "provide-testkit[docs]>=0.4.5",
 ]
 
 [tool.setuptools]
