@@ -202,7 +202,9 @@ class TestCreateResourceCty(unittest.TestCase):
         self.assertIn("resource", res_cty_val.value)
         r_type_block_val = res_cty_val.value["resource"].value[0]
         self.assertIn(expected_r_type, r_type_block_val.value)
-        r_name_block_val = r_type_block_val.value[expected_r_type].value[0]
+        # One list, at the `resource` level; the resource name is a plain dict
+        # key, matching what the parser returns for the same resource.
+        r_name_block_val = r_type_block_val.value[expected_r_type]
         self.assertIn(expected_r_name, r_name_block_val.value)
         actual_attributes_obj_val = r_name_block_val.value[expected_r_name]
         # FIX: Convert the CtyValue to a native Python dict before comparison.

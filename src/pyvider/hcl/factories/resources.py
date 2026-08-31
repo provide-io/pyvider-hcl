@@ -112,13 +112,17 @@ def create_resource_cty(  # noqa: C901
             logger.error("🏭❌ Type inference failed", r_type=r_type, r_name=r_name)
             raise HclFactoryError("Could not infer object type from attributes.")
 
-    root_py_struct = {"resource": [{r_type: [{r_name: attributes_py}]}]}
+    # The shape python-hcl2 8.x produces, and therefore the shape the parser in
+    # this package returns: one list at the `resource` level, holding a plain
+    # dict per label. The resource name is NOT wrapped in a second list -- doing
+    # so made factory output disagree with parser output for the same resource,
+    # so a value built here could not be compared with, merged into, or
+    # substituted for one that had been parsed.
+    root_py_struct = {"resource": [{r_type: {r_name: attributes_py}}]}
     root_schema = CtyObject(
         {
             "resource": CtyList(
-                element_type=CtyObject(
-                    {r_type: CtyList(element_type=CtyObject({r_name: CtyObject(attributes_cty_schema)}))}
-                )
+                element_type=CtyObject({r_type: CtyObject({r_name: CtyObject(attributes_cty_schema)})})
             )
         }
     )

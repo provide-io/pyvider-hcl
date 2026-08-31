@@ -60,7 +60,11 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
 
 2. **Factory Functions** (`factories/` subpackage)
    - `create_variable_cty(name, type_str, default_py=None, ...)`: Create Terraform variable CTY structures
-   - `create_resource_cty(r_type, r_name, attributes_py, ...)`: Create Terraform resource CTY structures
+   - `create_resource_cty(r_type, r_name, attributes_py, ...)`: Create Terraform resource CTY structures.
+     Produces `resource[0].<type>.<name>` — the same shape the parser returns for the same resource,
+     with one list at the `resource` level only. Do NOT wrap the resource name in a second list;
+     that made factory output disagree with parser output, and `tests/factories/
+     test_factory_parser_agreement.py` holds the two against each other
    - `parse_hcl_type_string(type_str)`: Parse HCL type strings (e.g., "list(string)", "object({...})")
    - Supports primitive types: string, number, bool, any
    - Supports complex types: list(), set(), map(), tuple([...]), object({...})

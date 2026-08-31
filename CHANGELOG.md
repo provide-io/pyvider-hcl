@@ -5,6 +5,27 @@ All notable changes to the pyvider-hcl project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-08-30
+
+### Changed
+- **BREAKING: `create_resource_cty` no longer wraps the resource name in a
+  list.** It produced `resource[0].<type>[0].<name>`, where python-hcl2 8.x and
+  therefore this package's parser produce `resource[0].<type>.<name>`. A value
+  built by the factory could not be compared with, merged into, or substituted
+  for one that had been parsed, though both claimed to describe the same
+  resource. The two are now byte-identical, types included.
+
+  Code reaching into the factory's output loses one index:
+
+  ```python
+  # before
+  value.value["resource"].value[0].value[r_type].value[0].value[r_name]
+  # after
+  value.value["resource"].value[0].value[r_type].value[r_name]
+  ```
+
+  `create_variable_cty` is unaffected -- a single label was already a plain key.
+
 ## [0.6.1] - 2026-08-30
 
 ### Fixed
