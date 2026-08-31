@@ -125,8 +125,11 @@ def _parse_object(inner_content: str) -> CtyType[Any]:
 
     attributes, optional = _parse_object_attributes_str(attrs_str)
     if optional:
-        # CtyObject declares optional_attributes with converter=frozenset, whose
-        # inferred parameter type carries an unbound TypeVar; cast past it.
+        # pyvider-cty 0.5.0 through 0.5.2 declare optional_attributes with
+        # converter=frozenset, whose inferred parameter type carries an unbound
+        # TypeVar that rejects every concrete argument; cast past it. Fixed in
+        # cty 0.5.3, so this goes when the floor next rises past 0.5.2 -- not
+        # worth a release of its own.
         return CtyObject(attributes, optional_attributes=cast("Any", optional))
     return CtyObject(attributes)
 
