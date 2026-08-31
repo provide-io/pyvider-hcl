@@ -91,9 +91,9 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - `TerraformConfig`: `blocks`, `attributes`, `blocks_of(type)`, `block_at(type, *labels)`,
      `block_types`
    - `TerraformBlock`: `block_type`, `labels`, `body`, `start_line`, `end_line`, `address`
-   - Block source lines come from `SerializationOptions(with_meta=True)`, which annotates each
-     block with `__start_line__`/`__end_line__`. `config.BLOCK_OPTIONS` adds that to the shared
-     `HCL2_OPTIONS`; the keys are read off the block dict before `normalize_hcl_data` drops them
+   - Block source lines come from `BlockView.start_line`/`.end_line` — the same numbers
+     `SerializationOptions(with_meta=True)` serializes, without serializing the block to reach
+     them
    - Modules: `config.py`
 
 5. **Error Handling** (`exceptions.py`)
@@ -397,7 +397,9 @@ Fixed upstream, workarounds removed here:
 
 Fixed locally, not yet upstream (branches in `../python-hcl2`):
 - `SerializationOptions.with_meta` emitted nothing (#291) — now emits `__start_line__` and
-  `__end_line__` per block, which is where `config.py` reads them from
+  `__end_line__` per block. The same branch adds `BlockView.start_line`/`.end_line`, which is
+  what `config.py` reads: `with_meta` puts the numbers in a dict, but the query API exposed no
+  way to get at them
 - hcl2's heredoc value form dropped the trailing newline, dedented whitespace-only lines, and
   measured `<<-` indentation in spaces only — now matches OpenTofu, so `normalize.py` no longer
   computes the body itself. The same change stopped `strings_to_heredocs` writing a body one

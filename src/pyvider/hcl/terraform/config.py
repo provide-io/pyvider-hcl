@@ -11,30 +11,24 @@ python-hcl2's typed rule tree through ``hcl2.query`` instead, so each top-level
 block keeps its type, its labels, and the line range it occupies — the
 information diagnostics need to point at a specific block.
 
-Source lines come from ``SerializationOptions(with_meta=True)``, which annotates
-each block with ``__start_line__`` and ``__end_line__``.
+Source lines come from ``BlockView.start_line`` and ``BlockView.end_line``, the
+same numbers ``SerializationOptions(with_meta=True)`` would serialize, without
+serializing the block to reach them.
 """
 
 from __future__ import annotations
 
-from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 import attrs
-from hcl2.const import END_LINE, START_LINE
 from hcl2.query import BlockView, DocumentView
 from hcl2.utils import process_escape_sequences
 from provide.foundation import logger
 
 from pyvider.hcl.exceptions import HclParsingError
 from pyvider.hcl.parser.diagnostics import source_location
-from pyvider.hcl.parser.normalize import HCL2_METADATA_KEYS, HCL2_OPTIONS, normalize_hcl_data
-
-# The options every other caller uses, plus the line numbers only a block
-# carries. They land on the block's own dict, so they are read off before the
-# body is normalized -- which drops them, along with the other hcl2 metadata.
-BLOCK_OPTIONS = replace(HCL2_OPTIONS, with_meta=True)
+from pyvider.hcl.parser.normalize import HCL2_OPTIONS, normalize_hcl_data
 
 # Terraform's own top-level block types, for callers that want to distinguish
 # them from provider- or tool-specific blocks.
@@ -101,25 +95,6 @@ class TerraformConfig:
         return tuple(seen)
 
 
-def _block_body(view: BlockView) -> dict[str, Any]:
-    """Serialize a block and return the innermost dict: its body and metadata.
-
-    A block serializes with its labels nested around the body, one dict per
-    label after the type, so descending that many levels lands on the body. Each
-    level is a single label key -- anything else there is hcl2 metadata, which
-    is skipped rather than counted.
-    """
-    serialized: Any = view.to_dict(options=BLOCK_OPTIONS)
-    for _ in view.name_labels:
-        if not isinstance(serialized, dict):
-            return {}
-        labelled = [value for key, value in serialized.items() if key not in HCL2_METADATA_KEYS]
-        if not labelled:
-            return {}
-        serialized = labelled[0]
-    return serialized if isinstance(serialized, dict) else {}
-
-
 def _block_from_view(view: BlockView) -> TerraformBlock:
     """Build a :class:`TerraformBlock` from an ``hcl2.query`` block view.
 
@@ -128,14 +103,13 @@ def _block_from_view(view: BlockView) -> TerraformBlock:
     label is an identifier and cannot carry an escape, so the same call is a
     no-op for it.
     """
-    serialized = _block_body(view)
-    body = normalize_hcl_data(serialized)
+    body = normalize_hcl_data(view.body.to_dict(options=HCL2_OPTIONS))
     return TerraformBlock(
         block_type=view.block_type,
         labels=tuple(process_escape_sequences(label) for label in view.name_labels),
         body=body if isinstance(body, dict) else {},
-        start_line=serialized.get(START_LINE),
-        end_line=serialized.get(END_LINE),
+        start_line=view.start_line,
+        end_line=view.end_line,
     )
 
 
