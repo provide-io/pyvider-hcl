@@ -6,9 +6,14 @@
 """Tests for normalization of python-hcl2 8.x output artifacts.
 
 python-hcl2 8.x preserves source syntax in its serialized output: string
-literals keep their quotes, escape sequences are left raw, and heredocs keep
-their markers. These tests pin the normalization that turns that back into
-plain Python values before CTY inference runs.
+literals keep their quotes and escape sequences are left raw. These tests pin
+the normalization that turns that back into plain Python values before CTY
+inference runs.
+
+Heredocs are not part of that: every parse asks for ``preserve_heredocs=False``,
+so python-hcl2 resolves a heredoc to its body before this package sees it. The
+heredoc cases below therefore pin what the parser returns end to end, not any
+unwrapping done here.
 """
 
 from decimal import Decimal
@@ -274,6 +279,28 @@ class TestExpressionPassthrough:
     def test_booleans_and_null(self) -> None:
         data = parse_with_context("a = true\nb = false\nc = null")
         assert data == {"a": True, "b": False, "c": None}
+
+
+class TestMetadataKeysAreNotOverreached:
+    """Only keys hcl2 actually injects may be dropped.
+
+    `__start_line__` / `__end_line__` appear only under `with_meta`, which this
+    package never sets. Filtering them would therefore never remove hcl2
+    metadata -- it would only delete an attribute a configuration happened to
+    name that, and HCL puts no namespace around these.
+    """
+
+    def test_an_attribute_named_like_block_metadata_survives(self) -> None:
+        data = parse_with_context("__start_line__ = 5\n__end_line__ = 9\nother = 1\n")
+        assert data == {"__start_line__": 5, "__end_line__": 9, "other": 1}
+
+    def test_the_same_inside_a_block_body(self) -> None:
+        data = parse_with_context('blk "x" {\n  __start_line__ = 5\n}\n')
+        assert data["blk"][0]["x"] == {"__start_line__": 5}
+
+    def test_hcl2_metadata_is_still_dropped(self) -> None:
+        data = parse_with_context('blk "x" {\n  a = 1\n}\n')
+        assert data["blk"][0]["x"] == {"a": 1}
 
 
 # 📄⚙️🔚

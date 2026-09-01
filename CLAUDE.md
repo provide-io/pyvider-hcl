@@ -153,16 +153,18 @@ from pyvider.hcl import (
 
 1. **HCL Parsing**: Wraps `python-hcl2` for HCL 2.x compatibility. 8.x output preserves source
    syntax for round-tripping, so `parser/normalize.py` reverses it, reusing
-   `hcl2.utils.process_escape_sequences`. Every call site passes `normalize.HCL2_OPTIONS`
-   (`SerializationOptions(preserve_heredocs=False)`), so hcl2 hands back the string a heredoc
-   body spells, with the dedent and trailing newline HCL gives it.
-   Do NOT add `strip_string_quotes=True` to those options. It resolves escapes before this
-   package sees the value, and the resolved quoted literal `"<<EOT\nbody\nEOT"` is a string
-   that must stay distinct from the heredoc it spells — pinned by
-   `tests/parser/test_hcl_semantics.py`. Leaving escapes raw until `normalize_hcl_string` keeps
-   the two apart, because hcl2 has already turned the real heredoc into its body and whatever
-   is still quoted is a literal.
-   Likewise do NOT use `hcl2.utils.is_dollar_string` in the emitter: it accepts `"${a} ${b}"`,
+   `hcl2.utils.process_escape_sequences`. Every parse entry point passes
+   `normalize.HCL2_OPTIONS` (`SerializationOptions(preserve_heredocs=False)`), so hcl2 hands
+   back the string a heredoc body spells, with the dedent and trailing newline HCL gives it.
+   `strip_string_quotes` is left off so escape resolution lives in one place — *not* because it
+   is unsafe. With `preserve_heredocs` already off, turning it on produces the same value for
+   every case in `tests/parser/test_hcl_semantics.py`; it would just do the same work earlier.
+   No test pins that option either way, so do not describe it as guarded.
+   A heredoc and the quoted literal `"<<EOT\nbody\nEOT"` arrive in the same shape — both
+   quoted, both escaped — and nothing in `normalize.py` tells them apart. Nothing needs to:
+   hcl2's grammar separated them, and the heredoc is already its body by then. Do NOT add a
+   check that treats a string *looking* like a heredoc as one.
+   Do NOT use `hcl2.utils.is_dollar_string` in the emitter: it accepts `"${a} ${b}"`,
    which emitted bare is invalid HCL
 2. **CTY Type Safety**: All values validated using the pyvider-cty type system
 3. **Type String Parsing**: Supports Terraform type syntax (e.g., "list(string)", "object({name=string, age=number})")
@@ -371,16 +373,19 @@ The package has minimal dependencies:
 
 > **This package currently requires an unreleased python-hcl2.** The three fixes below are
 > committed only on local branches in `../python-hcl2` (merged on `integration/all-three`), not
-> filed, not released. Against PyPI 8.1.3 this package fails to import — `hcl2.const` has no
-> `START_LINE`/`END_LINE` — and its heredoc values are wrong. Raise the floor in
-> `pyproject.toml` when the release carrying them lands.
+> filed, not released. Against PyPI 8.1.3 this package still *imports* — every module-scope
+> `hcl2` name it uses exists there — but `BlockView.start_line` does not, so the Terraform block
+> parser raises `AttributeError`, and heredoc values come back with the trailing newline
+> dropped. Raise the floor in `pyproject.toml` when the release carrying the fixes lands.
 >
-> Until then the checkout has to be installed by hand — `uv pip install
-> /Volumes/data/pyv/python-hcl2` — and **`uv sync` / `uv run` put the published 8.1.3 back**,
-> because that is what `uv.lock` pins. Export `UV_NO_SYNC=1` in any shell used here: without it
-> the `mypy strict` pre-commit hook (`uv run mypy src/`) reverts the environment and then fails
-> on the five resulting import errors. Nothing in the repo is configured around this, so there
-> is nothing to undo later.
+> Until then the checkout has to be installed by hand, from wherever it sits next to this
+> repository — `uv pip install ../python-hcl2` — and **`uv sync` / `uv run` put the published
+> 8.1.3 back**, because that is what `uv.lock` pins. This supersedes "Run `uv sync`" in
+> *Common Issues* and the `uv run` forms in *Common Development Commands* for as long as this
+> branch is parked: here `uv sync` is what breaks the environment. Export `UV_NO_SYNC=1` in any
+> shell used on this branch — without it the `mypy strict` pre-commit hook (`uv run mypy src/`)
+> reverts the environment and then fails. Use `.venv/bin/pytest` rather than `uv run pytest`.
+> Nothing in the repo is configured around this, so there is nothing to undo later.
 >
 > Install it non-editable. `-e` works at runtime but mypy cannot follow an editable install (it
 > does not read `.pth` files) and reports `hcl2` as missing; a plain install also avoids the

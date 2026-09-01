@@ -78,12 +78,15 @@ HCL String
     ↓
 parse_hcl_to_cty() [base.py]
     ↓
-hcl2.loads()  ──→  dict, with source syntax preserved
-    │              ('"web"', '"<<EOT\nbody\nEOT"', __is_block__ markers)
+hcl2.loads(serialization_options=HCL2_OPTIONS)  ──→  dict, source syntax
+    │              preserved ('"web"', '"body\\n"', __is_block__ markers).
+    │              preserve_heredocs=False, so a heredoc arrives as the
+    │              quoted string its body spells, not as markers.
     ↓
 normalize_hcl_data() [normalize.py]  ──→  plain Python dict/list
-    │   unquotes literals, resolves escapes, unwraps heredocs,
-    │   drops hcl2 metadata keys. Expressions stay as '${...}'.
+    │   unquotes literals, resolves escapes, drops hcl2 metadata
+    │   keys. Expressions stay as '${...}'. Heredoc bodies are
+    │   python-hcl2's work, not this module's.
     ↓
 Schema provided?
     ├─ Yes → schema.validate(data)  ──→  CtyValue
@@ -259,16 +262,17 @@ hcl2.query.DocumentView.parse()  ──→  typed rule tree
     │   block/attribute distinction and every source position
     ↓
     ├─ .blocks()      → BlockView  ──→  TerraformBlock
-    │      block_type, name_labels, body.to_dict(), and the line range
-    │      from the rule's own _meta
+    │      block_type, name_labels, body.to_dict(options=HCL2_OPTIONS),
+    │      and the line range from BlockView.start_line/.end_line
     └─ .attributes()  → AttributeView  ──→  TerraformConfig.attributes
     ↓
 normalize_hcl_data() on each body  ──→  plain Python values
 ```
 
-Source lines come from each rule's `_meta` rather than from
-`SerializationOptions(with_meta=True)`, which emits nothing as of python-hcl2
-8.1.3 (amplify-education/python-hcl2#291).
+Source lines come from `BlockView.start_line` / `.end_line` — the same numbers
+`SerializationOptions(with_meta=True)` serializes, without serializing the block
+to reach them. Both need an unreleased python-hcl2; see the upstream status
+section in CLAUDE.md.
 
 **Key Functions:**
 - `parse_terraform_config(config_path) → TerraformConfig` (config.py)
@@ -447,7 +451,7 @@ User catches exception with:
 ## Dependencies
 
 **Runtime Dependencies:**
-- `python-hcl2>=7.2.1` - Core HCL parsing
+- `python-hcl2` - Core HCL parsing
 - `pyvider-cty>=0.0.113` - Type system
 - `provide-foundation>=0.0.0` - Error handling/logging
 - `attrs>=25.3.0` - Structured exceptions

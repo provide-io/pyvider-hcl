@@ -22,19 +22,25 @@ The pieces python-hcl2 already gets right are asked for rather than rewritten.
 quoted string its body spells, dedent and trailing newline already applied the
 way HCL applies them.
 
-``strip_string_quotes`` stays off, and deliberately so. It would resolve escapes
-before this module sees the value, and the resolved form of the quoted literal
-``"<<EOT\\nbody\\nEOT"`` is a string this package must keep distinct from the
-heredoc it spells. Leaving escapes raw until here means the two never meet:
-python-hcl2 has already turned the real heredoc into its body, and what is still
-quoted is a literal, resolved by ``process_escape_sequences``.
+A heredoc and the quoted literal ``"<<EOT\\nbody\\nEOT"`` reach this module in the
+same shape -- both quoted, both escaped -- and nothing here tells them apart.
+Nothing has to: python-hcl2's grammar already separated them, and by this point
+the heredoc has been replaced by its body. Do not add a check that treats a
+string *looking* like a heredoc as one; that is what the deleted local unwrapper
+did, and it could not distinguish the two either.
+
+``strip_string_quotes`` stays off because escape resolution belongs in one place,
+not because it is unsafe: with ``preserve_heredocs`` already off it produces the
+same values for every case in ``tests/parser/test_hcl_semantics.py``. Turning it
+on would only move the work earlier, so the option buys nothing and splits the
+handling in two.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from hcl2.const import COMMENTS_KEY, END_LINE, INLINE_COMMENTS_KEY, IS_BLOCK, START_LINE
+from hcl2.const import COMMENTS_KEY, INLINE_COMMENTS_KEY, IS_BLOCK
 from hcl2.utils import SerializationOptions, process_escape_sequences
 
 # How this package asks python-hcl2 to serialize: heredocs resolved to their
@@ -42,9 +48,13 @@ from hcl2.utils import SerializationOptions, process_escape_sequences
 HCL2_OPTIONS = SerializationOptions(preserve_heredocs=False)
 
 # hcl2 8.x metadata keys injected into serialized block bodies, named by the
-# library rather than spelled out again here. The line numbers appear only when
-# a caller asks for them, and belong to the block rather than to its body.
-HCL2_METADATA_KEYS = frozenset({IS_BLOCK, COMMENTS_KEY, INLINE_COMMENTS_KEY, START_LINE, END_LINE})
+# library rather than spelled out again here.
+#
+# `__start_line__` and `__end_line__` are deliberately absent. They appear only
+# under `with_meta`, which `HCL2_OPTIONS` never sets, so filtering them would
+# never drop hcl2 metadata -- it would only delete an attribute a configuration
+# happened to name that, since HCL puts no namespace around these.
+HCL2_METADATA_KEYS = frozenset({IS_BLOCK, COMMENTS_KEY, INLINE_COMMENTS_KEY})
 
 
 def normalize_hcl_string(value: str) -> str:
