@@ -28,7 +28,7 @@ from provide.foundation import logger
 
 from pyvider.hcl.exceptions import HclParsingError
 from pyvider.hcl.parser.diagnostics import source_location
-from pyvider.hcl.parser.normalize import HCL2_OPTIONS, normalize_hcl_data
+from pyvider.hcl.parser.normalize import to_dict_normalized
 
 # Terraform's own top-level block types, for callers that want to distinguish
 # them from provider- or tool-specific blocks.
@@ -103,7 +103,7 @@ def _block_from_view(view: BlockView) -> TerraformBlock:
     label is an identifier and cannot carry an escape, so the same call is a
     no-op for it.
     """
-    body = normalize_hcl_data(view.body.to_dict(options=HCL2_OPTIONS))
+    body = to_dict_normalized(view.body)
     return TerraformBlock(
         block_type=view.block_type,
         labels=tuple(process_escape_sequences(label) for label in view.name_labels),
@@ -152,7 +152,7 @@ def parse_terraform_blocks(content: str, source_file: Path | None = None) -> Ter
 
     attributes: dict[str, Any] = {}
     for attribute in document.attributes():
-        serialized = normalize_hcl_data(attribute.to_dict(options=HCL2_OPTIONS))
+        serialized = to_dict_normalized(attribute)
         if isinstance(serialized, dict):
             attributes.update(serialized)
 

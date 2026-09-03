@@ -5,6 +5,32 @@ All notable changes to the pyvider-hcl project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **An attribute named like a python-hcl2 marker survives a parse.** `__is_block__`,
+  `__comments__` and `__inline_comments__` were requested from python-hcl2 and then
+  filtered out of the result, and HCL puts no namespace around those names, so a
+  configuration that declared one lost it silently. The options now turn
+  `with_comments` and `explicit_blocks` off, so the markers are never emitted and
+  nothing has to be removed. `__start_line__`/`__end_line__` stopped being filtered
+  in the previous release for the same reason; this finishes the job for the other
+  three.
+- **Serialization options are built per parse rather than shared.**
+  `SerializationOptions` is a mutable dataclass, and one module-level instance
+  backed all four parse call sites, so any assignment to a field reconfigured
+  parsing process-wide. `normalize.hcl2_options()` returns a fresh instance.
+
+### Changed
+- **The options and the normalization travel together.** `loads_normalized()` and
+  `to_dict_normalized()` replace four call sites that each passed
+  `HCL2_OPTIONS` by hand. Output serialized any other way normalizes wrongly and
+  silently -- heredoc markers come back instead of bodies -- so pairing them is no
+  longer something a new call site can forget. `HCL2_OPTIONS` and
+  `HCL2_METADATA_KEYS` are gone; neither was exported from `pyvider.hcl`.
+- `normalize_hcl_key()` delegates to `normalize_hcl_string()`. The two became
+  identical once heredoc handling moved into python-hcl2, and two copies drift.
+
 ## [0.6.4] - 2026-08-31
 
 ### Changed
