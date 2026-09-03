@@ -53,7 +53,6 @@ dependencies = [
     # package's null_required_attributes checker the thing that enforces it.
     "pyvider-cty>=0.5.3",
     "provide-foundation>=0.4.0",
-    "regex>=2024.11.6",
 ]
 
 [project.urls]
@@ -206,7 +205,7 @@ branch = true
 parallel = true
 
 [tool.coverage.report]
-fail_under = 70
+fail_under = 95
 show_missing = true
 skip_covered = true
 exclude_lines = [

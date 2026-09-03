@@ -462,7 +462,6 @@ User catches exception with:
 - `pyvider-cty>=0.5.3` - Type system
 - `provide-foundation>=0.4.0` - Error handling/logging
 - `attrs>=25.4.0` - Structured exceptions
-- `regex>=2024.11.6` - Enhanced regex
 
 **Development Dependencies:**
 - `pytest` - Testing framework

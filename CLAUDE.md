@@ -356,7 +356,6 @@ The package has minimal dependencies:
 - **pyvider-cty**: Type system integration
 - **provide-foundation**: Logging and error handling
 - **attrs**: Structured exception and config classes
-- **regex**: Enhanced regular expression support for parsing
 
 ## Current Limitations and Future Enhancements
 
