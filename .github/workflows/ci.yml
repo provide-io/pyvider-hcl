@@ -42,4 +42,9 @@ jobs:
       coverage-threshold: 0
       run-security: true
       run-secret-scan: true
-    secrets: inherit
+    # No secrets are passed. python-ci.yml declares only CODECOV_TOKEN, and the
+    # step that would use it is unreachable from here: `upload-coverage` is
+    # false by default and `use-wrknv: true` fails the same condition. GITHUB_TOKEN
+    # is implicit and unaffected. `secrets: inherit` would have handed the
+    # reusable workflow every secret this repository can see, including any added
+    # to the org later, to no purpose. Add named secrets here if that changes.
