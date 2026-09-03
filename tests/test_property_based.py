@@ -5,7 +5,7 @@
 
 """Property-based tests using Hypothesis for HCL parsing and factories."""
 
-from hypothesis import HealthCheck, given, settings, strategies as st
+from hypothesis import HealthCheck, assume, given, settings, strategies as st
 import pytest
 
 from pyvider.cty import CtyBool, CtyList, CtyMap, CtyNumber, CtyObject, CtyString
@@ -226,8 +226,15 @@ class TestPropertyBasedHclParsing:
         )
     )
     def test_simple_key_value_parsing(self, value: str) -> None:
-        """Simple key=value HCL should always parse."""
-        # Use safe characters to avoid HCL parsing issues
+        """Simple key=value HCL should always parse.
+
+        `${` and `%{` open an interpolation and a directive, so a value
+        containing either is a template the generator has left unterminated --
+        invalid HCL, which the parser is right to reject. They are excluded
+        here rather than removed from the alphabet, so a lone `$` or `%` (both
+        of which parse) stays covered.
+        """
+        assume("${" not in value and "%{" not in value)
         hcl_content = f'test_key = "{value}"'
         result = parse_hcl_to_cty(hcl_content)
         assert result is not None
