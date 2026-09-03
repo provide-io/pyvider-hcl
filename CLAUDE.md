@@ -381,15 +381,15 @@ The package has minimal dependencies:
 **python-hcl2 upstream status:**
 
 > **This package currently requires an unreleased python-hcl2.** The three fixes below are
-> committed only on local branches in `../python-hcl2` (merged on `integration/all-three`), not
-> filed, not released. Against PyPI 8.1.3 this package still *imports* — every module-scope
-> `hcl2` name it uses exists there — but `BlockView.start_line` does not, so the Terraform block
-> parser raises `AttributeError`, and heredoc values come back with the trailing newline
-> dropped. Raise the floor in `pyproject.toml` when the release carrying the fixes lands.
+> filed upstream as PRs #332, #333 and #335 (ready for review, not merged, not released), and
+> are carried locally on the `integration/all-three` branch of `../python-hcl2`. Against PyPI
+> 8.1.3 this package still *imports* — every module-scope `hcl2` name it uses exists there —
+> but `BlockView.start_line` does not, so the Terraform block parser raises `AttributeError`,
+> and heredoc values come back with the trailing newline dropped. Raise the floor in
+> `pyproject.toml` when the release carrying the fixes lands.
 >
-> Until then the checkout has to be installed by hand, from wherever it sits next to this
-> repository — `uv pip install ../python-hcl2` — and **`uv sync` / `uv run` put the published
-> 8.1.3 back**, because that is what `uv.lock` pins. This supersedes "Run `uv sync`" in
+> Until then the checkout has to be installed by hand, and **`uv sync` / `uv run` put the
+> published 8.1.3 back**, because that is what `uv.lock` pins. This supersedes "Run `uv sync`" in
 > *Common Issues* and the `uv run` forms in *Common Development Commands* for as long as this
 > branch is parked: here `uv sync` is what breaks the environment. Export `UV_NO_SYNC=1` in any
 > shell used on this branch — without it the `mypy strict` pre-commit hook (`uv run mypy src/`)
@@ -400,6 +400,27 @@ The package has minimal dependencies:
 > does not read `.pth` files) and reports `hcl2` as missing; a plain install also avoids the
 > stale `site-packages/hcl2/` directory that uv's uninstall leaves behind, which shadows an
 > editable install as a namespace package.
+>
+> Install from a worktree, not from `../python-hcl2` itself. That checkout sits on whatever ref
+> was last worked on — it has been left detached on a single fix branch — so
+> `uv pip install ../python-hcl2` installs whatever happens to be checked out, which is usually
+> not the branch this package needs:
+>
+> ```
+> git -C ../python-hcl2 worktree add /tmp/int-wt integration/all-three
+> cp ../python-hcl2/hcl2/version.py /tmp/int-wt/hcl2/
+> UV_NO_SYNC=1 uv pip install --python .venv/bin/python /tmp/int-wt
+> git -C ../python-hcl2 worktree remove --force /tmp/int-wt
+> ```
+>
+> The `cp` is not optional. `hcl2/version.py` is generated and gitignored, so a fresh worktree
+> does not have it, and python-hcl2's own suite then reports ~100 failures that are entirely
+> that missing file. Removing the worktree afterwards is safe: a non-editable install copies
+> the files, so nothing points back at it.
+>
+> To confirm the environment is right:
+> `.venv/bin/python -c "from hcl2.query import BlockView; print(hasattr(BlockView, 'start_line'))"`
+> — `True` means the local build is installed, `False` means something re-synced 8.1.3 back.
 
 Fixed upstream, workarounds removed here:
 - Negative integer literals loaded as `${-N}` strings (#307, fixed by PR #311)
@@ -409,16 +430,16 @@ Fixed upstream, workarounds removed here:
   (#308/#310, fixed by PR #313) — the option is still unused here, for the reasons in
   `Important Implementation Notes`
 
-Fixed locally, not yet upstream (branches in `../python-hcl2`):
-- `SerializationOptions.with_meta` emitted nothing (#291) — now emits `__start_line__` and
+Filed upstream, awaiting review; carried locally on `integration/all-three`:
+- `SerializationOptions.with_meta` emitted nothing (#291, PR #333) — now emits `__start_line__` and
   `__end_line__` per block. The same branch adds `BlockView.start_line`/`.end_line`, which is
   what `config.py` reads: `with_meta` puts the numbers in a dict, but the query API exposed no
   way to get at them
 - hcl2's heredoc value form dropped the trailing newline, dedented whitespace-only lines, and
-  measured `<<-` indentation in spaces only — now matches OpenTofu, so `normalize.py` no longer
-  computes the body itself. The same change stopped `strings_to_heredocs` writing a body one
-  line longer than the value it came from
-- `BodyView.blocks()`/`.attributes()` were annotated `List[NodeView]` — now the concrete view
+  measured `<<-` indentation in spaces only (#326/#330, PR #335) — now matches OpenTofu, so
+  `normalize.py` no longer computes the body itself. The same change stopped
+  `strings_to_heredocs` writing a body one line longer than the value it came from
+- `BodyView.blocks()`/`.attributes()` were annotated `List[NodeView]` (#328, PR #332) — now the concrete view
   classes, so `config.py` no longer narrows with `isinstance`
 
 Still open upstream, still handled here:
