@@ -49,9 +49,10 @@ The library is organized as a modular package under `src/pyvider/hcl/`:
    - `parse_with_context(content, source_file=None)`: Parse HCL with enhanced error context
    - `auto_infer_cty_type(raw_data)`: Automatically infer CTY types from Python data structures
    - `normalize_hcl_data(data)`: Strip python-hcl2 8.x serialization artifacts (quoted string
-     literals, `__is_block__`/`__comments__` markers, escape sequences left raw). Every parse
-     passes `normalize.HCL2_OPTIONS`, which turns off `preserve_heredocs` so hcl2 resolves
-     heredoc bodies itself; escape resolution stays here (see `Important Implementation Notes`)
+     literals, escape sequences left raw). It drops no keys, and it expects input serialized
+     with `normalize.hcl2_options()`; handed a bare `hcl2.loads` result it silently returns
+     heredoc *markers* instead of bodies. `loads_normalized()`/`to_dict_normalized()` pair the
+     two inside this package, and the exported `load_hcl_data()` does for callers outside it
    - `null_required_attributes(value)`: Report null non-optional object attributes (pyvider-cty
      defers required-ness to the schema layer, so this package enforces it)
    - Uses `python-hcl2` for underlying HCL parsing (see the upstream status note: the
@@ -153,9 +154,17 @@ from pyvider.hcl import (
 
 1. **HCL Parsing**: Wraps `python-hcl2` for HCL 2.x compatibility. 8.x output preserves source
    syntax for round-tripping, so `parser/normalize.py` reverses it, reusing
-   `hcl2.utils.process_escape_sequences`. Every parse entry point passes
-   `normalize.HCL2_OPTIONS` (`SerializationOptions(preserve_heredocs=False)`), so hcl2 hands
-   back the string a heredoc body spells, with the dedent and trailing newline HCL gives it.
+   `hcl2.utils.process_escape_sequences`. Every parse entry point goes through
+   `normalize.loads_normalized()` or `normalize.to_dict_normalized()`, which build
+   `normalize.hcl2_options()` -- `SerializationOptions(preserve_heredocs=False,
+   with_comments=False, explicit_blocks=False)` -- so hcl2 hands back the string a heredoc
+   body spells, with the dedent and trailing newline HCL gives it, and emits no
+   `__is_block__`/`__comments__` marker keys.
+   Build those options *per call*: `SerializationOptions` is a mutable dataclass, so one
+   shared instance lets any assignment to a field reconfigure parsing process-wide.
+   Do NOT filter marker keys out of the result instead. The markers are ordinary attribute
+   names as far as HCL is concerned, so a configuration declaring `__is_block__` or
+   `__comments__` lost it to the filter; not requesting them is what fixed that.
    `strip_string_quotes` is left off so escape resolution lives in one place — *not* because it
    is unsafe. With `preserve_heredocs` already off, turning it on produces the same value for
    every case in `tests/parser/test_hcl_semantics.py`; it would just do the same work earlier.

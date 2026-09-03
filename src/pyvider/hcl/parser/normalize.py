@@ -10,23 +10,25 @@ result can be reconstructed back into HCL:
 
 * string literals keep their surrounding quotes (``'"web"'``),
 * escape sequences are left raw (``'a\\\\tb'``),
-* block bodies carry ``__is_block__`` markers and ``__comments__`` entries,
 * object keys keep their quotes when the source quoted them.
 
 None of that is useful for CTY conversion, which wants plain Python values, so
 this module reverses it. Expressions (``'${var.x}'``) are deliberately left
 alone: this package parses HCL, it does not evaluate it.
 
-The pieces python-hcl2 already gets right are asked for rather than rewritten.
+The rest of 8.x's round-tripping support is declined rather than reversed.
 :func:`hcl2_options` turns off ``preserve_heredocs``, so a heredoc arrives as
 the quoted string its body spells, dedent and trailing newline already applied
-the way HCL applies them.
+the way HCL applies them, and turns off ``with_comments`` and
+``explicit_blocks`` so the ``__is_block__`` and ``__comments__`` markers are
+never emitted at all. Nothing here removes a key.
 
 :func:`normalize_hcl_data` expects input serialized with those options. Handed
 the output of a bare ``hcl2.loads``, it returns heredoc *markers* rather than
 bodies -- silently, since a heredoc and a string that merely looks like one are
-indistinguishable by then. Use :func:`loads_normalized` or
-:func:`to_dict_normalized` rather than pairing the two by hand.
+indistinguishable by then. Inside this package use :func:`loads_normalized` or
+:func:`to_dict_normalized` rather than pairing the two by hand; from outside it,
+``pyvider.hcl.load_hcl_data`` is the entry point that pairs them.
 
 A heredoc and the quoted literal ``"<<EOT\\nbody\\nEOT"`` reach this module in the
 same shape -- both quoted, both escaped -- and nothing here tells them apart.
@@ -47,16 +49,18 @@ from __future__ import annotations
 from typing import Any
 
 import hcl2
+from hcl2.query import AttributeView, BodyView
 from hcl2.utils import SerializationOptions, process_escape_sequences
 
 
 def hcl2_options() -> SerializationOptions:
     """Build the serialization options every parse in this package uses.
 
-    A fresh instance per call. ``SerializationOptions`` is a plain mutable
-    dataclass, so a module-level singleton is one object shared by every parse
-    in the process: anything that assigns to a field -- a caller, a subclass, a
-    test that forgets to restore -- silently reconfigures parsing everywhere.
+    A fresh instance per call, because ``SerializationOptions`` is a plain
+    mutable dataclass. The module-level singleton this replaced was one object
+    shared by every parse in the process, so a single stray assignment to a
+    field reconfigured parsing everywhere. Building it here means a caller that
+    mutates what it gets back changes only its own call.
 
     ``preserve_heredocs`` is off, so a heredoc arrives as the quoted string its
     body spells, dedent and trailing newline already applied the way HCL
@@ -86,7 +90,7 @@ def loads_normalized(text: str) -> Any:
     return normalize_hcl_data(hcl2.loads(text, serialization_options=hcl2_options()))
 
 
-def to_dict_normalized(node: Any) -> Any:
+def to_dict_normalized(node: BodyView | AttributeView) -> Any:
     """Serialize a python-hcl2 query view with this package's options."""
     return normalize_hcl_data(node.to_dict(options=hcl2_options()))
 
@@ -95,7 +99,7 @@ def normalize_hcl_string(value: str) -> str:
     """Normalize one string as serialized by hcl2 8.x.
 
     Args:
-        value: A string straight out of ``hcl2.loads``.
+        value: A string serialized with :func:`hcl2_options`.
 
     Returns:
         A plain Python string: the resolved literal for a quoted string, or
@@ -120,16 +124,24 @@ def normalize_hcl_key(key: str) -> str:
 
 
 def normalize_hcl_data(data: Any) -> Any:
-    """Recursively normalize a structure returned by ``hcl2.loads``.
+    """Recursively normalize a structure serialized with :func:`hcl2_options`.
 
-    Drops hcl2 metadata keys, unquotes object keys and block labels, and
-    normalizes every string via :func:`normalize_hcl_string`.
+    Unquotes object keys and block labels and normalizes every string via
+    :func:`normalize_hcl_string`. No key is dropped: the markers this package
+    discards are never requested in the first place, so an attribute a
+    configuration happens to name ``__is_block__`` survives like any other.
+
+    Given the output of a bare ``hcl2.loads`` instead, heredocs come back as
+    their markers rather than their bodies -- see the module docstring. Callers
+    outside this package want ``pyvider.hcl.load_hcl_data``, which pairs the
+    options with the normalization.
 
     Args:
-        data: Parsed hcl2 output (dict, list, or scalar).
+        data: hcl2 output serialized with :func:`hcl2_options` (dict, list, or
+            scalar).
 
     Returns:
-        The same structure with hcl2 serialization artifacts removed.
+        The same structure with hcl2 serialization artifacts resolved.
     """
     if isinstance(data, dict):
         return {normalize_hcl_key(key): normalize_hcl_data(value) for key, value in data.items()}

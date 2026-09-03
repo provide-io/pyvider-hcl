@@ -60,6 +60,7 @@ This document provides a visual and detailed overview of the pyvider-hcl archite
 - **`base.py`**: Core parsing logic - contains `parse_hcl_to_cty()`
 - **`context.py`**: Enhanced error context - contains `parse_with_context()`
 - **`normalize.py`**: Reverses python-hcl2 8.x serialization artifacts - contains
+  `hcl2_options()`, `loads_normalized()`, `to_dict_normalized()` and
   `normalize_hcl_data()`
 - **`inference.py`**: Type inference - contains `auto_infer_cty_type()`
 - **`diagnostics.py`**: Source location extraction - contains `source_location()`
@@ -78,14 +79,17 @@ HCL String
     ↓
 parse_hcl_to_cty() [base.py]
     ↓
-hcl2.loads(serialization_options=HCL2_OPTIONS)  ──→  dict, source syntax
-    │              preserved ('"web"', '"body\\n"', __is_block__ markers).
-    │              preserve_heredocs=False, so a heredoc arrives as the
-    │              quoted string its body spells, not as markers.
+loads_normalized() [normalize.py]
+    ↓
+hcl2.loads(serialization_options=hcl2_options())  ──→  dict, source syntax
+    │              preserved ('"web"', '"body\\n"'). preserve_heredocs=False,
+    │              so a heredoc arrives as the quoted string its body spells;
+    │              with_comments and explicit_blocks off, so no marker keys
+    │              are emitted for anything to have to remove.
     ↓
 normalize_hcl_data() [normalize.py]  ──→  plain Python dict/list
-    │   unquotes literals, resolves escapes, drops hcl2 metadata
-    │   keys. Expressions stay as '${...}'. Heredoc bodies are
+    │   unquotes literals and object keys, resolves escapes, drops
+    │   nothing. Expressions stay as '${...}'. Heredoc bodies are
     │   python-hcl2's work, not this module's.
     ↓
 Schema provided?
@@ -103,7 +107,8 @@ caret snippet off the lark error and HclParsingError carries them.
 - `parse_hcl_to_cty(hcl_content, schema=None) → CtyValue` (base.py)
 - `parse_with_context(content, source_file=None) → dict` (context.py)
 - `load_hcl_data(hcl_content) → dict` (base.py)
-- `normalize_hcl_data(data) → Any` (normalize.py)
+- `normalize_hcl_data(data) → Any` (normalize.py) - expects input serialized
+  with `hcl2_options()`; `load_hcl_data()` is the paired public entry point
 - `auto_infer_cty_type(raw_data) → CtyValue` (inference.py)
 - `null_required_attributes(value) → list[str]` (required.py)
 
@@ -262,11 +267,11 @@ hcl2.query.DocumentView.parse()  ──→  typed rule tree
     │   block/attribute distinction and every source position
     ↓
     ├─ .blocks()      → BlockView  ──→  TerraformBlock
-    │      block_type, name_labels, body.to_dict(options=HCL2_OPTIONS),
-    │      and the line range from BlockView.start_line/.end_line
+    │      block_type, name_labels, body, and the line range from
+    │      BlockView.start_line / .end_line
     └─ .attributes()  → AttributeView  ──→  TerraformConfig.attributes
     ↓
-normalize_hcl_data() on each body  ──→  plain Python values
+to_dict_normalized() on each body and attribute  ──→  plain Python values
 ```
 
 Source lines come from `BlockView.start_line` / `.end_line` — the same numbers

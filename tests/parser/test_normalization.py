@@ -204,9 +204,9 @@ class TestEscapeSequences:
 
 
 class TestBlockArtifacts:
-    """Quoted labels, ``__is_block__`` and ``__comments__`` are stripped."""
+    """Quoted labels are unquoted, and no marker key reaches the result."""
 
-    def test_block_labels_unquoted_and_markers_removed(self) -> None:
+    def test_block_labels_unquoted_and_no_markers_present(self) -> None:
         content = 'resource "aws_instance" "web" {\n  ami = "ami-1"\n}\n'
         data = parse_with_context(content)
         body = data["resource"][0]["aws_instance"]["web"]
@@ -281,24 +281,33 @@ class TestExpressionPassthrough:
         assert data == {"a": True, "b": False, "c": None}
 
 
-class TestMetadataKeysAreNotOverreached:
-    """Only keys hcl2 actually injects may be dropped.
+class TestMarkerNamesAreNotOverreached:
+    """No key is dropped, because no marker is ever requested.
 
-    `__start_line__` / `__end_line__` appear only under `with_meta`, which this
-    package never sets. Filtering them would therefore never remove hcl2
-    metadata -- it would only delete an attribute a configuration happened to
-    name that, and HCL puts no namespace around these.
+    HCL puts no namespace around the names python-hcl2 8.x uses for its own
+    markers: `__is_block__ = 1` is an ordinary attribute. `hcl2_options()`
+    turns `with_comments` and `explicit_blocks` off and never sets `with_meta`,
+    so none of the five names below can arrive as hcl2 metadata -- and a filter
+    for any of them could therefore only delete a configuration's own data.
+
+    These pin that directly. Re-adding a filter passes every other test in the
+    suite, which is how the bug survived the first time.
     """
 
-    def test_an_attribute_named_like_block_metadata_survives(self) -> None:
-        data = parse_with_context("__start_line__ = 5\n__end_line__ = 9\nother = 1\n")
-        assert data == {"__start_line__": 5, "__end_line__": 9, "other": 1}
+    MARKERS = ("__is_block__", "__comments__", "__inline_comments__", "__start_line__", "__end_line__")
 
-    def test_the_same_inside_a_block_body(self) -> None:
-        data = parse_with_context('blk "x" {\n  __start_line__ = 5\n}\n')
-        assert data["blk"][0]["x"] == {"__start_line__": 5}
+    def test_every_marker_name_survives_at_the_top_level(self) -> None:
+        source = "".join(f"{name} = {index}\n" for index, name in enumerate(self.MARKERS))
+        data = parse_with_context(source + "other = 99\n")
+        assert data == {name: index for index, name in enumerate(self.MARKERS)} | {"other": 99}
 
-    def test_hcl2_metadata_is_still_dropped(self) -> None:
+    def test_every_marker_name_survives_inside_a_block_body(self) -> None:
+        body = "".join(f"  {name} = {index}\n" for index, name in enumerate(self.MARKERS))
+        data = parse_with_context(f'blk "x" {{\n{body}}}\n')
+        assert data["blk"][0]["x"] == {name: index for index, name in enumerate(self.MARKERS)}
+
+    def test_no_marker_reaches_the_result_unbidden(self) -> None:
+        """The other direction: nothing asks for them, so nothing leaks in."""
         data = parse_with_context('blk "x" {\n  a = 1\n}\n')
         assert data["blk"][0]["x"] == {"a": 1}
 

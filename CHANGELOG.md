@@ -7,29 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **Requires an unreleased `python-hcl2`.** The block parser reads
+> `BlockView.start_line`/`.end_line`, and heredoc bodies now come from python-hcl2
+> rather than being computed here; neither exists in the published 8.1.3. Against
+> 8.1.3 this package still imports, but `parse_terraform_config()` raises
+> `AttributeError` and heredoc values lose their trailing newline. The floor
+> declared in `pyproject.toml` is understated until the release lands.
+
 ### Fixed
 - **An attribute named like a python-hcl2 marker survives a parse.** `__is_block__`,
   `__comments__` and `__inline_comments__` were requested from python-hcl2 and then
   filtered out of the result, and HCL puts no namespace around those names, so a
   configuration that declared one lost it silently. The options now turn
   `with_comments` and `explicit_blocks` off, so the markers are never emitted and
-  nothing has to be removed. `__start_line__`/`__end_line__` stopped being filtered
-  in the previous release for the same reason; this finishes the job for the other
-  three.
+  nothing has to be removed. `__start_line__` and `__end_line__` were briefly
+  filtered too, within this same unreleased cycle; neither is filtered now either.
 - **Serialization options are built per parse rather than shared.**
   `SerializationOptions` is a mutable dataclass, and one module-level instance
   backed all four parse call sites, so any assignment to a field reconfigured
   parsing process-wide. `normalize.hcl2_options()` returns a fresh instance.
 
 ### Changed
+- **`normalize_hcl_data()` no longer resolves heredocs on its own.** It is exported,
+  and `normalize_hcl_data(hcl2.loads(text))` -- this package's own code path through
+  0.6.4 -- now yields a heredoc as its `<<EOT ... EOT` markers rather than its body,
+  silently, because a heredoc and a quoted literal spelling one are indistinguishable
+  by that point. The function expects input serialized with `normalize.hcl2_options()`.
+  The exported `load_hcl_data()` pairs the two and is the supported entry point.
+  For the same reason it now drops no keys at all, so `with_meta=True` output handed
+  to it directly keeps its `__start_line__`/`__end_line__` entries.
+- **Heredoc bodies come from python-hcl2 rather than from this package.**
+  `normalize.py` computed them itself because python-hcl2's value form dropped the
+  newline before the closing marker, dedented whitespace-only lines, and measured
+  `<<-` indentation in spaces only. Upstream now matches OpenTofu, so
+  `preserve_heredocs=False` does the work and the local unwrapper is gone. No change
+  in what a parse returns -- the replacement was checked against all 21 OpenTofu
+  ground-truth cases in `tests/parser/test_hcl_semantics.py` -- but it is what makes
+  an unreleased python-hcl2 a requirement.
 - **The options and the normalization travel together.** `loads_normalized()` and
-  `to_dict_normalized()` replace four call sites that each passed
-  `HCL2_OPTIONS` by hand. Output serialized any other way normalizes wrongly and
-  silently -- heredoc markers come back instead of bodies -- so pairing them is no
-  longer something a new call site can forget. `HCL2_OPTIONS` and
-  `HCL2_METADATA_KEYS` are gone; neither was exported from `pyvider.hcl`.
+  `to_dict_normalized()` replace four call sites that each passed `HCL2_OPTIONS` by
+  hand. Output serialized any other way normalizes wrongly and silently -- heredoc
+  markers come back instead of bodies -- so pairing them is no longer something a new
+  call site can forget. `HCL2_OPTIONS` and `HCL2_METADATA_KEYS` are gone; neither was
+  exported from `pyvider.hcl`.
+- **Block source lines come from `BlockView.start_line`/`.end_line`** rather than the
+  rule's private `_meta`, and `blocks()`/`attributes()` are no longer narrowed with an
+  `isinstance` check, now that python-hcl2 annotates them with the concrete view
+  classes.
 - `normalize_hcl_key()` delegates to `normalize_hcl_string()`. The two became
   identical once heredoc handling moved into python-hcl2, and two copies drift.
+
+### Documentation
+- `docs/architecture.md` understated all four runtime dependency floors
+  (`python-hcl2`, `pyvider-cty`, `provide-foundation`, `attrs`) and still described
+  the deleted heredoc unwrapper and the `_meta` access.
 
 ## [0.6.4] - 2026-08-31
 

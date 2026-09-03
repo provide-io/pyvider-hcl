@@ -193,9 +193,9 @@ class TestHeredocsThroughTheBlockParser:
 
     `config.py` reaches hcl2 through `to_dict()` rather than `hcl2.loads`, so
     both paths go through the helpers in `normalize` rather than each passing
-    the options itself. Were one to stop, nothing else would notice: the values
-    would simply arrive as raw `<<EOT ... EOT` source, and the two parse paths
-    would disagree in silence.
+    the options itself. Before this class existed, dropping the options on
+    either path went unnoticed: the values simply arrived as raw
+    `<<EOT ... EOT` source and the two paths disagreed in silence.
     """
 
     SOURCE = "locals {\n  body = <<EOT\nline\nEOT\n}\ntop = <<EOT\nother\nEOT\n"
