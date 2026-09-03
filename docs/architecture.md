@@ -451,10 +451,12 @@ User catches exception with:
 ## Dependencies
 
 **Runtime Dependencies:**
-- `python-hcl2` - Core HCL parsing
-- `pyvider-cty>=0.0.113` - Type system
-- `provide-foundation>=0.0.0` - Error handling/logging
-- `attrs>=25.3.0` - Structured exceptions
+- `python-hcl2>=8.1.3` - Core HCL parsing. The declared floor; this branch needs
+  unreleased fixes on top of it, so see the upstream status note in `CLAUDE.md`
+  before trusting the floor alone
+- `pyvider-cty>=0.5.3` - Type system
+- `provide-foundation>=0.4.0` - Error handling/logging
+- `attrs>=25.4.0` - Structured exceptions
 - `regex>=2024.11.6` - Enhanced regex
 
 **Development Dependencies:**
