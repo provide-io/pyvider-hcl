@@ -35,7 +35,11 @@ jobs:
       # cryptography publish no win_arm64 wheels, so that runner cannot install
       # the suite at all (grpc/grpc#39064).
       include-windows: true
-      coverage-threshold: 0  # not yet enforced on the wrknv path (test.coverage has no --cov-fail-under)
+      # Ignored on the wrknv path: this input only reaches run-pytest.sh, which
+      # `use-wrknv: true` does not call. Coverage is still enforced -- `we run
+      # ci.test` runs `test.coverage` (`pytest --cov=src`), and pyproject's
+      # [tool.coverage.report] fail_under fails the run below the floor.
+      coverage-threshold: 0
       run-security: true
       run-secret-scan: true
     secrets: inherit
