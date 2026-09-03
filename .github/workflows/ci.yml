@@ -24,6 +24,11 @@ jobs:
     uses: provide-io/ci-tooling/.github/workflows/python-ci.yml@v0
     with:
       python-version: '3.11'
+      # Test every interpreter the classifiers claim. Without this the pipeline
+      # runs 3.11 alone, while pyproject advertises 3.11 through 3.14.
+      # 3.14 is NOT covered: ci-tooling@v0 hardcodes the matrix as
+      # ["3.11", "3.12", "3.13"] with no input to extend it.
+      matrix-testing: true
       use-wrknv: true
       platform-preset: standard  # ubuntu-24.04, ubuntu-24.04-arm, macos-15, macos-15-intel
       # Windows amd64. `include-windows-arm` is deliberately unset: grpcio and
