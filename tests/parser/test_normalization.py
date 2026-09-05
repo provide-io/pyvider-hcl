@@ -6,9 +6,14 @@
 """Tests for normalization of python-hcl2 8.x output artifacts.
 
 python-hcl2 8.x preserves source syntax in its serialized output: string
-literals keep their quotes, escape sequences are left raw, and heredocs keep
-their markers. These tests pin the normalization that turns that back into
-plain Python values before CTY inference runs.
+literals keep their quotes and escape sequences are left raw. These tests pin
+the normalization that turns that back into plain Python values before CTY
+inference runs.
+
+Heredocs are not part of that: every parse asks for ``preserve_heredocs=False``,
+so python-hcl2 resolves a heredoc to its body before this package sees it. The
+heredoc cases below therefore pin what the parser returns end to end, not any
+unwrapping done here.
 """
 
 from decimal import Decimal
@@ -62,7 +67,7 @@ class TestNegativeNumbers:
 
 
 class TestHeredocs:
-    """python-hcl2 8.x keeps heredoc markers in the serialized string.
+    """A heredoc reaches this package as the string its body spells.
 
     The expected values below were taken from OpenTofu evaluating the same
     source, so they are HCL's semantics rather than python-hcl2 7.x's (which
@@ -106,24 +111,23 @@ class TestHeredocs:
     def test_empty_indented_heredoc_is_an_empty_string(self) -> None:
         assert parse_with_context("script = <<-EOF\n  EOF\n")["script"] == ""
 
-    def test_blank_line_heredoc_is_a_newline(self) -> None:
-        """One empty body line is a newline, distinct from no body at all."""
-        assert normalize_hcl_data('"<<EOF\n\nEOF"') == "\n"
+    def test_a_literal_spelling_a_heredoc_stays_a_literal(self) -> None:
+        """A quoted string is a string, however much it looks like a heredoc.
 
-    def test_unterminated_heredoc_is_left_alone(self) -> None:
-        assert normalize_hcl_data('"<<EOF\nbody"') == "<<EOF\nbody"
-
-    def test_mismatched_closing_marker_is_left_alone(self) -> None:
-        assert normalize_hcl_data('"<<EOF\nbody\nOTHER"') == "<<EOF\nbody\nOTHER"
-
-    def test_text_after_the_closing_marker_is_left_alone(self) -> None:
-        """The heredoc patterns close on the delimiter, not the end of input.
-
-        They are matched against a token the grammar has already accepted, so
-        upstream needs no end anchor; here they run against any quoted string,
-        and a partial match means the text merely begins like a heredoc.
+        It has no closing marker line, so it carries no trailing newline -- the
+        one thing that always separates it from the heredoc it spells.
         """
-        assert normalize_hcl_data('"<<EOF\nbody\nEOF and more"') == "<<EOF\nbody\nEOF and more"
+        assert parse_with_context(r'script = "<<EOF\nbody\nEOF"')["script"] == "<<EOF\nbody\nEOF"
+
+    def test_a_literal_that_only_begins_like_a_heredoc(self) -> None:
+        assert parse_with_context(r'script = "<<EOF\nbody"')["script"] == "<<EOF\nbody"
+
+    def test_a_literal_whose_closing_marker_does_not_match(self) -> None:
+        assert parse_with_context(r'script = "<<EOF\nbody\nOTHER"')["script"] == "<<EOF\nbody\nOTHER"
+
+    def test_a_literal_with_text_after_the_closing_marker(self) -> None:
+        content = r'script = "<<EOF\nbody\nEOF and more"'
+        assert parse_with_context(content)["script"] == "<<EOF\nbody\nEOF and more"
 
     def test_heredoc_through_cty(self) -> None:
         value = parse_hcl_to_cty("script = <<EOT\nbody\nEOT\n")
@@ -200,9 +204,9 @@ class TestEscapeSequences:
 
 
 class TestBlockArtifacts:
-    """Quoted labels, ``__is_block__`` and ``__comments__`` are stripped."""
+    """Quoted labels are unquoted, and no marker key reaches the result."""
 
-    def test_block_labels_unquoted_and_markers_removed(self) -> None:
+    def test_block_labels_unquoted_and_no_markers_present(self) -> None:
         content = 'resource "aws_instance" "web" {\n  ami = "ami-1"\n}\n'
         data = parse_with_context(content)
         body = data["resource"][0]["aws_instance"]["web"]
@@ -275,6 +279,37 @@ class TestExpressionPassthrough:
     def test_booleans_and_null(self) -> None:
         data = parse_with_context("a = true\nb = false\nc = null")
         assert data == {"a": True, "b": False, "c": None}
+
+
+class TestMarkerNamesAreNotOverreached:
+    """No key is dropped, because no marker is ever requested.
+
+    HCL puts no namespace around the names python-hcl2 8.x uses for its own
+    markers: `__is_block__ = 1` is an ordinary attribute. `hcl2_options()`
+    turns `with_comments` and `explicit_blocks` off and never sets `with_meta`,
+    so none of the five names below can arrive as hcl2 metadata -- and a filter
+    for any of them could therefore only delete a configuration's own data.
+
+    These pin that directly. Re-adding a filter passes every other test in the
+    suite, which is how the bug survived the first time.
+    """
+
+    MARKERS = ("__is_block__", "__comments__", "__inline_comments__", "__start_line__", "__end_line__")
+
+    def test_every_marker_name_survives_at_the_top_level(self) -> None:
+        source = "".join(f"{name} = {index}\n" for index, name in enumerate(self.MARKERS))
+        data = parse_with_context(source + "other = 99\n")
+        assert data == {name: index for index, name in enumerate(self.MARKERS)} | {"other": 99}
+
+    def test_every_marker_name_survives_inside_a_block_body(self) -> None:
+        body = "".join(f"  {name} = {index}\n" for index, name in enumerate(self.MARKERS))
+        data = parse_with_context(f'blk "x" {{\n{body}}}\n')
+        assert data["blk"][0]["x"] == {name: index for index, name in enumerate(self.MARKERS)}
+
+    def test_no_marker_reaches_the_result_unbidden(self) -> None:
+        """The other direction: nothing asks for them, so nothing leaks in."""
+        data = parse_with_context('blk "x" {\n  a = 1\n}\n')
+        assert data["blk"][0]["x"] == {"a": 1}
 
 
 # 📄⚙️🔚

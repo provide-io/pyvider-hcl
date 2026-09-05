@@ -39,18 +39,20 @@ classifiers = [
 dependencies = [
     "attrs>=25.4.0",
     # 8.x is required: its serialized output keeps source syntax (quoted string
-    # literals, __is_block__ markers, heredoc markers), which the parser
-    # normalizes, and its typed rule tree supplies block source lines.
+    # literals, raw escape sequences), which the parser normalizes, and its
+    # typed rule tree supplies block source lines.
     # 8.1.3 specifically: earlier 8.x emits negative integer literals as
     # '${-N}' expression strings and cannot parse an empty heredoc, and the
     # parser now builds on hcl2.utils primitives it does not export before then.
+    # NOTE: this floor is currently understated. The code needs BlockView's line
+    # properties and the corrected heredoc bodies, neither released yet -- see
+    # the upstream status section in CLAUDE.md. Raise it when they ship.
     "python-hcl2>=8.1.3",
     # 0.5.0 defers required-ness to the schema layer rather than rejecting a
     # null required attribute during validation, which is what makes this
     # package's null_required_attributes checker the thing that enforces it.
     "pyvider-cty>=0.5.3",
     "provide-foundation>=0.4.0",
-    "regex>=2024.11.6",
 ]
 
 [project.urls]
@@ -203,7 +205,7 @@ branch = true
 parallel = true
 
 [tool.coverage.report]
-fail_under = 70
+fail_under = 90
 show_missing = true
 skip_covered = true
 exclude_lines = [

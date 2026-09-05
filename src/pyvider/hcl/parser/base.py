@@ -9,14 +9,12 @@ from __future__ import annotations
 
 from typing import Any
 
-import hcl2
-
 from pyvider.cty import CtyType, CtyValue
 from pyvider.cty.exceptions import CtyError as CtySchemaError, CtyValidationError
 from pyvider.hcl.exceptions import HclParsingError
 from pyvider.hcl.parser.diagnostics import source_location
 from pyvider.hcl.parser.inference import auto_infer_cty_type
-from pyvider.hcl.parser.normalize import normalize_hcl_data
+from pyvider.hcl.parser.normalize import loads_normalized
 from pyvider.hcl.parser.required import null_required_attributes
 
 
@@ -34,7 +32,7 @@ def load_hcl_data(hcl_content: str) -> Any:
             and column when the parser reported them.
     """
     try:
-        return normalize_hcl_data(hcl2.loads(hcl_content))
+        return loads_normalized(hcl_content)
     except Exception as e:
         location = source_location(e, hcl_content)
         message = f"Failed to parse HCL: {e}"

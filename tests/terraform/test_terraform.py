@@ -9,9 +9,10 @@ from pathlib import Path
 
 import pytest
 
-from pyvider.hcl import HclParsingError
+from pyvider.hcl import HclParsingError, parse_with_context
 from pyvider.hcl.terraform import (
     TERRAFORM_BLOCK_TYPES,
+    TerraformBlock,
     TerraformConfig,
     parse_terraform_blocks,
     parse_terraform_config,
@@ -185,6 +186,39 @@ class TestFileParsing:
         config = parse_terraform_config(config_path)
         assert config.blocks == ()
         assert config.attributes == {}
+
+
+class TestHeredocsThroughTheBlockParser:
+    """The block parser resolves heredocs the same way `parse_with_context` does.
+
+    `config.py` reaches hcl2 through `to_dict()` rather than `hcl2.loads`, so
+    both paths go through the helpers in `normalize` rather than each passing
+    the options itself. Before this class existed, dropping the options on
+    either path went unnoticed: the values simply arrived as raw
+    `<<EOT ... EOT` source and the two paths disagreed in silence.
+    """
+
+    SOURCE = "locals {\n  body = <<EOT\nline\nEOT\n}\ntop = <<EOT\nother\nEOT\n"
+
+    def _locals(self, config: TerraformConfig) -> TerraformBlock:
+        """Fail on a missing block rather than raising `AttributeError` on None."""
+        block = config.block_at("locals")
+        assert block is not None, "the locals block was not extracted"
+        return block
+
+    def test_a_heredoc_in_a_block_body_is_resolved(self) -> None:
+        config = parse_terraform_blocks(self.SOURCE)
+        assert self._locals(config).body["body"] == "line\n"
+
+    def test_a_top_level_heredoc_is_resolved(self) -> None:
+        config = parse_terraform_blocks(self.SOURCE)
+        assert config.attributes["top"] == "other\n"
+
+    def test_both_paths_agree(self) -> None:
+        loaded = parse_with_context(self.SOURCE)
+        config = parse_terraform_blocks(self.SOURCE)
+        assert config.attributes["top"] == loaded["top"]
+        assert self._locals(config).body["body"] == loaded["locals"][0]["body"]
 
 
 # 📄⚙️🔚

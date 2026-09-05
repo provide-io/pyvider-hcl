@@ -10,12 +10,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import hcl2
 from provide.foundation import logger
 
 from pyvider.hcl.exceptions import HclParsingError
 from pyvider.hcl.parser.diagnostics import source_location
-from pyvider.hcl.parser.normalize import normalize_hcl_data
+from pyvider.hcl.parser.normalize import loads_normalized
 
 
 def parse_with_context(content: str, source_file: Path | None = None) -> Any:
@@ -43,7 +42,7 @@ def parse_with_context(content: str, source_file: Path | None = None) -> Any:
     source_str = str(source_file) if source_file else "string input"
 
     try:
-        return normalize_hcl_data(hcl2.loads(content))
+        return loads_normalized(content)
     except Exception as e:
         location = source_location(e, content)
         logger.error(

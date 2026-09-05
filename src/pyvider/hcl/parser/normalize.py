@@ -10,121 +10,103 @@ result can be reconstructed back into HCL:
 
 * string literals keep their surrounding quotes (``'"web"'``),
 * escape sequences are left raw (``'a\\\\tb'``),
-* heredocs keep their markers (``'"<<EOT\\nbody\\nEOT"'``),
-* block bodies carry ``__is_block__`` markers and ``__comments__`` entries,
 * object keys keep their quotes when the source quoted them.
 
 None of that is useful for CTY conversion, which wants plain Python values, so
 this module reverses it. Expressions (``'${var.x}'``) are deliberately left
 alone: this package parses HCL, it does not evaluate it.
 
-The pieces python-hcl2 already gets right are imported rather than rewritten:
-``HEREDOC_PATTERN`` and ``HEREDOC_TRIM_PATTERN``, which the library documents as
-tracking its own grammar terminals (so delimiters containing ``.`` or ``-``,
-single-character delimiters, and CRLF line endings all follow automatically),
-and ``process_escape_sequences``, which resolves escapes in a single pass.
+The rest of 8.x's round-tripping support is declined rather than reversed.
+:func:`hcl2_options` turns off ``preserve_heredocs``, so a heredoc arrives as
+the quoted string its body spells, dedent and trailing newline already applied
+the way HCL applies them, and turns off ``with_comments`` and
+``explicit_blocks`` so the ``__is_block__`` and ``__comments__`` markers are
+never emitted at all. Nothing here removes a key.
 
-What stays here is the heredoc body, because python-hcl2's own value form —
-``SerializationOptions(preserve_heredocs=False, strip_string_quotes=True)`` —
-disagrees with HCL on every case ``tests/parser/test_hcl_semantics.py`` checks
-against OpenTofu: it drops the newline before the closing marker, dedents
-whitespace-only lines, and measures ``<<-`` indentation in spaces only, so a
-tab-indented heredoc is not dedented at all.
+:func:`normalize_hcl_data` expects input serialized with those options. Handed
+the output of a bare ``hcl2.loads``, it returns heredoc *markers* rather than
+bodies -- silently, since a heredoc and a string that merely looks like one are
+indistinguishable by then. Inside this package use :func:`loads_normalized` or
+:func:`to_dict_normalized` rather than pairing the two by hand; from outside it,
+``pyvider.hcl.load_hcl_data`` is the entry point that pairs them.
 
-``strip_string_quotes`` is unusable here for a second reason. It resolves
-escapes before this module sees the value, and a quoted literal spelling
-``"<<EOT\\nbody\\nEOT"`` then becomes byte-identical to a real heredoc — two
-different values by OpenTofu's reckoning. Unwrapping the heredoc first, while
-its escapes are still raw, is what keeps them apart.
+A heredoc and the quoted literal ``"<<EOT\\nbody\\nEOT"`` reach this module in the
+same shape -- both quoted, both escaped -- and nothing here tells them apart.
+Nothing has to: python-hcl2's grammar already separated them, and by this point
+the heredoc has been replaced by its body. Do not add a check that treats a
+string *looking* like a heredoc as one; that is what the deleted local unwrapper
+did, and it could not distinguish the two either.
+
+``strip_string_quotes`` stays off because escape resolution belongs in one place,
+not because it is unsafe: with ``preserve_heredocs`` already off it produces the
+same values for every case in ``tests/parser/test_hcl_semantics.py``. Turning it
+on would only move the work earlier, so the option buys nothing and splits the
+handling in two.
 """
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
-from hcl2.const import COMMENTS_KEY, INLINE_COMMENTS_KEY, IS_BLOCK
-from hcl2.utils import (
-    HEREDOC_PATTERN,
-    HEREDOC_TRIM_PATTERN,
-    process_escape_sequences,
-)
-
-# hcl2 8.x metadata keys injected into serialized block bodies, named by the
-# library rather than spelled out again here.
-HCL2_METADATA_KEYS = frozenset({IS_BLOCK, COMMENTS_KEY, INLINE_COMMENTS_KEY})
-
-# The indentation of the closing heredoc marker, which sits on its own line and
-# is not part of the value. Nothing else trailing is removed: a blank final line
-# and spaces at the end of a content line are both content, and a content line
-# always ends with its own newline, so this can never reach past one.
-_CLOSING_MARKER_INDENT_RE = re.compile(r"[ \t]*\Z")
+import hcl2
+from hcl2.query import AttributeView, BodyView
+from hcl2.utils import SerializationOptions, process_escape_sequences
 
 
-def _dedent_heredoc(lines: list[str]) -> list[str]:
-    """Strip the common leading whitespace from ``<<-`` heredoc lines.
+def hcl2_options() -> SerializationOptions:
+    """Build the serialization options every parse in this package uses.
 
-    The spec measures "any literal string at the start of each line", so a
-    whitespace-only line offers no measurement and is left exactly as it was:
-    OpenTofu reports ``"a\\n      \\nb\\n"`` for a heredoc indented by four
-    spaces whose middle line is six, neither measuring that line nor trimming
-    it. Indentation is counted in characters, not spaces, so a tab-indented
-    heredoc dedents like a space-indented one.
+    A fresh instance per call, because ``SerializationOptions`` is a plain
+    mutable dataclass. The module-level singleton this replaced was one object
+    shared by every parse in the process, so a single stray assignment to a
+    field reconfigured parsing everywhere. Building it here means a caller that
+    mutates what it gets back changes only its own call.
+
+    ``preserve_heredocs`` is off, so a heredoc arrives as the quoted string its
+    body spells, dedent and trailing newline already applied the way HCL
+    applies them.
+
+    ``with_comments`` and ``explicit_blocks`` are off because this package
+    discards both. Asking for them and then filtering them out cost real data:
+    the markers are ordinary attribute names as far as HCL is concerned, so a
+    configuration with an attribute called ``__is_block__`` or ``__comments__``
+    lost it to the filter. Not requesting them means nothing has to be removed,
+    and nothing a document actually says can collide with the removal.
     """
-    indents = [len(line) - len(line.lstrip()) for line in lines if line.strip()]
-    if not indents:
-        return lines
-    margin = min(indents)
-    return [line[margin:] if line.strip() else line for line in lines]
+    return SerializationOptions(
+        preserve_heredocs=False,
+        with_comments=False,
+        explicit_blocks=False,
+    )
 
 
-def _unwrap_heredoc(value: str) -> str | None:
-    """Extract the body of a heredoc serialized by hcl2 8.x.
+def loads_normalized(text: str) -> Any:
+    """Parse *text* with this package's options and normalize the result.
 
-    Args:
-        value: Candidate string with the outer quotes already removed.
-
-    Returns:
-        The heredoc body, or ``None`` when ``value`` is not a heredoc.
+    The options and the normalization belong together -- output serialized
+    another way normalizes wrongly, silently -- so both entry points go through
+    here rather than each remembering to pass the options.
     """
-    match = HEREDOC_TRIM_PATTERN.match(value)
-    dedent = match is not None
-    if match is None:
-        match = HEREDOC_PATTERN.match(value)
-    # Both patterns close on the last occurrence of the delimiter rather than
-    # anchoring at the end, so a match that stops short is text that merely
-    # begins like a heredoc.
-    if match is None or match.end() != len(value):
-        return None
+    return normalize_hcl_data(hcl2.loads(text, serialization_options=hcl2_options()))
 
-    # Everything between the opening marker's newline and the closing one: the
-    # content lines with the newlines that terminate them, then the closing
-    # marker's indentation. HCL counts the newline before the closing marker as
-    # content, so `<<EOT\nline\nEOT` is "line\n", not "line" -- verified against
-    # OpenTofu, which reports the same for the same source.
-    body = _CLOSING_MARKER_INDENT_RE.sub("", match.group(2))
-    if not dedent:
-        return body
-    return "\n".join(_dedent_heredoc(body.split("\n")))
+
+def to_dict_normalized(node: BodyView | AttributeView) -> Any:
+    """Serialize a python-hcl2 query view with this package's options."""
+    return normalize_hcl_data(node.to_dict(options=hcl2_options()))
 
 
 def normalize_hcl_string(value: str) -> str:
     """Normalize one string as serialized by hcl2 8.x.
 
     Args:
-        value: A string straight out of ``hcl2.loads``.
+        value: A string serialized with :func:`hcl2_options`.
 
     Returns:
-        A plain Python string: the body for a heredoc, the resolved literal for
-        a quoted string, or ``value`` unchanged for a bare expression or
-        identifier.
+        A plain Python string: the resolved literal for a quoted string, or
+        ``value`` unchanged for a bare expression or identifier.
     """
     if len(value) >= 2 and value.startswith('"') and value.endswith('"'):
-        inner = value[1:-1]
-        heredoc = _unwrap_heredoc(inner)
-        if heredoc is not None:
-            return heredoc
-        return process_escape_sequences(inner)
+        return process_escape_sequences(value[1:-1])
 
     return value
 
@@ -133,32 +115,36 @@ def normalize_hcl_key(key: str) -> str:
     """Unquote and unescape an object key or block label kept quoted by hcl2 8.x.
 
     A quoted key is a string literal and carries the same escapes a value does,
-    so it has to be resolved the same way -- otherwise ``{ "a\\nb" = "a\\nb" }``
-    yields a key and a value that spell the same source text differently.
+    so it is resolved the same way -- otherwise ``{ "a\\nb" = "a\\nb" }`` yields
+    a key and a value that spell the same source text differently. It delegates
+    rather than repeating the body: the two were identical once the heredoc
+    branch left this module, and two copies drift.
     """
-    if len(key) >= 2 and key.startswith('"') and key.endswith('"'):
-        return process_escape_sequences(key[1:-1])
-    return key
+    return normalize_hcl_string(key)
 
 
 def normalize_hcl_data(data: Any) -> Any:
-    """Recursively normalize a structure returned by ``hcl2.loads``.
+    """Recursively normalize a structure serialized with :func:`hcl2_options`.
 
-    Drops hcl2 metadata keys, unquotes object keys and block labels, and
-    normalizes every string via :func:`normalize_hcl_string`.
+    Unquotes object keys and block labels and normalizes every string via
+    :func:`normalize_hcl_string`. No key is dropped: the markers this package
+    discards are never requested in the first place, so an attribute a
+    configuration happens to name ``__is_block__`` survives like any other.
+
+    Given the output of a bare ``hcl2.loads`` instead, heredocs come back as
+    their markers rather than their bodies -- see the module docstring. Callers
+    outside this package want ``pyvider.hcl.load_hcl_data``, which pairs the
+    options with the normalization.
 
     Args:
-        data: Parsed hcl2 output (dict, list, or scalar).
+        data: hcl2 output serialized with :func:`hcl2_options` (dict, list, or
+            scalar).
 
     Returns:
-        The same structure with hcl2 serialization artifacts removed.
+        The same structure with hcl2 serialization artifacts resolved.
     """
     if isinstance(data, dict):
-        return {
-            normalize_hcl_key(key): normalize_hcl_data(value)
-            for key, value in data.items()
-            if key not in HCL2_METADATA_KEYS
-        }
+        return {normalize_hcl_key(key): normalize_hcl_data(value) for key, value in data.items()}
     if isinstance(data, list):
         return [normalize_hcl_data(item) for item in data]
     if isinstance(data, str):

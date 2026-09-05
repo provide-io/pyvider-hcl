@@ -24,13 +24,21 @@ jobs:
     uses: provide-io/ci-tooling/.github/workflows/python-ci.yml@v0
     with:
       python-version: '3.11'
+      # Test every interpreter the classifiers claim. Without this the pipeline
+      # runs 3.11 alone, while pyproject advertises 3.11 through 3.14. As of
+      # ci-tooling 0.5.0 the matrix is 3.11 through 3.14, so the two agree.
+      matrix-testing: true
       use-wrknv: true
       platform-preset: standard  # ubuntu-24.04, ubuntu-24.04-arm, macos-15, macos-15-intel
       # Windows amd64. `include-windows-arm` is deliberately unset: grpcio and
       # cryptography publish no win_arm64 wheels, so that runner cannot install
       # the suite at all (grpc/grpc#39064).
       include-windows: true
-      coverage-threshold: 0  # not yet enforced on the wrknv path (test.coverage has no --cov-fail-under)
+      # Ignored on the wrknv path: this input only reaches run-pytest.sh, which
+      # `use-wrknv: true` does not call. Coverage is still enforced -- `we run
+      # ci.test` runs `test.coverage` (`pytest --cov=src`), and pyproject's
+      # [tool.coverage.report] fail_under fails the run below the floor.
+      coverage-threshold: 0
       run-security: true
       # The dependency audit gates. It could not before ci-tooling 0.8.3: the
       # audit ran pip-audit from the virtualenv the workflow had just installed
@@ -45,4 +53,9 @@ jobs:
       # family never reached here.
       fail-on-vulnerability: true
       run-secret-scan: true
-    secrets: inherit
+    # No secrets are passed. python-ci.yml declares only CODECOV_TOKEN, and the
+    # step that would use it is unreachable from here: `upload-coverage` is
+    # false by default and `use-wrknv: true` fails the same condition. GITHUB_TOKEN
+    # is implicit and unaffected. `secrets: inherit` would have handed the
+    # reusable workflow every secret this repository can see, including any added
+    # to the org later, to no purpose. Add named secrets here if that changes.
