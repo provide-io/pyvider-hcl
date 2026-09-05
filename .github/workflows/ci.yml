@@ -32,5 +32,17 @@ jobs:
       include-windows: true
       coverage-threshold: 0  # not yet enforced on the wrknv path (test.coverage has no --cov-fail-under)
       run-security: true
+      # The dependency audit gates. It could not before ci-tooling 0.8.3: the
+      # audit ran pip-audit from the virtualenv the workflow had just installed
+      # it into, so it reported on the scanner's own dependency tree, and every
+      # call site wrapped it in `|| true`. Both are fixed -- it reads the
+      # resolved lock and runs the scanner from `uvx` -- which is what makes the
+      # exit status worth acting on.
+      #
+      # This project's lock is clean: 88 packages, no known vulnerabilities. It
+      # takes `provide-testkit[standard]`, which never included the `security`
+      # extra, so the `safety` -> `nltk` chain that reached the rest of the
+      # family never reached here.
+      fail-on-vulnerability: true
       run-secret-scan: true
     secrets: inherit
